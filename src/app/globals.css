@@ -1,26 +1,74 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  themes: all;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@plugin "daisyui/theme" {
+  name: "black";
+  default: true;
+  --color-primary: var(--color-cyan-300);
+  --color-primary-content: var(--color-cyan-950);
+  --color-secondary: var(--color-pink-400);
+  --color-secondary-content: var(--color-pink-950);
+  --radius-selector: 2rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@custom-variant dark (&:where([data-theme=black], [data-theme=black] *));
+
+@theme {
+  --text-xxs: 0.625rem;
+  --font-dm-sans: var(--font-dm-sans);
+  --container-8xl: 90rem;
+  --color-content-muted: color-mix(
+    in oklab,
+    var(--color-base-content) 60%,
+    transparent
+  );
+  --color-border: color-mix(
+    in oklab,
+    var(--color-base-content) 10%,
+    transparent
+  );
+}
+
+@utility scrollbar-sm {
+  scrollbar-width: thin;
+}
+
+@layer base {
+  * {
+    @apply border-border font-dm-sans scroll-smooth;
+  }
+  body {
+    @apply bg-base-100 text-base-content;
+  }
+  [role="button"],
+  button {
+    cursor: pointer;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(6);
+    opacity: 0;
+  }
+}
+
+.input:focus,
+.input:focus-within {
+  @apply ring-primary border-0 ring-2 ring-offset-0 outline-0 transition;
+}
+
+input:-webkit-autofill {
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

@@ -1,0 +1,94 @@
+"use client";
+
+import { Masonry } from "masonic";
+
+import { useIsMobile } from "@/hooks/use-mobile";
+
+import UploadCard from "./upload-card";
+import UploadSkeleton from "./upload-skeleton";
+import { useGalleryItems } from "../_hooks/use-gallery-items";
+
+import type { UploadWithProfileAndAspect } from "@/lib/types";
+
+interface MasonryGridProps {
+  // Para el feed
+  uploads?: UploadWithProfileAndAspect[];
+  relatedUploads?: UploadWithProfileAndAspect[];
+  loading?: boolean;
+  initialLoading?: boolean;
+  isReachingEnd?: boolean;
+  // Para detalles
+  layout?: "feed" | "details";
+}
+
+const MasonryGrid = ({
+  uploads,
+  relatedUploads,
+  loading = false,
+  initialLoading = false,
+  isReachingEnd = true,
+  layout = "feed",
+}: MasonryGridProps) => {
+  const isMobile = useIsMobile();
+
+  const galleryItems = useGalleryItems(
+    uploads ?? [],
+    loading ?? false,
+    initialLoading ?? false,
+    isReachingEnd ?? true,
+    20,
+  );
+
+  const relatedItems = useGalleryItems(
+    relatedUploads ?? [],
+    loading ?? false,
+    initialLoading ?? false,
+    isReachingEnd ?? true,
+    16,
+  );
+
+  // Feed: usa el hook y los props originales
+  if (layout === "feed" && uploads) {
+    return (
+      <Masonry
+        items={galleryItems}
+        columnWidth={isMobile ? 160 : 240}
+        columnGutter={isMobile ? 4 : 20}
+        overscanBy={3}
+        render={({ data }) => {
+          if (data.type === "upload") {
+            return <UploadCard upload={data.upload} />;
+          }
+
+          if ((data as any).hidden) return null;
+
+          return <UploadSkeleton aspectRatio={data.aspectRatio} />;
+        }}
+      />
+    );
+  }
+
+  // Detalles: recibe los items ya preparados
+  if (layout === "details" && relatedUploads) {
+    return (
+      <Masonry
+        items={relatedItems}
+        columnWidth={isMobile ? 160 : 240}
+        columnGutter={isMobile ? 4 : 20}
+        overscanBy={3}
+        render={({ data }) => {
+          if (data.type === "upload") {
+            return <UploadCard upload={data.upload} />;
+          }
+          if ((data as any).hidden) return null;
+
+          return <UploadSkeleton aspectRatio={data.aspectRatio} />;
+        }}
+      />
+    );
+  }
+
+  return null;
+};
+
+export default MasonryGrid;

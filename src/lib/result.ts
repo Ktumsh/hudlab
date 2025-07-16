@@ -1,0 +1,27 @@
+export const resultMessages = {
+  USER_CREATED: "Cuenta creada exitosamente.",
+  LOGIN_SUCCESS: "Inicio de sesión exitoso.",
+  INVALID_CREDENTIALS: "Correo o contraseña incorrectos.",
+  UNKNOWN_ERROR: "Ocurrió un error inesperado. Intenta nuevamente.",
+  EMAIL_ALREADY_EXISTS: "El correo electrónico ya está en uso.",
+  WEAK_PASSWORD: "La contraseña es demasiado débil.",
+  INVALID_INPUT: "Hay campos inválidos. Revísalos e intenta de nuevo.",
+  CHECK_EMAIL_ERROR: "No se pudo verificar el correo. Intenta nuevamente.",
+  SIGNUP_ERROR: "No se pudo registrar la cuenta. Intenta más tarde.",
+  EMAIL_SENT: "Te hemos enviado un código de verificación.",
+  EMAIL_INVALID: "Correo inválido.",
+  EMAIL_SAME: "El correo electrónico nuevo no puede ser igual al actual.",
+  EMAIL_DISABLED: "El usuario está deshabilitado.",
+  EMAIL_SEND_ERROR: "Error al enviar el correo.",
+  CODE_VERIFIED: "Código verificado.",
+  CODE_EXPIRED: "El código ha expirado.",
+  CODE_NOT_FOUND: "Código no encontrado.",
+  CODE_ALREADY_USED: "El correo ya está verificado.",
+  CODE_ERROR: "Error interno al verificar el código.",
+  TOKEN_INVALID: "El enlace es inválido o ha expirado.",
+  SAME_PASSWORD: "La nueva contraseña no puede ser igual a la anterior.",
+  PASSWORD_UPDATED: "Tu contraseña ha sido actualizada correctamente.",
+  PASSWORD_RESET_ERROR: "No se pudo actualizar la contraseña.",
+};
+
+export type ResultCode = keyof typeof resultMessages;
