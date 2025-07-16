@@ -5,11 +5,11 @@ import { getUploadByPublicId } from "@/db/querys/uploads-querys";
 import UploadDetails from "./_components/upload-details";
 
 interface UploadPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function UploadPage({ params }: UploadPageProps) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) redirect("/feed");
 
