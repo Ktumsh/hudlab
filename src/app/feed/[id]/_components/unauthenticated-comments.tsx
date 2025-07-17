@@ -1,6 +1,7 @@
 "use client";
 
 import { IconMessageCircle } from "@tabler/icons-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import Logo from "@/components/logo";
@@ -33,7 +34,7 @@ const UnauthenticatedComments = () => {
           <a href={`/auth/login?next=${pathname}`}>Iniciar sesión</a>
         </Button>
         <Button asChild variant="primary">
-          <a href="/auth/signup">Registrarse</a>
+          <Link href="/auth/signup">Registrarse</Link>
         </Button>
       </div>
     </div>

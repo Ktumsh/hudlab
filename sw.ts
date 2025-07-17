@@ -26,12 +26,12 @@ self.addEventListener("push", (event) => {
     const data = event.data.json();
     const options = {
       body: data.body,
-      icon: data.icon || "/icon.png",
-      badge: data.badge || "/icon.png",
+      icon: data.icon || "/logo/icon.png",
+      badge: data.badge || "/logo/icon.png",
       image: data.image || undefined,
       vibrate: [100, 50, 100],
       data: {
-        url: data.url || "https://www.essentia.plus",
+        url: data.url || "https://hudlab.vercel.app",
         dateOfArrival: Date.now(),
         primaryKey: "2",
       },
