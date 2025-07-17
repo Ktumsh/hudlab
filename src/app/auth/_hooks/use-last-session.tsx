@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import {
+  getLastSession,
+  saveLastSession as saveLastSessionDB,
+} from "@/db/querys/user-querys";
 import { isProductionEnvironment } from "@/lib/consts";
 
 interface LastSession {
@@ -9,8 +13,8 @@ interface LastSession {
   provider: string;
   userDisplayName: string;
   userAvatarUrl?: string;
-  fingerprint: string;
-  timestamp: number;
+  deviceFingerprint: string;
+  lastUsedAt: Date;
 }
 
 // Generar fingerprint único del dispositivo
@@ -75,41 +79,34 @@ export const useLastSessionManager = () => {
   useEffect(() => {
     const loadLastSession = async () => {
       try {
-        const fingerprint = generateDeviceFingerprint();
-        const sessionKey = `hudlab_session_${fingerprint}`;
+        const deviceFingerprint = generateDeviceFingerprint();
 
-        const savedSession = localStorage.getItem(sessionKey);
-        if (savedSession) {
-          const parsed = JSON.parse(savedSession) as LastSession;
+        // Obtener sesión desde la base de datos
+        const dbSession = await getLastSession(deviceFingerprint);
 
+        if (dbSession) {
           // Verificar que la sesión no sea muy antigua (30 días en producción, 7 días en desarrollo)
           const maxAge = isProductionEnvironment ? 30 : 7;
           const maxAgeMs = maxAge * 24 * 60 * 60 * 1000;
           const cutoffTime = Date.now() - maxAgeMs;
+          const sessionTime = dbSession.lastUsedAt
+            ? new Date(dbSession.lastUsedAt).getTime()
+            : 0;
 
-          if (parsed.timestamp && parsed.timestamp > cutoffTime) {
-            // Verificar que el fingerprint coincida para seguridad
-            if (parsed.fingerprint === fingerprint) {
-              setLastSession(parsed);
-            } else {
-              // Si el fingerprint no coincide, es posible que el dispositivo haya cambiado
-              console.warn("Device fingerprint mismatch, clearing session");
-              localStorage.removeItem(sessionKey);
-            }
-          } else {
-            // Limpiar sesión expirada
-            localStorage.removeItem(sessionKey);
+          if (sessionTime > cutoffTime && dbSession.lastUsedAt) {
+            const sessionData: LastSession = {
+              userId: dbSession.userId,
+              provider: dbSession.provider,
+              userDisplayName: dbSession.userDisplayName,
+              userAvatarUrl: dbSession.userAvatarUrl || undefined,
+              deviceFingerprint: dbSession.deviceFingerprint,
+              lastUsedAt: dbSession.lastUsedAt,
+            };
+            setLastSession(sessionData);
           }
         }
       } catch (error) {
         console.error("Error loading last session:", error);
-        // En caso de error, limpiar posibles datos corruptos
-        try {
-          const fingerprint = generateDeviceFingerprint();
-          localStorage.removeItem(`hudlab_session_${fingerprint}`);
-        } catch (cleanupError) {
-          console.error("Error during cleanup:", cleanupError);
-        }
       } finally {
         setIsLoading(false);
       }
@@ -120,22 +117,31 @@ export const useLastSessionManager = () => {
 
   // Función para guardar una nueva sesión
   const saveLastSession = useCallback(
-    (sessionData: Omit<LastSession, "fingerprint" | "timestamp">) => {
+    async (
+      sessionData: Omit<LastSession, "deviceFingerprint" | "lastUsedAt">,
+    ) => {
       try {
-        const fingerprint = generateDeviceFingerprint();
-        const sessionKey = `hudlab_session_${fingerprint}`;
+        const deviceFingerprint = generateDeviceFingerprint();
 
-        const sessionToSave: LastSession = {
+        // Guardar en la base de datos
+        await saveLastSessionDB(
+          deviceFingerprint,
+          sessionData.userId,
+          sessionData.provider,
+          sessionData.userDisplayName,
+          sessionData.userAvatarUrl,
+        );
+
+        // Actualizar el estado local
+        const newSession: LastSession = {
           ...sessionData,
-          fingerprint,
-          timestamp: Date.now(),
+          deviceFingerprint,
+          lastUsedAt: new Date(),
         };
-
-        localStorage.setItem(sessionKey, JSON.stringify(sessionToSave));
-        setLastSession(sessionToSave);
+        setLastSession(newSession);
 
         if (!isProductionEnvironment) {
-          console.log("Last session saved:", sessionToSave);
+          console.log("Last session saved to DB:", newSession);
         }
       } catch (error) {
         console.error("Error saving last session:", error);
@@ -147,14 +153,12 @@ export const useLastSessionManager = () => {
   // Función para limpiar la sesión actual
   const clearLastSession = useCallback(() => {
     try {
-      const fingerprint = generateDeviceFingerprint();
-      const sessionKey = `hudlab_session_${fingerprint}`;
-
-      localStorage.removeItem(sessionKey);
+      // Solo limpiar el estado local
+      // La BD mantiene el historial para otros dispositivos
       setLastSession(null);
 
       if (!isProductionEnvironment) {
-        console.log("Last session cleared");
+        console.log("Last session cleared from local state");
       }
     } catch (error) {
       console.error("Error clearing last session:", error);
@@ -165,25 +169,20 @@ export const useLastSessionManager = () => {
   const clearSpecificSession = useCallback(
     (userId: string, provider: string) => {
       try {
-        const fingerprint = generateDeviceFingerprint();
-        const sessionKey = `hudlab_session_${fingerprint}`;
-
-        const savedSession = localStorage.getItem(sessionKey);
-        if (savedSession) {
-          const parsed = JSON.parse(savedSession) as LastSession;
-
-          // Solo limpiar si coincide con el usuario/provider específico
-          if (parsed.userId === userId && parsed.provider === provider) {
-            localStorage.removeItem(sessionKey);
-            setLastSession(null);
-            console.log(`Cleared specific session for ${userId} - ${provider}`);
-          }
+        // Solo limpiar si coincide con la sesión actual
+        if (
+          lastSession &&
+          lastSession.userId === userId &&
+          lastSession.provider === provider
+        ) {
+          setLastSession(null);
+          console.log(`Cleared specific session for ${userId} - ${provider}`);
         }
       } catch (error) {
         console.error("Error clearing specific session:", error);
       }
     },
-    [],
+    [lastSession],
   );
 
   // Función para verificar si hay una sesión válida

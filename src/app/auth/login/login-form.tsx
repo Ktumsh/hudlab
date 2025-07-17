@@ -26,7 +26,7 @@ import SocialButtons from "../_components/social-buttons";
 import SubmitButton from "../_components/submit-button";
 import { login } from "../actions";
 
-const STORAGE_KEY = "rememberedEmailHudlab";
+const STORAGE_KEY = "hudlab-remembered-email";
 
 const LoginForm = () => {
   const searchParams = useSearchParams();

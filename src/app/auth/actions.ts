@@ -1,7 +1,5 @@
 "use server";
 
-import { AuthError } from "next-auth";
-
 import {
   type EmailSendsActionType,
   getVerificationCode,
@@ -20,6 +18,7 @@ import {
 import { resultMessages } from "@/lib/result";
 import { generateUniqueUsername, generateVerificationCode } from "@/lib/utils";
 
+import { AuthErrorHandler } from "./_lib/auth-error-handler";
 import { sendEmailAction } from "./_lib/email-action";
 import { auth, signIn } from "./auth";
 
@@ -44,8 +43,8 @@ interface Result {
 
 export async function signup(data: SignupFormData): Promise<Result> {
   const { email, password, displayName } = data;
-
   const username = await generateUniqueUsername(email);
+  const errorHandler = AuthErrorHandler.getInstance();
 
   try {
     const user = await createUser({
@@ -74,48 +73,20 @@ export async function signup(data: SignupFormData): Promise<Result> {
       redirectUrl: "/feed",
     };
   } catch (error: unknown) {
-    if (error instanceof AuthError) {
-      return {
-        type: "error",
-        message: resultMessages.INVALID_CREDENTIALS,
-      };
-    }
-
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "message" in error &&
-      typeof (error as any).message === "string"
-    ) {
-      const msg = (error as any).message;
-      if (msg.includes("duplicate key") && msg.includes("users_email_key")) {
-        return {
-          type: "error",
-          message: resultMessages.EMAIL_ALREADY_EXISTS,
-        };
-      }
-    }
+    const errorResult = errorHandler.handleSignupError(error);
 
     return {
       type: "error",
-      message: resultMessages.UNKNOWN_ERROR,
+      message: errorResult.message,
     };
   }
 }
 
 export async function login(data: LoginFormData): Promise<Result> {
+  const { email, password } = data;
+  const errorHandler = AuthErrorHandler.getInstance();
+
   try {
-    const { email, password } = data;
-
-    const user = await getUserByEmail(email);
-
-    if (!user) {
-      return {
-        type: "error",
-        message: resultMessages.INVALID_CREDENTIALS,
-      };
-    }
-
     const result = await signIn("credentials", {
       email,
       password,
@@ -123,9 +94,16 @@ export async function login(data: LoginFormData): Promise<Result> {
     });
 
     if (result?.error) {
+      if (errorHandler.isCredentialsSignInError(result.error)) {
+        return {
+          type: "error",
+          message: resultMessages.INVALID_CREDENTIALS,
+        };
+      }
+
       return {
         type: "error",
-        message: resultMessages.INVALID_CREDENTIALS,
+        message: resultMessages.UNKNOWN_ERROR,
       };
     }
 
@@ -136,9 +114,12 @@ export async function login(data: LoginFormData): Promise<Result> {
     };
   } catch (err) {
     console.error("Error en login:", err);
+
+    const error = errorHandler.handleLoginError(err);
+
     return {
       type: "error",
-      message: resultMessages.UNKNOWN_ERROR,
+      message: error.message,
     };
   }
 }
@@ -328,33 +309,5 @@ export async function getLastSessionAction(fingerprint: string) {
   } catch (error) {
     console.error("Error getting last session:", error);
     return null;
-  }
-}
-
-export async function saveLastSessionAction(
-  fingerprint: string,
-  userId: string,
-  provider: string,
-  userDisplayName: string,
-  userAvatarUrl?: string,
-) {
-  try {
-    // Importamos la función desde user-querys
-    const { saveLastSession } = await import("@/db/querys/user-querys");
-
-    await saveLastSession(
-      fingerprint,
-      userId,
-      provider,
-      userDisplayName,
-      userAvatarUrl,
-    );
-    return { success: true };
-  } catch (error) {
-    console.error("Error saving last session:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
   }
 }

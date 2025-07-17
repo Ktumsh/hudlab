@@ -9,9 +9,9 @@ import {
   createUser,
   getUserByEmail,
   hasUserAccount,
-  saveLastSession,
   updateLastUsedAccount,
 } from "@/db/querys/user-querys";
+import { isDevelopmentEnvironment } from "@/lib/consts";
 import { generateUniqueUsername } from "@/lib/utils";
 
 import { authConfig } from "./auth.config";
@@ -37,7 +37,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          prompt: "consent",
+          prompt: "select_account",
           access_type: "offline",
           response_type: "code",
           scope: "openid email profile",
@@ -94,23 +94,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 }
               } catch (error) {
                 console.error("Error managing user account:", error);
-              }
-            }
-
-            // Guardar información para "última sesión" (simulamos fingerprint)
-            if (account?.provider && dbUser.profile) {
-              try {
-                // Usar una combinación simple como fingerprint
-                const simpleFingerprint = `${account.provider}_${dbUser.id}`;
-                await saveLastSession(
-                  simpleFingerprint,
-                  dbUser.id,
-                  account.provider,
-                  dbUser.profile.displayName || dbUser.profile.username,
-                  dbUser.profile.avatarUrl || undefined,
-                );
-              } catch (error) {
-                console.error("Error saving last session:", error);
               }
             }
           } else if (account?.provider === "google") {
@@ -197,18 +180,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  events: {
-    async signIn({ user, account }) {
-      if (account?.provider && account.provider !== "credentials") {
-        console.log(
-          `OAuth sign-in successful: ${account.provider} - ${user.email}`,
-        );
-      }
-    },
-    async signOut() {
-      console.log(`User signed out`);
-    },
-  },
-  debug: process.env.NODE_ENV === "development",
+  debug: isDevelopmentEnvironment,
   trustHost: true,
 });
