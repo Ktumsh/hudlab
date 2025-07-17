@@ -2,12 +2,12 @@
 
 import { createAvatar } from "@dicebear/core";
 import * as funEmojis from "@dicebear/fun-emoji";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { generateHashedPassword } from "@/lib";
 
 import { db } from "../db";
-import { profiles, users } from "../schema";
+import { profiles, users, userAccounts, lastSessions } from "../schema";
 
 export async function getUserByEmail(email: string) {
   try {
@@ -15,6 +15,7 @@ export async function getUserByEmail(email: string) {
       where: (u, { eq }) => eq(u.email, email),
       with: {
         profile: true,
+        accounts: true,
       },
     });
   } catch (error) {
@@ -30,6 +31,7 @@ export async function createUser({
   displayName,
   provider,
   providerId,
+  avatarUrl,
 }: {
   email: string;
   password: string;
@@ -37,6 +39,7 @@ export async function createUser({
   displayName: string;
   provider?: string;
   providerId?: string;
+  avatarUrl?: string;
 }) {
   const hashedPassword = generateHashedPassword(password);
 
@@ -53,8 +56,6 @@ export async function createUser({
       .values({
         email,
         password: hashedPassword,
-        provider: provider ?? null,
-        providerId: providerId ?? null,
       })
       .returning();
 
@@ -62,8 +63,26 @@ export async function createUser({
       userId: user.id,
       username,
       displayName,
-      avatarUrl: avatarSvg,
+      avatarUrl: avatarUrl ?? avatarSvg,
     });
+
+    // Crear la cuenta asociada
+    if (provider) {
+      await db.insert(userAccounts).values({
+        userId: user.id,
+        provider,
+        providerId,
+        lastUsedAt: new Date(),
+      });
+    } else {
+      // Para credentials
+      await db.insert(userAccounts).values({
+        userId: user.id,
+        provider: "credentials",
+        providerId: null,
+        lastUsedAt: new Date(),
+      });
+    }
 
     return user;
   } catch (error) {
@@ -78,6 +97,7 @@ export async function getUserById(id: string) {
       where: (u, { eq }) => eq(u.id, id),
       with: {
         profile: true,
+        accounts: true,
       },
     });
   } catch (error) {
@@ -134,6 +154,121 @@ export async function getExistingEmail(email: string): Promise<boolean> {
     return !!existing;
   } catch (error) {
     console.error("Error al obtener el correo existente:", error);
+    throw error;
+  }
+}
+
+export async function addUserAccount(
+  userId: string,
+  provider: string,
+  providerId: string,
+) {
+  try {
+    await db.insert(userAccounts).values({
+      userId,
+      provider,
+      providerId,
+      lastUsedAt: new Date(),
+    });
+    return true;
+  } catch (error) {
+    console.error("Error al agregar cuenta de usuario:", error);
+    throw error;
+  }
+}
+
+export async function updateLastUsedAccount(userId: string, provider: string) {
+  try {
+    await db
+      .update(userAccounts)
+      .set({ lastUsedAt: new Date() })
+      .where(
+        and(
+          eq(userAccounts.userId, userId),
+          eq(userAccounts.provider, provider),
+        ),
+      );
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar última cuenta usada:", error);
+    throw error;
+  }
+}
+
+export async function getUserAccounts(userId: string) {
+  try {
+    return await db.query.userAccounts.findMany({
+      where: (ua, { eq }) => eq(ua.userId, userId),
+    });
+  } catch (error) {
+    console.error("Error al obtener cuentas del usuario:", error);
+    throw error;
+  }
+}
+
+export async function hasUserAccount(userId: string, provider: string) {
+  try {
+    const account = await db.query.userAccounts.findFirst({
+      where: (ua, { eq, and }) =>
+        and(eq(ua.userId, userId), eq(ua.provider, provider)),
+    });
+    return !!account;
+  } catch (error) {
+    console.error("Error al verificar cuenta de usuario:", error);
+    throw error;
+  }
+}
+
+export async function saveLastSession(
+  deviceFingerprint: string,
+  userId: string,
+  provider: string,
+  userDisplayName: string,
+  userAvatarUrl?: string,
+) {
+  try {
+    // Insertar o actualizar la última sesión para este dispositivo
+    await db
+      .insert(lastSessions)
+      .values({
+        deviceFingerprint,
+        userId,
+        provider,
+        userDisplayName,
+        userAvatarUrl,
+        lastUsedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: lastSessions.deviceFingerprint,
+        set: {
+          userId,
+          provider,
+          userDisplayName,
+          userAvatarUrl,
+          lastUsedAt: new Date(),
+        },
+      });
+    return true;
+  } catch (error) {
+    console.error("Error al guardar última sesión:", error);
+    throw error;
+  }
+}
+
+export async function getLastSession(deviceFingerprint: string) {
+  try {
+    return await db.query.lastSessions.findFirst({
+      where: (ls, { eq }) => eq(ls.deviceFingerprint, deviceFingerprint),
+      with: {
+        user: {
+          with: {
+            profile: true,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener última sesión:", error);
     throw error;
   }
 }

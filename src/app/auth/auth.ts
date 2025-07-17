@@ -1,9 +1,17 @@
 import { compare } from "bcrypt-ts";
 import NextAuth, { Session, User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
 
-import { createUser, getUserByEmail } from "@/db/querys/user-querys";
+import {
+  addUserAccount,
+  createUser,
+  getUserByEmail,
+  hasUserAccount,
+  saveLastSession,
+  updateLastUsedAccount,
+} from "@/db/querys/user-querys";
 import { generateUniqueUsername } from "@/lib";
 
 import { authConfig } from "./auth.config";
@@ -28,14 +36,53 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    Discord({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         const dbUser = await getUserByEmail(user.email!);
 
         if (dbUser) {
           token.id = dbUser.id;
+
+          // Si es OAuth y no tiene cuenta con este provider, agregar
+          if (account?.provider && account.provider !== "credentials") {
+            const hasAccount = await hasUserAccount(
+              dbUser.id,
+              account.provider,
+            );
+            if (!hasAccount) {
+              await addUserAccount(
+                dbUser.id,
+                account.provider,
+                account.providerAccountId,
+              );
+            } else {
+              // Actualizar última vez usado
+              await updateLastUsedAccount(dbUser.id, account.provider);
+            }
+          }
+
+          // Guardar información para "última sesión" (simulamos fingerprint)
+          if (account?.provider && dbUser.profile) {
+            try {
+              // Usar una combinación simple como fingerprint
+              const simpleFingerprint = `${account.provider}_${dbUser.id}`;
+              await saveLastSession(
+                simpleFingerprint,
+                dbUser.id,
+                account.provider,
+                dbUser.profile.displayName || dbUser.profile.username,
+                dbUser.profile.avatarUrl || undefined,
+              );
+            } catch (error) {
+              console.log("Error saving last session:", error);
+            }
+          }
         } else if (account?.provider === "google") {
           const username = await generateUniqueUsername(user.email!);
           const newUser = await createUser({
@@ -45,6 +92,31 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             displayName: user.name ?? user.email!.split("@")[0],
             provider: account.provider,
             providerId: account.providerAccountId,
+            avatarUrl: profile?.picture,
+          });
+
+          token.id = newUser.id;
+        } else if (account?.provider === "discord") {
+          const username = await generateUniqueUsername(user.email!);
+          const newUser = await createUser({
+            email: user.email!,
+            password: "",
+            username:
+              typeof profile?.display_name === "string"
+                ? profile.display_name
+                : username,
+            displayName:
+              typeof profile?.username === "string"
+                ? profile.username
+                : user.email!.split("@")[0],
+            provider: account.provider,
+            providerId: account.providerAccountId,
+            avatarUrl:
+              typeof profile?.image_url === "string"
+                ? profile.image_url
+                : profile?.avatar
+                  ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.webp`
+                  : undefined,
           });
 
           token.id = newUser.id;

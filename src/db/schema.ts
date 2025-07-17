@@ -18,11 +18,41 @@ export const users = table("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: varchar("password", { length: 255 }),
-  provider: varchar("provider", { length: 50 }),
-  providerId: varchar("provider_id", { length: 255 }),
   role: varchar("role", { length: 20 }).default("user"),
   createdAt: timestamp("created_at").defaultNow(),
   status: varchar("status", { length: 20 }).default("active"),
+});
+
+// ─────────────────────────────
+// 🔗 USER ACCOUNTS (OAuth + Credentials)
+// ─────────────────────────────
+export const userAccounts = table("user_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  provider: varchar("provider", { length: 50 }).notNull(), // 'google', 'discord', 'credentials'
+  providerId: varchar("provider_id", { length: 255 }), // ID del provider (null para credentials)
+  lastUsedAt: timestamp("last_used_at").defaultNow(), // Nueva: última vez que usó este provider
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─────────────────────────────
+// 💾 LAST SESSION (Recordar último login)
+// ─────────────────────────────
+export const lastSessions = table("last_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  deviceFingerprint: varchar("device_fingerprint", { length: 255 })
+    .notNull()
+    .unique(), // Hash del navegador/dispositivo
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  provider: varchar("provider", { length: 50 }).notNull(),
+  userDisplayName: varchar("user_display_name", { length: 100 }).notNull(),
+  userAvatarUrl: text("user_avatar_url"),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // ─────────────────────────────
@@ -260,6 +290,21 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     relationName: "follower",
   }),
   emailSends: many(emailSends),
+  accounts: many(userAccounts),
+}));
+
+export const userAccountsRelations = relations(userAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [userAccounts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const lastSessionsRelations = relations(lastSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [lastSessions.userId],
+    references: [users.id],
+  }),
 }));
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
@@ -413,6 +458,8 @@ export const reportsRelations = relations(reports, ({ one }) => ({
 // ─────────────────────────────
 
 export type User = InferSelectModel<typeof users>;
+export type UserAccount = InferSelectModel<typeof userAccounts>;
+export type LastSession = InferSelectModel<typeof lastSessions>;
 export type Profile = InferSelectModel<typeof profiles>;
 export type UserFollow = InferSelectModel<typeof userFollows>;
 export type EmailSend = InferSelectModel<typeof emailSends>;

@@ -22,7 +22,7 @@ import { signupSchema, type SignupFormData } from "@/lib/form-schemas";
 import { resultMessages } from "@/lib/result";
 
 import FooterForm from "../_components/footer-form";
-import GoogleButton from "../_components/google-button";
+import SocialButtons from "../_components/social-buttons";
 import SubmitButton from "../_components/submit-button";
 import { useSignupForm } from "../_hooks/use-signup-form";
 import { signup } from "../actions";
@@ -232,10 +232,7 @@ const SignupForm = () => {
               Crear cuenta
             </SubmitButton>
           )}
-          <GoogleButton
-            isSubmitting={isSubmitting}
-            label="Regístrate con Google"
-          />
+          <SocialButtons isSubmitting={isSubmitting} />
         </div>
       </form>
       <FooterForm

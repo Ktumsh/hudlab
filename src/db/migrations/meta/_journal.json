@@ -64,6 +64,20 @@
       "when": 1752725567865,
       "tag": "0008_freezing_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1752750212649,
+      "tag": "0009_illegal_kulan_gath",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1752750804434,
+      "tag": "0010_sharp_gamora",
+      "breakpoints": true
     }
   ]
 }

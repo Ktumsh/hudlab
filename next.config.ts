@@ -4,6 +4,9 @@ import { NextConfig } from "next";
 import { isProductionEnvironment } from "@/lib/consts";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
+  },
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -11,6 +14,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "media.rawg.io",
         pathname: "/media/**",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+        pathname: "/**",
       },
     ],
   },

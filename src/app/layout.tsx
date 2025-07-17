@@ -12,6 +12,8 @@ import {
 } from "@/db/querys/filter-querys";
 import { cn } from "@/lib";
 
+import SessionTracker from "./auth/_components/session-tracker";
+
 import type { Viewport } from "next";
 
 export const metadata = metadataConfig;
@@ -37,6 +39,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={cn(dmSans.variable, "antialiased")}>
         <Providers>
+          <SessionTracker />
           <AppHeader
             filterOptionsPromise={filterOptions}
             suggestionsPromise={suggestions}

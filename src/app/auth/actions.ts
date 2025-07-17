@@ -13,6 +13,7 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
+  getLastSession,
   updateUserPassword,
   verifySamePassword,
 } from "@/db/querys/user-querys";
@@ -316,6 +317,44 @@ export async function resetPassword(token: string, newPassword: string) {
     return {
       type: "error",
       message: resultMessages.PASSWORD_RESET_ERROR,
+    };
+  }
+}
+
+export async function getLastSessionAction(fingerprint: string) {
+  try {
+    const lastSession = await getLastSession(fingerprint);
+    return lastSession;
+  } catch (error) {
+    console.error("Error getting last session:", error);
+    return null;
+  }
+}
+
+export async function saveLastSessionAction(
+  fingerprint: string,
+  userId: string,
+  provider: string,
+  userDisplayName: string,
+  userAvatarUrl?: string,
+) {
+  try {
+    // Importamos la función desde user-querys
+    const { saveLastSession } = await import("@/db/querys/user-querys");
+
+    await saveLastSession(
+      fingerprint,
+      userId,
+      provider,
+      userDisplayName,
+      userAvatarUrl,
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving last session:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

@@ -21,8 +21,13 @@ import UserAvatar from "./user-avatar";
 
 const UserOptions = () => {
   const pathname = usePathname();
-
   const { user } = useUser();
+
+  const handleLogout = () => {
+    // Solo proceder con el logout de NextAuth
+    // NO limpiamos localStorage para mantener la funcionalidad "Continuar como [usuario]"
+    signOut({ redirectTo: "/auth/login" });
+  };
 
   if (!user) {
     return (
@@ -79,9 +84,7 @@ const UserOptions = () => {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => signOut({ redirectTo: "/auth/login" })}
-        >
+        <DropdownMenuItem onSelect={handleLogout}>
           <IconLogout />
           Cerrar sesión
         </DropdownMenuItem>

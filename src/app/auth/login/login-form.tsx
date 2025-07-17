@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { loginSchema, LoginFormData } from "@/lib/form-schemas";
 
 import FooterForm from "../_components/footer-form";
-import GoogleButton from "../_components/google-button";
+import SocialButtons from "../_components/social-buttons";
 import SubmitButton from "../_components/submit-button";
 import { login } from "../actions";
 
@@ -179,7 +179,7 @@ const LoginForm = () => {
           >
             Iniciar sesión
           </SubmitButton>
-          <GoogleButton isSubmitting={pending} />
+          <SocialButtons isSubmitting={pending} />
         </div>
       </form>
       <FooterForm
