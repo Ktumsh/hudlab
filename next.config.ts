@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/feed",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
