@@ -4,6 +4,11 @@ export const authConfig = {
   pages: {
     signIn: "/auth/login",
     newUser: "/auth/signup",
+    error: "/auth/login", // Redirigir errores OAuth al login
+  },
+  session: {
+    strategy: "jwt" as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   providers: [],
   callbacks: {

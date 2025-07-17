@@ -1,5 +1,5 @@
 import { compare } from "bcrypt-ts";
-import NextAuth, { Session, User } from "next-auth";
+import NextAuth, { type Session, type User } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
@@ -12,7 +12,7 @@ import {
   saveLastSession,
   updateLastUsedAccount,
 } from "@/db/querys/user-querys";
-import { generateUniqueUsername } from "@/lib";
+import { generateUniqueUsername } from "@/lib/utils";
 
 import { authConfig } from "./auth.config";
 
@@ -35,6 +35,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+          scope: "openid email profile",
+        },
+      },
     }),
     Discord({
       clientId: process.env.DISCORD_CLIENT_ID!,
@@ -42,84 +50,131 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // Manejo especial para errores de OAuth
+      try {
+        if (account?.provider === "google" || account?.provider === "discord") {
+          // Verificar que tenemos los datos necesarios
+          if (!user.email) {
+            console.error("OAuth sign-in failed: No email provided");
+            return false;
+          }
+          return true;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error in signIn callback:", error);
+        return false;
+      }
+    },
     async jwt({ token, user, account, profile }) {
       if (user) {
-        const dbUser = await getUserByEmail(user.email!);
+        try {
+          const dbUser = await getUserByEmail(user.email!);
 
-        if (dbUser) {
-          token.id = dbUser.id;
+          if (dbUser) {
+            token.id = dbUser.id;
 
-          // Si es OAuth y no tiene cuenta con este provider, agregar
-          if (account?.provider && account.provider !== "credentials") {
-            const hasAccount = await hasUserAccount(
-              dbUser.id,
-              account.provider,
-            );
-            if (!hasAccount) {
-              await addUserAccount(
-                dbUser.id,
-                account.provider,
-                account.providerAccountId,
-              );
-            } else {
-              // Actualizar última vez usado
-              await updateLastUsedAccount(dbUser.id, account.provider);
+            // Si es OAuth y no tiene cuenta con este provider, agregar
+            if (account?.provider && account.provider !== "credentials") {
+              try {
+                const hasAccount = await hasUserAccount(
+                  dbUser.id,
+                  account.provider,
+                );
+                if (!hasAccount) {
+                  await addUserAccount(
+                    dbUser.id,
+                    account.provider,
+                    account.providerAccountId,
+                  );
+                } else {
+                  // Actualizar última vez usado
+                  await updateLastUsedAccount(dbUser.id, account.provider);
+                }
+              } catch (error) {
+                console.error("Error managing user account:", error);
+              }
             }
-          }
 
-          // Guardar información para "última sesión" (simulamos fingerprint)
-          if (account?.provider && dbUser.profile) {
+            // Guardar información para "última sesión" (simulamos fingerprint)
+            if (account?.provider && dbUser.profile) {
+              try {
+                // Usar una combinación simple como fingerprint
+                const simpleFingerprint = `${account.provider}_${dbUser.id}`;
+                await saveLastSession(
+                  simpleFingerprint,
+                  dbUser.id,
+                  account.provider,
+                  dbUser.profile.displayName || dbUser.profile.username,
+                  dbUser.profile.avatarUrl || undefined,
+                );
+              } catch (error) {
+                console.error("Error saving last session:", error);
+              }
+            }
+          } else if (account?.provider === "google") {
             try {
-              // Usar una combinación simple como fingerprint
-              const simpleFingerprint = `${account.provider}_${dbUser.id}`;
-              await saveLastSession(
-                simpleFingerprint,
-                dbUser.id,
-                account.provider,
-                dbUser.profile.displayName || dbUser.profile.username,
-                dbUser.profile.avatarUrl || undefined,
-              );
+              const username = await generateUniqueUsername(user.email!);
+              const newUser = await createUser({
+                email: user.email!,
+                password: "",
+                username,
+                displayName: user.name ?? user.email!.split("@")[0],
+                provider: account.provider,
+                providerId: account.providerAccountId,
+                avatarUrl: profile?.picture,
+              });
+
+              token.id = newUser.id;
             } catch (error) {
-              console.log("Error saving last session:", error);
+              console.error("Error creating Google user:", error);
+              throw error;
+            }
+          } else if (account?.provider === "discord") {
+            try {
+              const username = await generateUniqueUsername(user.email!);
+              const newUser = await createUser({
+                email: user.email!,
+                password: "",
+                username:
+                  typeof profile?.display_name === "string"
+                    ? profile.display_name
+                    : username,
+                displayName:
+                  typeof profile?.username === "string"
+                    ? profile.username
+                    : user.email!.split("@")[0],
+                provider: account.provider,
+                providerId: account.providerAccountId,
+                avatarUrl:
+                  typeof profile?.image_url === "string"
+                    ? profile.image_url
+                    : profile?.avatar
+                      ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.webp`
+                      : undefined,
+              });
+
+              token.id = newUser.id;
+            } catch (error) {
+              console.error("Error creating Discord user:", error);
+              throw error;
             }
           }
-        } else if (account?.provider === "google") {
-          const username = await generateUniqueUsername(user.email!);
-          const newUser = await createUser({
-            email: user.email!,
-            password: "",
-            username,
-            displayName: user.name ?? user.email!.split("@")[0],
-            provider: account.provider,
-            providerId: account.providerAccountId,
-            avatarUrl: profile?.picture,
-          });
-
-          token.id = newUser.id;
-        } else if (account?.provider === "discord") {
-          const username = await generateUniqueUsername(user.email!);
-          const newUser = await createUser({
-            email: user.email!,
-            password: "",
-            username:
-              typeof profile?.display_name === "string"
-                ? profile.display_name
-                : username,
-            displayName:
-              typeof profile?.username === "string"
-                ? profile.username
-                : user.email!.split("@")[0],
-            provider: account.provider,
-            providerId: account.providerAccountId,
-            avatarUrl:
-              typeof profile?.image_url === "string"
-                ? profile.image_url
-                : profile?.avatar
-                  ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.webp`
-                  : undefined,
-          });
-
-          token.id = newUser.id;
+        } catch (error) {
+          console.error("Error in JWT callback:", error);
+          // En caso de error, mantener el token básico si existe
+          if (!token.id && user.email) {
+            // Intentar obtener el usuario una vez más
+            try {
+              const fallbackUser = await getUserByEmail(user.email);
+              if (fallbackUser) {
+                token.id = fallbackUser.id;
+              }
+            } catch (fallbackError) {
+              console.error("Fallback user lookup failed:", fallbackError);
+            }
+          }
         }
       }
 
@@ -142,5 +197,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return session;
     },
   },
+  events: {
+    async signIn({ user, account }) {
+      if (account?.provider && account.provider !== "credentials") {
+        console.log(
+          `OAuth sign-in successful: ${account.provider} - ${user.email}`,
+        );
+      }
+    },
+    async signOut() {
+      console.log(`User signed out`);
+    },
+  },
+  debug: process.env.NODE_ENV === "development",
   trustHost: true,
 });
