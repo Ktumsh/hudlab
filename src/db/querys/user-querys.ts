@@ -4,7 +4,7 @@ import { createAvatar } from "@dicebear/core";
 import * as funEmojis from "@dicebear/fun-emoji";
 import { eq, and } from "drizzle-orm";
 
-import { generateHashedPassword } from "@/lib";
+import { generateHashedPassword } from "@/lib/utils";
 
 import { db } from "../db";
 import { profiles, users, userAccounts, lastSessions } from "../schema";
