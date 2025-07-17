@@ -97,7 +97,7 @@ function FormLabel({
     <Label
       data-slot="form-label"
       data-error={!!error}
-      className={cn("data-[error=true]:text-error fieldset-legend", className)}
+      className={cn("fieldset-legend", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -148,7 +148,10 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-error fieldset-legend text-sm", className)}
+      className={cn(
+        "text-error fieldset-legend text-sm font-medium",
+        className,
+      )}
       {...props}
     >
       {body}

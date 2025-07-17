@@ -1,11 +1,15 @@
-import type { Game, Profile, Upload } from "@/db/schema";
+import type { Game, Profile, Upload, User } from "@/db/schema";
 
 export interface ApplicationError extends Error {
   info: string;
   status: number;
 }
 
-export interface User {
+export interface UserWithProfile extends User {
+  profile: Profile;
+}
+
+export interface UserComment {
   id: string;
   displayName: string;
   username?: string;
@@ -14,7 +18,7 @@ export interface User {
 
 export interface Comment {
   id: string;
-  user: User;
+  user: UserComment;
   content: string;
   createdAt: Date;
   likes: number;
@@ -57,7 +61,6 @@ export interface FilterState {
 }
 
 export interface FilterOptions {
-  tags: string[];
   platforms: string[];
   releaseYears: number[];
 }

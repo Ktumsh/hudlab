@@ -2,18 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useTransition, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useTransition, useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useLocalStorage } from "usehooks-ts";
 
 import { ButtonPassword } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -25,30 +21,61 @@ import {
 import { Input } from "@/components/ui/input";
 import { loginSchema, LoginFormData } from "@/lib/form-schemas";
 
+import FooterForm from "../_components/footer-form";
 import GoogleButton from "../_components/google-button";
 import SubmitButton from "../_components/submit-button";
 import { login } from "../actions";
 
+const STORAGE_KEY = "rememberedEmailHudlab";
+
 const LoginForm = () => {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("next") || "/feed";
+
   const [pending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const [storageEmail, setStorageEmail, removeStorageEmail] = useLocalStorage(
+    STORAGE_KEY,
+    "",
+  );
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
+      remember: false,
     },
   });
+
+  const { control, handleSubmit, setValue } = form;
+
+  useEffect(() => {
+    if (storageEmail) {
+      setValue("email", storageEmail);
+      setValue("remember", true);
+    }
+  }, [setValue, storageEmail]);
+
+  const handleSuccess = useCallback(
+    async (data: LoginFormData) => {
+      if (data.remember) {
+        setStorageEmail(data.email);
+      } else {
+        removeStorageEmail();
+      }
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 500);
+    },
+    [redirectUrl, setStorageEmail, removeStorageEmail],
+  );
 
   const onSubmit = (data: LoginFormData) => {
     startTransition(async () => {
       const result = await login(data);
       if (result.type === "success") {
-        toast.success(result.message);
-        setTimeout(() => {
-          window.location.href = result.redirectUrl || "/";
-        }, 500);
+        handleSuccess(data);
       } else {
         toast.error(result.message);
       }
@@ -56,96 +83,111 @@ const LoginForm = () => {
   };
 
   return (
-    <Card className="bg-base-100 gap-4">
-      <CardHeader>
-        <CardTitle>Inicia sesión en tu cuenta</CardTitle>
-        <CardDescription>
-          Ingresa tu correo electrónico para acceder a tu cuenta
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <GoogleButton isSubmitting={pending} className="mb-4" />
-        <div className="relative my-4 flex items-center">
-          <span className="flex-1 border-t border-gray-200" />
-          <span className="mx-2 text-xs text-gray-400">o</span>
-          <span className="flex-1 border-t border-gray-200" />
-        </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Correo electrónico</FormLabel>
+    <Form {...form}>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="z-10 flex flex-col gap-6"
+      >
+        <div className="flex flex-col gap-5">
+          <FormField
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <FormItem className="py-0">
+                <FormLabel>Correo electrónico</FormLabel>
+                <div className="bg-base-100">
                   <FormControl>
                     <Input
                       type="text"
                       autoComplete="email"
                       placeholder="Tu correo"
+                      isAuth
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Contraseña</FormLabel>
-                    <Link
-                      href="/auth/forgot-password"
-                      className="text-sm underline-offset-4 hover:underline"
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
-                  </div>
+          <FormField
+            control={control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className="py-0">
+                <FormLabel>Contraseña</FormLabel>
+                <div className="bg-base-100 relative">
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="current-password"
-                        placeholder="Tu contraseña"
-                        {...field}
-                      />
-                      <ButtonPassword
-                        isVisible={showPassword}
-                        setIsVisible={setShowPassword}
-                      />
-                    </div>
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      placeholder="Tu contraseña"
+                      isAuth
+                      {...field}
+                    />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <SubmitButton
-              type="submit"
-              loadingText="Ingresando..."
-              isSubmitting={pending}
-              className="mt-6 w-full"
-            >
-              Iniciar sesión
-            </SubmitButton>
-
-            <div className="mt-6 text-center text-sm">
-              ¿No tienes una cuenta?{" "}
-              <Link
-                href="/auth/signup"
-                className="underline underline-offset-4"
-              >
-                Regístrate
-              </Link>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                  <ButtonPassword
+                    isVisible={showPassword}
+                    setIsVisible={setShowPassword}
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="flex items-center">
+          <FormField
+            control={control}
+            name="remember"
+            render={({ field }) => (
+              <FormItem className="py-0">
+                <FormControl>
+                  <label htmlFor="remember" className="flex items-start gap-2">
+                    <Checkbox
+                      id="remember"
+                      checked={field.value}
+                      onCheckedChange={(checked: boolean) =>
+                        field.onChange(checked)
+                      }
+                      className="border-alternative shadow-none"
+                    />
+                    <div className="inline-flex flex-col">
+                      <p className="text-sm font-medium select-none">
+                        Recordarme
+                      </p>
+                    </div>
+                  </label>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <Link
+            href="/auth/forgot-password"
+            className="ms-auto text-sm font-semibold underline-offset-2 hover:underline"
+            aria-label="¿Olvidaste tu contraseña?"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+        <div className="flex flex-col gap-4">
+          <SubmitButton
+            type="submit"
+            loadingText="Ingresando..."
+            isSubmitting={pending}
+          >
+            Iniciar sesión
+          </SubmitButton>
+          <GoogleButton isSubmitting={pending} />
+        </div>
+      </form>
+      <FooterForm
+        label="¿No tienes una cuenta?"
+        linkText="Regístrate"
+        link="/auth/signup"
+      />
+    </Form>
   );
 };
 

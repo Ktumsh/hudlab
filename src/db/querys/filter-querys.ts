@@ -3,7 +3,7 @@
 import { desc, isNotNull, eq, inArray } from "drizzle-orm";
 
 import { db } from "../db";
-import { tags, uploads, games } from "../schema";
+import { uploads, games } from "../schema";
 
 import type { FilterOptions, SearchSuggestion } from "@/lib/types";
 
@@ -27,17 +27,17 @@ export async function getFilterOptions(): Promise<FilterOptions> {
       .where(isNotNull(games.releaseYear))
       .orderBy(games.releaseYear);
 
-    const tagsResult = await db
+    /* const tagsResult = await db
       .selectDistinct({ name: tags.name })
       .from(tags)
-      .orderBy(tags.name);
+      .orderBy(tags.name); */
 
     return {
       platforms,
       releaseYears: yearsResult
         .map((y) => y.releaseYear)
         .filter(Boolean) as number[],
-      tags: tagsResult.map((t) => t.name),
+      /* tags: tagsResult.map((t) => t.name), */
     };
   } catch (error) {
     console.error("Error al obtener opciones de filtro:", error);

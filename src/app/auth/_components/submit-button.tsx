@@ -1,7 +1,6 @@
 import { IconLoader } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface SubmitButtonProps {
   isSubmitting: boolean;
@@ -24,7 +23,7 @@ const SubmitButton = ({
       variant="primary"
       disabled={isSubmitting}
       onClick={onClick}
-      className={cn("flex-1", className)}
+      className={className}
       {...props}
     >
       {isSubmitting ? (

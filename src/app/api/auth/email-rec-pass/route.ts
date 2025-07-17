@@ -1,20 +1,11 @@
-import fs from "fs";
-import path from "path";
-
-import * as brevo from "@getbrevo/brevo";
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
+import EmailTemplate from "@/app/auth/_components/email-template";
 import { getUserByEmail } from "@/db/querys/user-querys";
 import { siteUrl } from "@/lib";
 
-const apiInstance = new brevo.TransactionalEmailsApi();
-
-apiInstance.setApiKey(
-  brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY as string,
-);
-
-const smtpEmail = new brevo.SendSmtpEmail();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,26 +22,18 @@ export async function POST(req: NextRequest) {
 
     const username = user?.profile.username || "Usuario";
 
-    const templatePath = path.join(
-      process.cwd(),
-      "src/app/auth/_lib/email-rec-pass.html",
-    );
-    let htmlContent = fs.readFileSync(templatePath, "utf8");
-
-    htmlContent = htmlContent
-      .replace("{{username}}", username)
-      .replace("{{recoveryCode}}", code)
-      .replace("{{logoUrl}}", `${siteUrl}/logo/HUDLab-logo.webp`);
-
-    smtpEmail.subject = "Recuperar contraseña";
-    smtpEmail.sender = {
-      name: "HUDLab",
-      email: process.env.EMAIL_FROM,
-    };
-    smtpEmail.to = [{ email, name: username }];
-    smtpEmail.htmlContent = htmlContent;
-
-    await apiInstance.sendTransacEmail(smtpEmail);
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || "noreply@hudlab.com",
+      to: email,
+      subject: "Recuperar contraseña",
+      react: EmailTemplate({
+        username,
+        verificationCode: code,
+        type: "password-reset",
+        companyLogo: `${siteUrl}/logo/HUDLab-logo.webp`,
+        actionUrl: `${siteUrl}/auth/reset-password?email=${email}&token=${token}`,
+      }),
+    });
 
     return NextResponse.json({ success: "Email sent" });
   } catch (error) {

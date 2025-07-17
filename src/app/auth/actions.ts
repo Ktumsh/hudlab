@@ -17,21 +17,21 @@ import {
   verifySamePassword,
 } from "@/db/querys/user-querys";
 import { resultMessages } from "@/lib/result";
-import { generateVerificationCode } from "@/lib/utils";
+import { generateUniqueUsername, generateVerificationCode } from "@/lib/utils";
 
 import { sendEmailAction } from "./_lib/email-action";
 import { auth, signIn } from "./auth";
 
-import type { User } from "@/db/schema";
 import type { LoginFormData, SignupFormData } from "@/lib/form-schemas";
+import type { UserWithProfile } from "@/lib/types";
 
-export async function getCurrentUser(): Promise<User | null> {
+export async function getCurrentUser(): Promise<UserWithProfile | null> {
   const session = await auth();
   const userId = session?.user?.id;
-
   if (!userId) return null;
 
   const user = await getUserById(userId);
+
   return user ?? null;
 }
 
@@ -42,7 +42,9 @@ interface Result {
 }
 
 export async function signup(data: SignupFormData): Promise<Result> {
-  const { email, password, username, displayName, bio } = data;
+  const { email, password, displayName } = data;
+
+  const username = await generateUniqueUsername(email);
 
   try {
     const user = await createUser({
@@ -50,7 +52,6 @@ export async function signup(data: SignupFormData): Promise<Result> {
       password,
       username,
       displayName,
-      bio,
     });
 
     if (!user) {
@@ -69,7 +70,7 @@ export async function signup(data: SignupFormData): Promise<Result> {
     return {
       type: "success",
       message: resultMessages.USER_CREATED,
-      redirectUrl: "/",
+      redirectUrl: "/feed",
     };
   } catch (error: unknown) {
     if (error instanceof AuthError) {
@@ -103,13 +104,24 @@ export async function signup(data: SignupFormData): Promise<Result> {
 
 export async function login(data: LoginFormData): Promise<Result> {
   try {
-    const res = await signIn("credentials", {
+    const { email, password } = data;
+
+    const user = await getUserByEmail(email);
+
+    if (!user) {
+      return {
+        type: "error",
+        message: resultMessages.INVALID_CREDENTIALS,
+      };
+    }
+
+    const result = await signIn("credentials", {
+      email,
+      password,
       redirect: false,
-      email: data.email,
-      password: data.password,
     });
 
-    if (res?.error) {
+    if (result?.error) {
       return {
         type: "error",
         message: resultMessages.INVALID_CREDENTIALS,
@@ -119,7 +131,7 @@ export async function login(data: LoginFormData): Promise<Result> {
     return {
       type: "success",
       message: resultMessages.LOGIN_SUCCESS,
-      redirectUrl: "/",
+      redirectUrl: "/feed",
     };
   } catch (err) {
     console.error("Error en login:", err);

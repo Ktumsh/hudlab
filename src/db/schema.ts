@@ -33,7 +33,7 @@ export const profiles = table("profiles", {
   userId: uuid("user_id")
     .notNull()
     .unique()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "cascade" }),
   username: varchar("username", { length: 50 }).notNull().unique(),
   displayName: varchar("display_name", { length: 100 }),
   avatarUrl: text("avatar_url"),
@@ -49,10 +49,10 @@ export const userFollows = table(
   {
     followerId: uuid("follower_id")
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: "cascade" }),
     followingId: uuid("following_id")
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.followerId, t.followingId] })],

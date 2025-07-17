@@ -4,7 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 
 import { createUser, getUserByEmail } from "@/db/querys/user-querys";
-import { generateUsername } from "@/lib";
+import { generateUniqueUsername } from "@/lib";
 
 import { authConfig } from "./auth.config";
 
@@ -18,9 +18,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Credentials({
       async authorize({ email, password }: any) {
         const user = await getUserByEmail(email);
-        if (!user) return null;
+        if (!user) throw new Error("Invalid email or password");
         const passwordsMatch = await compare(password, user.password!);
-        if (!passwordsMatch) return null;
+        if (!passwordsMatch) throw new Error("Invalid email or password");
         return user;
       },
     }),
@@ -37,12 +37,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         if (dbUser) {
           token.id = dbUser.id;
         } else if (account?.provider === "google") {
+          const username = await generateUniqueUsername(user.email!);
           const newUser = await createUser({
             email: user.email!,
             password: "",
-            username: generateUsername(user.email!),
+            username,
             displayName: user.name ?? user.email!.split("@")[0],
-            provider: "google",
+            provider: account.provider,
             providerId: account.providerAccountId,
           });
 

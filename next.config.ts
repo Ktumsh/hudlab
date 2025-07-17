@@ -1,9 +1,10 @@
-import type { NextConfig } from "next";
+import withSerwistInit from "@serwist/next";
+import { NextConfig } from "next";
+
+import { isProductionEnvironment } from "@/lib";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    viewTransition: true,
-  },
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
@@ -15,4 +16,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withPWA = withSerwistInit({
+  disable: !isProductionEnvironment,
+  swSrc: "sw.ts",
+  swDest: "public/sw.js",
+});
+
+export default withPWA({
+  ...nextConfig,
+});

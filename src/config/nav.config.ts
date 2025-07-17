@@ -3,6 +3,7 @@ import {
   IconHomeFilled,
   IconIcons,
   IconIconsFilled,
+  IconLogin2,
   IconPlus,
   IconSearch,
   IconSquareRoundedPlus,
@@ -39,7 +40,6 @@ export const navConfig = {
     },
     {
       title: "Perfil",
-      href: "/profile",
     },
   ],
   bottomNav: [
@@ -69,6 +69,11 @@ export const navConfig = {
     {
       title: "Perfil",
       href: "/profile",
+    },
+    {
+      title: "Login",
+      href: "/auth/login",
+      icon: IconLogin2,
     },
   ],
 };

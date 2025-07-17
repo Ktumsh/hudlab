@@ -1,15 +1,19 @@
+import AuthHeader from "./_components/auth-header";
+import { SignupFormProvider } from "./_hooks/use-signup-form";
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <main className="flex min-h-svh w-full items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="flex w-full max-w-sm flex-col gap-6">{children}</div>
+    <SignupFormProvider>
+      <main className="relative min-h-dvh overflow-hidden px-4 py-12 md:px-8 md:pt-24">
+        <div className="relative z-10 mx-auto flex w-full flex-col gap-8 sm:max-w-90">
+          <AuthHeader />
+          {children}
         </div>
       </main>
-    </>
+    </SignupFormProvider>
   );
 }

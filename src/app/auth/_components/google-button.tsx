@@ -4,31 +4,22 @@ import { signIn } from "next-auth/react";
 
 import { Google } from "@/components/icons/social";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface GoogleButtonProps {
   isSubmitting?: boolean;
-  className?: string;
-  children?: React.ReactNode;
+  label?: string;
 }
 
-const GoogleButton = ({
-  isSubmitting,
-  className,
-  children,
-}: GoogleButtonProps) => (
+const GoogleButton = ({ isSubmitting, label }: GoogleButtonProps) => (
   <Button
     type="button"
     outline
-    className={cn(
-      "flex w-full items-center gap-2 border border-gray-300",
-      className,
-    )}
+    className="flex w-full items-center gap-2 border"
     disabled={isSubmitting}
-    onClick={() => signIn("google")}
+    onClick={() => signIn("google", { callbackUrl: "/feed" })}
   >
-    <Google width={22} height={22} />
-    {children ?? "Continuar con Google"}
+    <Google className="size-5" />
+    {label || "Continuar con Google"}
   </Button>
 );
 

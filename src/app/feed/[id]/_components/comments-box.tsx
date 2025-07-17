@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Textarea } from "@/components/ui/textarea";
+import UserAvatar from "@/components/user-avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib";
 
@@ -158,7 +159,6 @@ const CommentsBox = ({
     setReplyContentMap((prev) => ({ ...prev, [replyingId!]: "" }));
   };
 
-  // Estado para controlar respuestas expandidas por comentario
   const [expandedReplies, setExpandedReplies] = useState<{
     [key: string]: boolean;
   }>({});
@@ -416,7 +416,8 @@ const CommentsBox = ({
   );
 
   const footer = (
-    <div className="relative">
+    <div className="relative flex gap-2">
+      <UserAvatar className="mt-2" />
       <Textarea
         rows={1}
         placeholder="Agregar un comentario"

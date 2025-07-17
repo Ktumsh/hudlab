@@ -17,7 +17,7 @@ export const formErrors = {
   length: {
     usernameMin: "El nombre de usuario debe tener al menos 3 caracteres",
     usernameMax: "El nombre de usuario no puede exceder los 20 caracteres",
-    displayNameMin: "El nombre para mostrar debe tener al menos 2 caracteres",
+    displayNameMin: "El nombre es obligatorio",
     displayNameMax: "El nombre para mostrar no puede exceder los 50 caracteres",
     bioMax: "La biografía no puede exceder los 160 caracteres",
     passwordMin: "La contraseña debe tener al menos 8 caracteres",

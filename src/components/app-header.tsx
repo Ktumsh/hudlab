@@ -1,20 +1,21 @@
 "use client";
 
-import { IconChevronLeft, IconUser } from "@tabler/icons-react";
+import { IconChevronLeft } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { use } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/hooks/use-filters";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib";
 import { SearchSuggestion, FilterOptions } from "@/lib/types";
 
 import Filters from "./filters";
 import { BetterTooltip } from "./ui/tooltip";
+import UserOptions from "./user-options";
 import Search from "../app/feed/_components/search";
 
 interface AppHeaderProps {
@@ -34,7 +35,10 @@ const AppHeader = ({
   const { setFilters, onFilterChange } = useFilters();
   const router = useRouter();
   const pathname = usePathname();
+
   const isHome = pathname === "/feed";
+
+  const { user } = useUser();
 
   const isMobile = useIsMobile();
 
@@ -96,12 +100,19 @@ const AppHeader = ({
               <span className="sr-only">Volver</span>
             </Button>
           )}
-          {isHome && (
-            <Filters
-              filterOptions={filterOptions}
-              onFilterChange={onFilterChange}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            {isHome && (
+              <Filters
+                filterOptions={filterOptions}
+                onFilterChange={onFilterChange}
+              />
+            )}
+            {!user && isHome && (
+              <Button variant="primary" asChild className="h-11">
+                <Link href="/auth/signup">Registrarse</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </header>
     );
@@ -120,14 +131,7 @@ const AppHeader = ({
             )}
           </Search>
         </div>
-        <Button variant="ghost" size="icon">
-          <Avatar className="size-9">
-            <AvatarImage />
-            <AvatarFallback>
-              <IconUser className="size-4" />
-            </AvatarFallback>
-          </Avatar>
-        </Button>
+        <UserOptions />
       </div>
     </header>
   );

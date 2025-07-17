@@ -81,13 +81,13 @@ function ButtonPassword({ isVisible, setIsVisible }: ButtonPasswordType) {
   return (
     <button
       type="button"
-      className="text-base-content/60 absolute top-0 right-0 z-10 inline-flex h-full items-center justify-center px-3"
+      className="text-content-muted absolute top-0 right-0 z-10 inline-flex h-full items-center justify-center px-3"
       onClick={() => setIsVisible(!isVisible)}
     >
       {isVisible ? (
-        <IconEye className="size-4" />
+        <IconEye className="size-5" />
       ) : (
-        <IconEyeOff className="size-4" />
+        <IconEyeOff className="size-5" />
       )}
       <span className="sr-only">
         {isVisible ? "Hide password" : "Show password"}

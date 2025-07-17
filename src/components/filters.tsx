@@ -13,7 +13,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DEFAULT_FILTERS } from "@/lib/consts";
 
 import FilterItem from "./filter-item";
-import { TagsFilter } from "./tags-filter";
 
 import type {
   FilterChangeEvent,
@@ -110,12 +109,6 @@ const Filters = ({ filterOptions, onFilterChange }: FiltersProps) => {
             options={[{ value: "none", label: "Todos" }, ...yearOptions]}
             onChange={(value) => updateFilter("releaseYear", value)}
             placeholder="Todos"
-          />
-
-          <TagsFilter
-            selectedTags={filters.tags}
-            onChange={(tags) => updateFilter("tags", tags)}
-            availableTags={filterOptions.tags}
           />
           <div className="mt-4 space-y-2">
             {hasActiveFilters && (
