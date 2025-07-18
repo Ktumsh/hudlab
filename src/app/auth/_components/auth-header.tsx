@@ -29,7 +29,7 @@ const AuthHeader = () => {
     if (path === "/auth/login") {
       return {
         header: "Accede a tu cuenta",
-        subText: "Por favor, ingresa tus datos.",
+        subText: "¡Continúa explorando diseños gaming!",
       };
     }
     if (path === "/auth/signup") {
@@ -37,7 +37,7 @@ const AuthHeader = () => {
         header: "Crea una nueva cuenta",
         subText:
           step === 1 ? (
-            "Ingresa tu correo o regístrate con Google"
+            "Completa tus datos o accede rápidamente"
           ) : (
             <>
               Continúas con:{" "}

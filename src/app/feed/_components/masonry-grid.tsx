@@ -8,16 +8,17 @@ import UploadCard from "./upload-card";
 import UploadSkeleton from "./upload-skeleton";
 import { useGalleryItems } from "../_hooks/use-gallery-items";
 
-import type { UploadWithProfileAndAspect } from "@/lib/types";
+import type {
+  UploadWithDetails,
+  UploadWithProfileAndAspect,
+} from "@/lib/types";
 
 interface MasonryGridProps {
-  // Para el feed
-  uploads?: UploadWithProfileAndAspect[];
+  uploads?: UploadWithDetails[];
   relatedUploads?: UploadWithProfileAndAspect[];
   loading?: boolean;
   initialLoading?: boolean;
   isReachingEnd?: boolean;
-  // Para detalles
   layout?: "feed" | "details";
 }
 
@@ -36,7 +37,7 @@ const MasonryGrid = ({
     loading ?? false,
     initialLoading ?? false,
     isReachingEnd ?? true,
-    20,
+    8,
   );
 
   const relatedItems = useGalleryItems(
@@ -44,7 +45,7 @@ const MasonryGrid = ({
     loading ?? false,
     initialLoading ?? false,
     isReachingEnd ?? true,
-    16,
+    8,
   );
 
   // Feed: usa el hook y los props originales

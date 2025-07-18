@@ -1,15 +1,16 @@
 "use client";
 
+import { motion } from "motion/react";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 
 import { Discord, Google } from "@/components/icons/social";
 import { Button } from "@/components/ui/button";
 
-import { useLastSessionManager } from "../_hooks/use-last-session";
+import { useLastSession } from "../../../hooks/use-last-session";
 
 const LastSessionButton = () => {
-  const { lastSession, isLoading, hasValidSession } = useLastSessionManager();
+  const { lastSession, isLoading, hasValidSession } = useLastSession();
 
   const handleContinueAs = async () => {
     if (!lastSession || isLoading) return;
@@ -48,12 +49,16 @@ const LastSessionButton = () => {
     }
   };
 
-  if (!hasValidSession()) {
+  if (!hasValidSession) {
     return null;
   }
 
+  const MotionButton = motion(Button);
+
   return (
-    <Button
+    <MotionButton
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       type="button"
       variant="ghost"
       className="bg-primary/5 border-primary/20 hover:bg-primary/10 flex h-auto w-full items-center gap-3 border p-3 transition-colors"
@@ -80,7 +85,7 @@ const LastSessionButton = () => {
         </div>
         {getProviderIcon(lastSession!.provider)}
       </div>
-    </Button>
+    </MotionButton>
   );
 };
 

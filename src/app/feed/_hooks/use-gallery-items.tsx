@@ -11,9 +11,18 @@ const aspectRatios = [
   "aspect-3/4",
   "aspect-4/5",
   "aspect-2/3",
-  "aspect-10/9",
-  "aspect-1/1",
+  "aspect-3/5",
   "aspect-9/16",
+  "aspect-3/4",
+  "aspect-4/5",
+  "aspect-1/1",
+  "aspect-5/6",
+  "aspect-6/5",
+  "aspect-4/3",
+  "aspect-3/2",
+  "aspect-5/3",
+  "aspect-2/5",
+  "aspect-1/2",
 ];
 
 type GalleryItem =
@@ -28,6 +37,7 @@ export function useGalleryItems(
   limit: number,
 ): GalleryItem[] {
   const aspectRatioMap = useRef(new Map<string, string>());
+  const lastRatiosRef = useRef<string[]>([]);
   const lastCount = useRef(0);
 
   const totalExpected =
@@ -40,13 +50,32 @@ export function useGalleryItems(
   return useMemo(() => {
     const items: GalleryItem[] = [];
 
+    const selectSmartRatio = (): string => {
+      const recentRatios = lastRatiosRef.current.slice(-3);
+      let attempts = 0;
+      let ratio: string;
+
+      do {
+        ratio = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+        attempts++;
+      } while (recentRatios.includes(ratio) && attempts < 10);
+
+      // Actualizar historial
+      lastRatiosRef.current.push(ratio);
+      if (lastRatiosRef.current.length > 5) {
+        lastRatiosRef.current.shift(); // Mantener solo los últimos 5
+      }
+
+      return ratio;
+    };
+
     for (let i = 0; i < lastCount.current; i++) {
       const upload = uploads[i];
 
       if (upload) {
+        // Asignar aspect ratio inteligente pero consistente para cada upload
         if (!aspectRatioMap.current.has(upload.id)) {
-          const ratio =
-            aspectRatios[aspectRatioMap.current.size % aspectRatios.length];
+          const ratio = selectSmartRatio();
           aspectRatioMap.current.set(upload.id, ratio);
         }
 

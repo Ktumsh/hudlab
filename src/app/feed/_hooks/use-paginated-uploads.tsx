@@ -1,33 +1,26 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import useSWRInfinite from "swr/infinite";
 
 import { fetcher } from "@/lib";
 
-import type {
-  UploadWithDetails,
-  FilterState,
-  UploadWithProfileAndAspect,
-} from "@/lib/types";
+import type { UploadWithDetails, FilterState } from "@/lib/types";
 
 type UploadsResponse = {
   uploads: UploadWithDetails[];
   nextCursor: string | null;
 };
 
-const aspectRatios = [
-  "aspect-3/4",
-  "aspect-4/5",
-  "aspect-2/3",
-  "aspect-10/9",
-  "aspect-1/1",
-  "aspect-9/16",
-];
+const limit = 8;
 
-const limit = 20;
-
-export function usePaginatedUploads(filters: FilterState) {
+export function usePaginatedUploads(
+  filters: FilterState,
+  initialData?: {
+    uploads: UploadWithDetails[];
+    nextCursor: string | null;
+  },
+) {
   const queryString = new URLSearchParams({
     limit: limit.toString(),
     searchText: filters.searchText || "",
@@ -47,30 +40,35 @@ export function usePaginatedUploads(filters: FilterState) {
   const { data, size, setSize, isValidating, error } =
     useSWRInfinite<UploadsResponse>(getKey, fetcher, {
       revalidateOnFocus: false,
+      fallbackData: initialData ? [initialData] : undefined,
     });
+
+  const previousQueryRef = useRef(queryString);
+  const previousUploadsRef = useRef<UploadWithDetails[]>([]);
+
+  if (previousQueryRef.current !== queryString) {
+    previousUploadsRef.current = [];
+    previousQueryRef.current = queryString;
+  }
 
   useEffect(() => {
     setSize(1);
   }, [queryString, setSize]);
 
-  const rawUploads = data?.flatMap((page) => page.uploads) ?? [];
+  const uploads = data?.flatMap((page) => page.uploads) ?? [];
 
-  const aspectRatioMap = new Map<string, string>();
-  const uploads: UploadWithProfileAndAspect[] = rawUploads.map((upload) => {
-    let fixed = aspectRatioMap.get(upload.id);
-    if (!fixed) {
-      fixed = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
-      aspectRatioMap.set(upload.id, fixed);
-    }
-    return { ...upload, aspectRatio: fixed };
-  });
+  if (uploads.length >= previousUploadsRef.current.length) {
+    previousUploadsRef.current = uploads;
+  }
+
+  const stableUploads = previousUploadsRef.current;
 
   const isLoadingInitial = !data && !error;
   const isLoadingMore = isValidating && !!data && data.length > 0;
   const isReachingEnd = data?.[data.length - 1]?.nextCursor === null;
 
   return {
-    uploads,
+    uploads: stableUploads,
     isLoadingInitial,
     isLoadingMore,
     isReachingEnd,

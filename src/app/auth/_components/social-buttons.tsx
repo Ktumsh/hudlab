@@ -15,7 +15,6 @@ const SocialButtons = ({ isSubmitting }: SocialButtonsProps) => {
   return (
     <>
       <LastSessionButton />
-
       <div className="relative flex items-center">
         <div className="flex-grow border-t" />
         <span className="text-muted-foreground bg-background mx-4 px-2 text-sm">

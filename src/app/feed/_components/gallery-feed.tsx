@@ -4,20 +4,29 @@ import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/hooks/use-filters";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 import FooterStatus from "./footer-status";
-import { useInfiniteScroll } from "../_hooks/use-infinite-scroll";
 import { usePaginatedUploads } from "../_hooks/use-paginated-uploads";
+
+import type { UploadWithDetails } from "@/lib/types";
 
 const MasonryGrid = dynamic(() => import("./masonry-grid"), {
   ssr: false,
 });
 
-const GalleryFeed = () => {
+interface GalleryFeedProps {
+  initialData?: {
+    uploads: UploadWithDetails[];
+    nextCursor: string | null;
+  };
+}
+
+const GalleryFeed = ({ initialData }: GalleryFeedProps) => {
   const { filters, setFilters } = useFilters();
 
   const { uploads, loadMore, isLoadingInitial, isLoadingMore, isReachingEnd } =
-    usePaginatedUploads(filters);
+    usePaginatedUploads(filters, initialData);
 
   useInfiniteScroll({
     disabled: isLoadingInitial || isLoadingMore || isReachingEnd,
@@ -54,7 +63,7 @@ const GalleryFeed = () => {
 
   return (
     <>
-      <div className="px-1 pt-1 md:px-6">
+      <div className="relative px-1 pt-1 md:px-6">
         <MasonryGrid
           key={`${filters.searchText}-${filters.sortBy}-${filters.platform}-${filters.releaseYear}`}
           uploads={uploads}

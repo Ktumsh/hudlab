@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 
 import { FilterProvider } from "@/hooks/use-filters";
+import { LastSessionProvider } from "@/hooks/use-last-session";
 
 const ClientProviders = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -13,7 +14,9 @@ const ClientProviders = ({ children }: { children: React.ReactNode }) => {
         defaultTheme="black"
         enableSystem={false}
       >
-        <FilterProvider>{children}</FilterProvider>
+        <LastSessionProvider>
+          <FilterProvider>{children}</FilterProvider>
+        </LastSessionProvider>
       </ThemeProvider>
     </SessionProvider>
   );

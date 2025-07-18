@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { usePaginatedRelatedUploads } from "@/app/feed/_hooks/use-paginated-related-uploads";
 import { Button } from "@/components/ui/button";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 import DetailsSection from "./details-section";
 import FooterStatus from "../../_components/footer-status";
-import { useInfiniteScroll } from "../../_hooks/use-infinite-scroll";
 
 import type { UploadWithDetails } from "@/lib/types";
 

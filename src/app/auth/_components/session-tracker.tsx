@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 
-import { useLastSessionManager } from "../_hooks/use-last-session";
+import { useLastSession } from "../../../hooks/use-last-session";
 
 /**
  * Componente para manejar automáticamente el guardado de sesiones
@@ -11,7 +11,7 @@ import { useLastSessionManager } from "../_hooks/use-last-session";
  */
 const SessionTracker = () => {
   const { data: session, status } = useSession();
-  const { saveLastSession } = useLastSessionManager();
+  const { saveLastSession } = useLastSession();
   const lastSavedSessionRef = useRef<string | null>(null);
 
   useEffect(() => {

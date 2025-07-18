@@ -8,9 +8,11 @@ interface UploadSkeletonProps {
 
 const UploadSkeleton = ({ aspectRatio }: UploadSkeletonProps) => {
   return (
-    <Card className="overflow-hidden py-0">
-      <Skeleton className={cn("w-full", aspectRatio)} />
-    </Card>
+    <div data-masonry-item data-skeleton>
+      <Card className="overflow-hidden py-0">
+        <Skeleton className={cn("w-full", aspectRatio)} />
+      </Card>
+    </div>
   );
 };
 

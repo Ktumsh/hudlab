@@ -24,7 +24,7 @@ const aspectRatios = [
   "aspect-9/16",
 ];
 
-const limit = 16;
+const limit = 8;
 
 export function usePaginatedRelatedUploads({
   gameId,

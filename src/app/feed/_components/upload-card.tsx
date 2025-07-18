@@ -9,13 +9,14 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { startTransition, useState } from "react";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BetterTooltip } from "@/components/ui/tooltip";
+import { useForceHover } from "@/hooks/use-force-hover";
 import { cn } from "@/lib";
 
 import type { UploadWithProfileAndAspect } from "@/lib/types";
@@ -29,16 +30,19 @@ const UploadCard = ({ upload }: UploadCardProps) => {
   const avatarFallback = displayName.charAt(0).toUpperCase();
 
   const router = useRouter();
+  const { elementRef, isHovered } = useForceHover();
 
   const [favorite, setFavorite] = useState(false);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-masonry-item>
       <Card
-        onClick={() =>
-          startTransition(() => router.push(`/feed/${upload.publicId}`))
-        }
-        className="group bg-base-100 relative cursor-pointer overflow-hidden py-0 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+        ref={elementRef}
+        onClick={() => router.push(`/feed/${upload.publicId}`)}
+        className={cn(
+          "group bg-base-100 pointer-events-auto relative transform-gpu cursor-pointer touch-manipulation overflow-hidden py-0 transition-all duration-300 ease-out will-change-transform backface-hidden hover:-translate-y-1 hover:shadow-lg",
+          isHovered && "-translate-y-1 transform shadow-lg",
+        )}
       >
         <Image
           priority
@@ -47,21 +51,33 @@ const UploadCard = ({ upload }: UploadCardProps) => {
           width={400}
           height={600}
           className={cn(
-            "rounded-box h-auto object-cover transition-transform duration-300 group-hover:scale-105",
+            "rounded-box h-auto transform-gpu object-cover transition-transform duration-300 ease-out will-change-transform backface-hidden group-hover:scale-105",
             upload.aspectRatio,
+            isHovered && "scale-105 transform",
           )}
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
 
         {upload.game.name && (
-          <div className="absolute top-3 left-3 hidden transition-opacity duration-300 group-hover:opacity-0 md:block">
+          <div
+            className={cn(
+              "absolute top-3 left-3 hidden transition-opacity duration-300 ease-out will-change-auto group-hover:opacity-0 md:block",
+              isHovered && "opacity-0",
+            )}
+          >
             <Badge className="border-0 bg-black/70 text-white">
               {upload.game.name}
             </Badge>
           </div>
         )}
 
-        <div className="from-base-100/80 absolute inset-0 bg-gradient-to-t to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div
+          className={cn(
+            "from-base-100/80 absolute inset-0 bg-gradient-to-t to-transparent opacity-0 transition-opacity duration-300 ease-out will-change-auto group-hover:opacity-100",
+            isHovered && "opacity-100",
+          )}
+          style={{ willChange: "opacity" }}
+        >
           <CardContent className="flex flex-1 flex-col gap-4 p-4">
             <div className="absolute top-3 right-3 flex gap-2">
               <BetterTooltip
