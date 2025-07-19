@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTransition, useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { useLocalStorage } from "usehooks-ts";
 
 import { ButtonPassword } from "@/components/ui/button";
@@ -19,9 +18,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { resultMessages } from "@/lib";
 import { loginSchema, LoginFormData } from "@/lib/form-schemas";
 
+import ErrorMessage from "../_components/error-message";
 import FooterForm from "../_components/footer-form";
+import LastSessionButton from "../_components/last-session-button";
 import SocialButtons from "../_components/social-buttons";
 import SubmitButton from "../_components/submit-button";
 import { login } from "../actions";
@@ -33,6 +35,7 @@ const LoginForm = () => {
   const redirectUrl = searchParams.get("next") || "/feed";
 
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [storageEmail, setStorageEmail, removeStorageEmail] = useLocalStorage(
     STORAGE_KEY,
@@ -73,11 +76,16 @@ const LoginForm = () => {
 
   const onSubmit = (data: LoginFormData) => {
     startTransition(async () => {
-      const result = await login(data);
-      if (result.type === "success") {
-        handleSuccess(data);
-      } else {
-        toast.error(result.message);
+      try {
+        const result = await login(data);
+        if (result.type === "success") {
+          handleSuccess(data);
+        } else {
+          setError(result.message);
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        setError(resultMessages.UNKNOWN_ERROR);
       }
     });
   };
@@ -89,6 +97,7 @@ const LoginForm = () => {
         className="z-10 flex flex-col gap-6"
       >
         <div className="flex flex-col gap-5">
+          <ErrorMessage error={error} />
           <FormField
             control={control}
             name="email"
@@ -179,6 +188,7 @@ const LoginForm = () => {
           >
             Iniciar sesión
           </SubmitButton>
+          <LastSessionButton />
           <SocialButtons isSubmitting={pending} />
         </div>
       </form>

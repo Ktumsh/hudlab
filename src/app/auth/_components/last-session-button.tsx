@@ -3,13 +3,14 @@
 import { motion } from "motion/react";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
+import { memo } from "react";
 
 import { Discord, Google } from "@/components/icons/social";
 import { Button } from "@/components/ui/button";
 
 import { useLastSession } from "../../../hooks/use-last-session";
 
-const LastSessionButton = () => {
+const PureLastSessionButton = () => {
   const { lastSession, isLoading, hasValidSession } = useLastSession();
 
   const handleContinueAs = async () => {
@@ -59,6 +60,7 @@ const LastSessionButton = () => {
     <MotionButton
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       type="button"
       variant="ghost"
       className="bg-primary/5 border-primary/20 hover:bg-primary/10 flex h-auto w-full items-center gap-3 border p-3 transition-colors"
@@ -89,4 +91,4 @@ const LastSessionButton = () => {
   );
 };
 
-export default LastSessionButton;
+export default memo(PureLastSessionButton);

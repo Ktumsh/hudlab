@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 
+import { getFirstName } from "@/lib";
+
 import { useLastSession } from "../../../hooks/use-last-session";
 
 /**
@@ -40,10 +42,11 @@ const SessionTracker = () => {
 
             // Evitar guardar la misma sesión múltiples veces
             if (lastSavedSessionRef.current !== sessionKey) {
+              const displayName = user.name || user.email.split("@")[0];
               const sessionData = {
                 userId: user.id,
                 provider: provider,
-                userDisplayName: user.name || user.email.split("@")[0],
+                userDisplayName: getFirstName(displayName),
                 userAvatarUrl: user.image || undefined,
               };
 
@@ -56,6 +59,10 @@ const SessionTracker = () => {
             }
           }
         }
+      } else if (status === "unauthenticated") {
+        // Si el usuario se desconecta, limpiar la referencia pero no el localStorage
+        // para que pueda ver su última sesión cuando regrese
+        lastSavedSessionRef.current = null;
       }
     };
 

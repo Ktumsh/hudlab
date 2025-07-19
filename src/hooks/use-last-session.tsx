@@ -9,10 +9,6 @@ import React, {
   useMemo,
 } from "react";
 
-import {
-  getLastSession,
-  saveLastSession as saveLastSessionDB,
-} from "@/db/querys/user-querys";
 import { isProductionEnvironment } from "@/lib/consts";
 
 interface LastSession {
@@ -20,7 +16,6 @@ interface LastSession {
   provider: string;
   userDisplayName: string;
   userAvatarUrl?: string;
-  deviceFingerprint: string;
   lastUsedAt: Date;
 }
 
@@ -29,64 +24,77 @@ interface LastSessionContextType {
   isLoading: boolean;
   hasValidSession: boolean;
   saveLastSession: (
-    sessionData: Omit<LastSession, "deviceFingerprint" | "lastUsedAt">,
+    sessionData: Omit<LastSession, "lastUsedAt">,
   ) => Promise<void>;
   clearLastSession: () => void;
   clearSpecificSession: (userId: string, provider: string) => void;
-  generateDeviceFingerprint: () => string;
 }
 
 const LastSessionContext = createContext<LastSessionContextType | undefined>(
   undefined,
 );
 
-const generateDeviceFingerprint = (): string => {
+const STORAGE_KEY = "hudlab-last-session";
+
+// Función para obtener datos del localStorage de forma segura
+const getStoredLastSession = (): LastSession | null => {
   try {
-    if (isProductionEnvironment) {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.textBaseline = "top";
-        ctx.font = "14px Arial";
-        ctx.fillStyle = "#FF0000";
-        ctx.fillRect(125, 1, 62, 20);
-        ctx.fillStyle = "#00FF00";
-        ctx.fillText("HUDLab Device Fingerprint", 2, 2);
-      }
-      const canvasFingerprint = canvas.toDataURL();
+    if (typeof window === "undefined") return null;
 
-      const fingerprint = btoa(
-        navigator.userAgent +
-          navigator.language +
-          (navigator.languages ? navigator.languages.join(",") : "") +
-          screen.width +
-          screen.height +
-          screen.colorDepth +
-          screen.pixelDepth +
-          new Date().getTimezoneOffset() +
-          (navigator.hardwareConcurrency || 0) +
-          ((navigator as any).deviceMemory || 0) +
-          canvasFingerprint.slice(0, 100),
-      ).slice(0, 64);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
 
-      return fingerprint;
-    } else {
-      return btoa(
-        "dev_" +
-          navigator.userAgent.slice(0, 50) +
-          navigator.language +
-          screen.width +
-          screen.height,
-      ).slice(0, 32);
+    const parsed = JSON.parse(stored);
+
+    // Validar que tenga la estructura correcta
+    if (!parsed.userId || !parsed.provider || !parsed.userDisplayName) {
+      return null;
     }
+
+    // Verificar que no esté expirada (30 días en prod, 7 en dev)
+    const maxAge = isProductionEnvironment ? 30 : 7;
+    const maxAgeMs = maxAge * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - maxAgeMs;
+    const sessionTime = new Date(parsed.lastUsedAt).getTime();
+
+    if (sessionTime < cutoffTime) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
+    return {
+      ...parsed,
+      lastUsedAt: new Date(parsed.lastUsedAt),
+    };
   } catch (error) {
-    console.error("Error generating device fingerprint:", error);
-    return btoa(
-      "fallback_" +
-        navigator.userAgent.slice(0, 30) +
-        navigator.language +
-        Date.now().toString(),
-    ).slice(0, 32);
+    console.error("Error reading stored session:", error);
+    // Limpiar datos corruptos
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    return null;
+  }
+};
+
+// Función para guardar en localStorage
+const setStoredLastSession = (session: LastSession): void => {
+  try {
+    if (typeof window === "undefined") return;
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  } catch (error) {
+    console.error("Error storing session:", error);
+  }
+};
+
+// Función para limpiar el localStorage
+const clearStoredLastSession = (): void => {
+  try {
+    if (typeof window === "undefined") return;
+
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Error clearing stored session:", error);
   }
 };
 
@@ -103,29 +111,11 @@ export const LastSessionProvider: React.FC<LastSessionProviderProps> = ({
   useEffect(() => {
     const loadLastSession = async () => {
       try {
-        const deviceFingerprint = generateDeviceFingerprint();
+        const storedSession = getStoredLastSession();
+        setLastSession(storedSession);
 
-        const dbSession = await getLastSession(deviceFingerprint);
-
-        if (dbSession) {
-          const maxAge = isProductionEnvironment ? 30 : 7;
-          const maxAgeMs = maxAge * 24 * 60 * 60 * 1000;
-          const cutoffTime = Date.now() - maxAgeMs;
-          const sessionTime = dbSession.lastUsedAt
-            ? new Date(dbSession.lastUsedAt).getTime()
-            : 0;
-
-          if (sessionTime > cutoffTime && dbSession.lastUsedAt) {
-            const sessionData: LastSession = {
-              userId: dbSession.userId,
-              provider: dbSession.provider,
-              userDisplayName: dbSession.userDisplayName,
-              userAvatarUrl: dbSession.userAvatarUrl || undefined,
-              deviceFingerprint: dbSession.deviceFingerprint,
-              lastUsedAt: dbSession.lastUsedAt,
-            };
-            setLastSession(sessionData);
-          }
+        if (!isProductionEnvironment && storedSession) {
+          console.log("Loaded last session from localStorage:", storedSession);
         }
       } catch (error) {
         console.error("Error loading last session:", error);
@@ -138,29 +128,18 @@ export const LastSessionProvider: React.FC<LastSessionProviderProps> = ({
   }, []);
 
   const saveLastSession = useCallback(
-    async (
-      sessionData: Omit<LastSession, "deviceFingerprint" | "lastUsedAt">,
-    ) => {
+    async (sessionData: Omit<LastSession, "lastUsedAt">) => {
       try {
-        const deviceFingerprint = generateDeviceFingerprint();
-
-        await saveLastSessionDB(
-          deviceFingerprint,
-          sessionData.userId,
-          sessionData.provider,
-          sessionData.userDisplayName,
-          sessionData.userAvatarUrl,
-        );
-
         const newSession: LastSession = {
           ...sessionData,
-          deviceFingerprint,
           lastUsedAt: new Date(),
         };
+
+        setStoredLastSession(newSession);
         setLastSession(newSession);
 
         if (!isProductionEnvironment) {
-          console.log("Last session saved to DB:", newSession);
+          console.log("Last session saved to localStorage:", newSession);
         }
       } catch (error) {
         console.error("Error saving last session:", error);
@@ -171,10 +150,11 @@ export const LastSessionProvider: React.FC<LastSessionProviderProps> = ({
 
   const clearLastSession = useCallback(() => {
     try {
+      clearStoredLastSession();
       setLastSession(null);
 
       if (!isProductionEnvironment) {
-        console.log("Last session cleared from local state");
+        console.log("Last session cleared from localStorage");
       }
     } catch (error) {
       console.error("Error clearing last session:", error);
@@ -207,15 +187,24 @@ export const LastSessionProvider: React.FC<LastSessionProviderProps> = ({
     );
   }, [isLoading, lastSession]);
 
-  const value: LastSessionContextType = {
-    lastSession,
-    isLoading,
-    saveLastSession,
-    clearLastSession,
-    clearSpecificSession,
-    hasValidSession,
-    generateDeviceFingerprint,
-  };
+  const value: LastSessionContextType = useMemo(
+    () => ({
+      lastSession,
+      isLoading,
+      saveLastSession,
+      clearLastSession,
+      clearSpecificSession,
+      hasValidSession,
+    }),
+    [
+      lastSession,
+      isLoading,
+      saveLastSession,
+      clearLastSession,
+      clearSpecificSession,
+      hasValidSession,
+    ],
+  );
 
   return (
     <LastSessionContext.Provider value={value}>

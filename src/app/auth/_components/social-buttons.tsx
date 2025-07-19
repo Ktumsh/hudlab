@@ -5,8 +5,6 @@ import { signIn } from "next-auth/react";
 import { Discord, Google } from "@/components/icons/social";
 import { Button } from "@/components/ui/button";
 
-import LastSessionButton from "./last-session-button";
-
 interface SocialButtonsProps {
   isSubmitting: boolean;
 }
@@ -14,7 +12,6 @@ interface SocialButtonsProps {
 const SocialButtons = ({ isSubmitting }: SocialButtonsProps) => {
   return (
     <>
-      <LastSessionButton />
       <div className="relative flex items-center">
         <div className="flex-grow border-t" />
         <span className="text-muted-foreground bg-background mx-4 px-2 text-sm">

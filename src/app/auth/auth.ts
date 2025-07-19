@@ -101,7 +101,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               const username = await generateUniqueUsername(user.email!);
               const newUser = await createUser({
                 email: user.email!,
-                password: "",
                 username,
                 displayName: user.name ?? user.email!.split("@")[0],
                 provider: account.provider,
@@ -119,7 +118,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               const username = await generateUniqueUsername(user.email!);
               const newUser = await createUser({
                 email: user.email!,
-                password: "",
                 username:
                   typeof profile?.display_name === "string"
                     ? profile.display_name

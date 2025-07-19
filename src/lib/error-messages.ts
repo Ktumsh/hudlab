@@ -33,8 +33,8 @@ export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
  * Ejemplo de cómo sería la internacionalización
  */
 export const AUTH_ERROR_MESSAGES_ES: Record<AuthErrorCode, string> = {
-  [AUTH_ERROR_CODES.INVALID_CREDENTIALS]: "Email o contraseña inválidos",
-  [AUTH_ERROR_CODES.DUPLICATE_EMAIL]: "El email ya existe",
+  [AUTH_ERROR_CODES.INVALID_CREDENTIALS]: "Correo o contraseña inválidos",
+  [AUTH_ERROR_CODES.DUPLICATE_EMAIL]: "El correo ya existe",
   [AUTH_ERROR_CODES.INVALID_AUTH]: "Credenciales inválidas",
   [AUTH_ERROR_CODES.UNKNOWN]: "Ocurrió un error desconocido",
   [AUTH_ERROR_CODES.OAUTH_CALLBACK_ERROR]:
@@ -45,22 +45,18 @@ export const AUTH_ERROR_MESSAGES_ES: Record<AuthErrorCode, string> = {
 /**
  * Función para obtener el mensaje de error según el idioma
  */
-export function getAuthErrorMessage(
-  code: AuthErrorCode,
-  locale: string = "en",
-): string {
-  const messages =
-    locale === "es" ? AUTH_ERROR_MESSAGES_ES : AUTH_ERROR_MESSAGES;
+export function getAuthErrorMessage(code: AuthErrorCode): string {
+  const messages = AUTH_ERROR_MESSAGES_ES;
   return messages[code] || messages[AUTH_ERROR_CODES.UNKNOWN];
 }
 
 /**
  * Función para crear un error estructurado con código y mensaje
  */
-export function createAuthError(code: AuthErrorCode, locale?: string) {
+export function createAuthError(code: AuthErrorCode) {
   return {
     code,
-    message: getAuthErrorMessage(code, locale),
+    message: getAuthErrorMessage(code),
     timestamp: new Date().toISOString(),
   };
 }

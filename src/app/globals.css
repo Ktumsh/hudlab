@@ -12,6 +12,8 @@
   --color-primary-content: var(--color-cyan-950);
   --color-secondary: var(--color-pink-400);
   --color-secondary-content: var(--color-pink-950);
+  --color-error: var(--color-rose-500);
+  --color-error-content: var(--color-rose-50);
   --radius-selector: 2rem;
   --radius-field: 0.75rem;
   --radius-box: 1rem;

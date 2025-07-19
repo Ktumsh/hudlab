@@ -11,7 +11,6 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
-  getLastSession,
   updateUserPassword,
   verifySamePassword,
 } from "@/db/querys/user-querys";
@@ -299,15 +298,5 @@ export async function resetPassword(token: string, newPassword: string) {
       type: "error",
       message: resultMessages.PASSWORD_RESET_ERROR,
     };
-  }
-}
-
-export async function getLastSessionAction(fingerprint: string) {
-  try {
-    const lastSession = await getLastSession(fingerprint);
-    return lastSession;
-  } catch (error) {
-    console.error("Error getting last session:", error);
-    return null;
   }
 }

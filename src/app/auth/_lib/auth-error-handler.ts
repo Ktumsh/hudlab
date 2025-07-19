@@ -102,11 +102,11 @@ export class AuthErrorHandler {
    * @param locale - Idioma para el mensaje de error (opcional)
    * @returns Estructura de error con código y mensaje
    */
-  public handleLoginError(error: unknown, locale?: string) {
+  public handleLoginError(error: unknown) {
     // AuthError específicos de NextAuth
     if (this.isAuthError(error)) {
       if (error.type === "CredentialsSignin") {
-        return createAuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, locale);
+        return createAuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
       }
     }
 
@@ -115,16 +115,16 @@ export class AuthErrorHandler {
       const actualError = this.extractErrorFromCause(error.cause);
 
       if (actualError && this.isCredentialsError(actualError)) {
-        return createAuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, locale);
+        return createAuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
       }
     }
 
     // Error directo de credenciales inválidas
     if (this.isCredentialsError(error)) {
-      return createAuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS, locale);
+      return createAuthError(AUTH_ERROR_CODES.INVALID_CREDENTIALS);
     }
 
-    return createAuthError(AUTH_ERROR_CODES.UNKNOWN, locale);
+    return createAuthError(AUTH_ERROR_CODES.UNKNOWN);
   }
 
   /**
@@ -133,16 +133,16 @@ export class AuthErrorHandler {
    * @param locale - Idioma para el mensaje de error (opcional)
    * @returns Estructura de error con código y mensaje
    */
-  public handleSignupError(error: unknown, locale?: string) {
+  public handleSignupError(error: unknown) {
     if (this.isAuthError(error)) {
-      return createAuthError(AUTH_ERROR_CODES.INVALID_AUTH, locale);
+      return createAuthError(AUTH_ERROR_CODES.INVALID_AUTH);
     }
 
     if (this.isDuplicateKeyError(error)) {
-      return createAuthError(AUTH_ERROR_CODES.DUPLICATE_EMAIL, locale);
+      return createAuthError(AUTH_ERROR_CODES.DUPLICATE_EMAIL);
     }
 
-    return createAuthError(AUTH_ERROR_CODES.UNKNOWN, locale);
+    return createAuthError(AUTH_ERROR_CODES.UNKNOWN);
   }
 
   /**
@@ -160,8 +160,8 @@ export class AuthErrorHandler {
    * @param locale - Idioma para el mensaje
    * @returns Mensaje de error localizado
    */
-  public getErrorMessage(code: AuthErrorCode, locale?: string): string {
-    return getAuthErrorMessage(code, locale);
+  public getErrorMessage(code: AuthErrorCode): string {
+    return getAuthErrorMessage(code);
   }
 
   /**

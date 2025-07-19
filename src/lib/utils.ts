@@ -39,3 +39,13 @@ export function generateHashedPassword(password: string) {
 
   return hash;
 }
+
+export function getFirstName(fullName: string): string {
+  if (!fullName) return "";
+
+  const trimmed = fullName.trim();
+  if (!trimmed) return "";
+
+  const firstSpace = trimmed.indexOf(" ");
+  return firstSpace > 0 ? trimmed.substring(0, firstSpace) : trimmed;
+}

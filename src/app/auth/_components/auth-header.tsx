@@ -25,6 +25,8 @@ const AuthHeader = () => {
     setStep(1);
   }, [pathname, setEmail, setStep]);
 
+  if (!isLoginPage && !isSignupPage) return null;
+
   function getHeaderText(path: string, step: number, email: string) {
     if (path === "/auth/login") {
       return {

@@ -7,7 +7,14 @@ import { eq, and } from "drizzle-orm";
 import { generateHashedPassword } from "@/lib/utils";
 
 import { db } from "../db";
-import { profiles, users, userAccounts, lastSessions } from "../schema";
+import { profiles, users, userAccounts } from "../schema";
+
+// Nota: `lastSessions` está importado pero no se usa actualmente.
+// Se mantiene disponible para funcionalidades futuras como:
+// - Panel de dispositivos activos del usuario
+// - Auditoría de seguridad
+// - Analytics de administración
+// La funcionalidad actual de "última sesión" usa localStorage por seguridad.
 
 export async function getUserByEmail(email: string) {
   try {
@@ -34,14 +41,25 @@ export async function createUser({
   avatarUrl,
 }: {
   email: string;
-  password: string;
+  password?: string; // Opcional para providers OAuth
   username: string;
   displayName: string;
   provider?: string;
   providerId?: string;
   avatarUrl?: string;
 }) {
-  const hashedPassword = generateHashedPassword(password);
+  // Validación: Para credentials se requiere contraseña
+  if ((!provider || provider === "credentials") && !password) {
+    throw new Error("Password is required for credentials-based registration");
+  }
+
+  // Solo hashear la contraseña si no es un provider OAuth
+  const hashedPassword =
+    provider && provider !== "credentials"
+      ? null
+      : password
+        ? generateHashedPassword(password)
+        : null;
 
   const avatar = createAvatar(funEmojis, {
     seed: displayName,
@@ -215,60 +233,6 @@ export async function hasUserAccount(userId: string, provider: string) {
     return !!account;
   } catch (error) {
     console.error("Error al verificar cuenta de usuario:", error);
-    throw error;
-  }
-}
-
-export async function saveLastSession(
-  deviceFingerprint: string,
-  userId: string,
-  provider: string,
-  userDisplayName: string,
-  userAvatarUrl?: string,
-) {
-  try {
-    // Insertar o actualizar la última sesión para este dispositivo
-    await db
-      .insert(lastSessions)
-      .values({
-        deviceFingerprint,
-        userId,
-        provider,
-        userDisplayName,
-        userAvatarUrl,
-        lastUsedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: lastSessions.deviceFingerprint,
-        set: {
-          userId,
-          provider,
-          userDisplayName,
-          userAvatarUrl,
-          lastUsedAt: new Date(),
-        },
-      });
-    return true;
-  } catch (error) {
-    console.error("Error al guardar última sesión:", error);
-    throw error;
-  }
-}
-
-export async function getLastSession(deviceFingerprint: string) {
-  try {
-    return await db.query.lastSessions.findFirst({
-      where: (ls, { eq }) => eq(ls.deviceFingerprint, deviceFingerprint),
-      with: {
-        user: {
-          with: {
-            profile: true,
-          },
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Error al obtener última sesión:", error);
     throw error;
   }
 }
