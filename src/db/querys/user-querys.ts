@@ -140,9 +140,10 @@ export async function getUserByUsername(username: string) {
 
 export async function updateUserPassword(userId: string, newPassword: string) {
   try {
+    const hashedPassword = generateHashedPassword(newPassword);
     await db
       .update(users)
-      .set({ password: newPassword })
+      .set({ password: hashedPassword })
       .where(eq(users.id, userId));
     return true;
   } catch (error) {

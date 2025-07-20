@@ -8,7 +8,7 @@ interface FooterFormProps {
 
 const FooterForm = ({ label, linkText, link }: FooterFormProps) => {
   return (
-    <div className="z-10 flex justify-center gap-1 text-center text-sm">
+    <p className="z-10 flex justify-center gap-1 text-center text-sm">
       <span className="text-content-muted">{label}</span>
       <Link
         href={link}
@@ -16,7 +16,7 @@ const FooterForm = ({ label, linkText, link }: FooterFormProps) => {
       >
         {linkText}
       </Link>
-    </div>
+    </p>
   );
 };
 

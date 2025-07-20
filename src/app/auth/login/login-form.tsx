@@ -109,7 +109,7 @@ const LoginForm = () => {
                     <Input
                       type="text"
                       autoComplete="email"
-                      placeholder="Tu correo"
+                      placeholder="Ingresa tu correo"
                       isAuth
                       {...field}
                     />
@@ -131,7 +131,7 @@ const LoginForm = () => {
                     <Input
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
-                      placeholder="Tu contraseña"
+                      placeholder="••••••••"
                       isAuth
                       {...field}
                     />

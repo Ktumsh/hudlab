@@ -23,7 +23,7 @@
 
 @theme {
   --text-xxs: 0.625rem;
-  --font-dm-sans: var(--font-dm-sans);
+  --font-inter: var(--font-inter);
   --container-8xl: 90rem;
   --color-content-muted: color-mix(
     in oklab,
@@ -31,6 +31,11 @@
     transparent
   );
   --color-border: color-mix(
+    in oklab,
+    var(--color-base-content) 15%,
+    transparent
+  );
+  --color-border-muted: color-mix(
     in oklab,
     var(--color-base-content) 10%,
     transparent
@@ -41,9 +46,15 @@
   scrollbar-width: thin;
 }
 
+@utility transition-inherit-all {
+  transition-property: inherit;
+  transition-duration: inherit;
+  transition-timing-function: inherit;
+}
+
 @layer base {
   * {
-    @apply border-border font-dm-sans scroll-smooth;
+    @apply border-border font-inter scroll-smooth;
   }
   body {
     @apply bg-base-100 text-base-content;

@@ -40,3 +40,19 @@ export const DEFAULT_FILTERS: FilterState = {
   isFavorited: false,
   sortBy: "newest",
 };
+
+export const aspectRatios = [
+  "aspect-3/4",
+  "aspect-4/5",
+  "aspect-2/3",
+  "aspect-3/5",
+  "aspect-9/16",
+  "aspect-3/4",
+  "aspect-4/5",
+  "aspect-1/1",
+  "aspect-5/6",
+  "aspect-6/5",
+  "aspect-4/3",
+  "aspect-3/2",
+  "aspect-5/3",
+];

@@ -18,11 +18,21 @@ type EmailWithCodePayload = {
   token: string;
 };
 
-type Payload = EmailWithCodePayload | EmailChangePayload | EmailBasePayload;
+// Nuevo payload específico para reset de contraseña (sin código)
+type EmailResetPasswordPayload = {
+  email: string;
+  token: string;
+};
+
+type Payload =
+  | EmailWithCodePayload
+  | EmailChangePayload
+  | EmailBasePayload
+  | EmailResetPasswordPayload;
 
 type ActionType =
   | "email_verification"
-  | "password_recovery"
+  | "reset_password"
   | "email_change"
   | "account_deleted";
 
@@ -38,8 +48,8 @@ export async function sendEmailAction(
     case "email_verification":
       endpoint = "/api/auth/email-verify";
       break;
-    case "password_recovery":
-      endpoint = "/api/auth/email-rec-pass";
+    case "reset_password":
+      endpoint = "/api/auth/reset-password";
       break;
     case "email_change":
       endpoint = "/api/auth/email-change";

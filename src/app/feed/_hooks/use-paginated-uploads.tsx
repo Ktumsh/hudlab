@@ -12,48 +12,51 @@ type UploadsResponse = {
   nextCursor: string | null;
 };
 
-const limit = 8;
-
-export function usePaginatedUploads(
-  filters: FilterState,
-  initialData?: {
-    uploads: UploadWithDetails[];
-    nextCursor: string | null;
-  },
-) {
-  const queryString = new URLSearchParams({
-    limit: limit.toString(),
-    searchText: filters.searchText || "",
-    sortBy: filters.sortBy || "newest",
-    platform: filters.platform || "",
-    releaseYear: filters.releaseYear?.toString() || "",
-    isFavorited: filters.isFavorited ? "1" : "",
-    tags: filters.tags.join(",") || "",
-  }).toString();
-
-  const getKey = (_: number, previousPageData: UploadsResponse | null) => {
+export function usePaginatedUploads(filters: FilterState) {
+  const getKey = (
+    pageIndex: number,
+    previousPageData: UploadsResponse | null,
+  ) => {
     if (previousPageData && !previousPageData.nextCursor) return null;
+
+    const limit = pageIndex === 0 ? 20 : 10;
     const cursor = previousPageData?.nextCursor;
+
+    const queryString = new URLSearchParams({
+      limit: limit.toString(),
+      searchText: filters.searchText || "",
+      sortBy: filters.sortBy || "newest",
+      platform: filters.platform || "",
+      releaseYear: filters.releaseYear?.toString() || "",
+      isFavorited: filters.isFavorited ? "1" : "",
+      tags: filters.tags.join(",") || "",
+    }).toString();
+
     return `/api/filtered-uploads?${queryString}${cursor ? `&cursor=${cursor}` : ""}`;
   };
 
   const { data, size, setSize, isValidating, error } =
     useSWRInfinite<UploadsResponse>(getKey, fetcher, {
       revalidateOnFocus: false,
-      fallbackData: initialData ? [initialData] : undefined,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000,
+      keepPreviousData: true,
     });
 
-  const previousQueryRef = useRef(queryString);
+  const previousQueryRef = useRef("");
   const previousUploadsRef = useRef<UploadWithDetails[]>([]);
 
-  if (previousQueryRef.current !== queryString) {
+  // Generar una clave única para detectar cambios en filtros
+  const currentQueryKey = JSON.stringify(filters);
+
+  if (previousQueryRef.current !== currentQueryKey) {
     previousUploadsRef.current = [];
-    previousQueryRef.current = queryString;
+    previousQueryRef.current = currentQueryKey;
   }
 
   useEffect(() => {
     setSize(1);
-  }, [queryString, setSize]);
+  }, [currentQueryKey, setSize]);
 
   const uploads = data?.flatMap((page) => page.uploads) ?? [];
 
@@ -72,7 +75,7 @@ export function usePaginatedUploads(
     isLoadingInitial,
     isLoadingMore,
     isReachingEnd,
-    limit,
+    limit: 20, // Para mostrar que la primera carga es de 20
     loadMore: () => setSize(size + 1),
     error,
   };

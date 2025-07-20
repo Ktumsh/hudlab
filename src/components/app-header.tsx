@@ -23,7 +23,14 @@ interface AppHeaderProps {
   suggestionsPromise: Promise<SearchSuggestion[]>;
 }
 
-const PAGES_TO_HIDE = ["/auth/login", "/auth/signup", "/auth/forgot-password"];
+const PAGES_TO_HIDE = [
+  "/auth/login",
+  "/auth/signup",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/account-deleted",
+];
 
 const AppHeader = ({
   filterOptionsPromise,

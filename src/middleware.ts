@@ -5,6 +5,7 @@ import { auth } from "./app/auth/auth";
 const PUBLIC_AUTH_ROUTES = [
   "/auth/login",
   "/auth/signup",
+  "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-email",
   "/auth/account-deleted",
@@ -41,5 +42,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/auth/(login|signup|reset-password|verify-email|account-deleted)"],
+  matcher: [
+    "/auth/(login|signup|forgot-password|reset-password|verify-email|account-deleted)",
+  ],
 };

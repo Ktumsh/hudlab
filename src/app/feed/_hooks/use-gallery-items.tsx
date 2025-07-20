@@ -2,28 +2,12 @@
 
 import { useMemo, useRef } from "react";
 
+import { aspectRatios } from "@/lib";
+
 import type {
   UploadWithDetails,
   UploadWithProfileAndAspect,
 } from "@/lib/types";
-
-const aspectRatios = [
-  "aspect-3/4",
-  "aspect-4/5",
-  "aspect-2/3",
-  "aspect-3/5",
-  "aspect-9/16",
-  "aspect-3/4",
-  "aspect-4/5",
-  "aspect-1/1",
-  "aspect-5/6",
-  "aspect-6/5",
-  "aspect-4/3",
-  "aspect-3/2",
-  "aspect-5/3",
-  "aspect-2/5",
-  "aspect-1/2",
-];
 
 type GalleryItem =
   | { type: "upload"; id: string; upload: UploadWithProfileAndAspect }

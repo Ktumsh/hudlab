@@ -26,7 +26,7 @@ import FooterForm from "../_components/footer-form";
 import LastSessionButton from "../_components/last-session-button";
 import SocialButtons from "../_components/social-buttons";
 import SubmitButton from "../_components/submit-button";
-import { useSignupForm } from "../_hooks/use-signup-form";
+import { useAuthForm } from "../_hooks/use-auth-form";
 import { signup } from "../actions";
 
 const SignupForm = () => {
@@ -35,7 +35,7 @@ const SignupForm = () => {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  const { setEmail, setStep: setFormStep } = useSignupForm();
+  const { setEmail, setStep: setFormStep } = useAuthForm();
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -151,7 +151,7 @@ const SignupForm = () => {
                       <Input
                         {...field}
                         type="text"
-                        placeholder="Tu correo"
+                        placeholder="Ingresa tu correo"
                         isAuth
                       />
                     </FormControl>
@@ -174,7 +174,7 @@ const SignupForm = () => {
                         <Input
                           {...field}
                           type="text"
-                          placeholder="Tu nombre"
+                          placeholder="Ingresa tu nombre"
                           autoComplete="new-name"
                           isAuth
                         />
@@ -195,7 +195,7 @@ const SignupForm = () => {
                         <Input
                           {...field}
                           type={isVisiblePassword ? "text" : "password"}
-                          placeholder="Tu contraseña"
+                          placeholder="••••••••"
                           autoComplete="new-password"
                           isAuth
                         />

@@ -4,7 +4,7 @@ import AppFooter from "@/components/app-footer";
 import AppHeader from "@/components/app-header";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
-import { dmSans } from "@/config/font.config";
+import { inter } from "@/config/font.config";
 import { metadataConfig } from "@/config/metadata.config";
 import {
   getFilterOptions,
@@ -37,7 +37,7 @@ export default function RootLayout({
 
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={cn(dmSans.variable, "antialiased")}>
+      <body className={cn(inter.variable, "antialiased")}>
         <Providers>
           <SessionTracker />
           <AppHeader

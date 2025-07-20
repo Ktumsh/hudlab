@@ -35,6 +35,7 @@ export default function EmailTemplate({
   unsubscribeUrl,
 }: EmailTemplateProps) {
   const config = EMAIL_CONFIGS[type];
+  const isPasswordReset = type === "password-reset";
 
   const formatVerificationCode = (code: string) => {
     return code.split("").join(" ");
@@ -49,7 +50,7 @@ export default function EmailTemplate({
           {/* Header Section */}
           <Section style={header}>
             <Row>
-              <Column align="center">
+              <Column align="left">
                 <Img
                   src={companyLogo}
                   width="120"
@@ -57,14 +58,13 @@ export default function EmailTemplate({
                   alt="HUDLab"
                   style={logo}
                 />
-                <Heading style={headerTitle}>{config.title}</Heading>
+                <Heading style={headerTitle}>¡Hola, {username}!</Heading>
               </Column>
             </Row>
           </Section>
 
           {/* Content Section */}
           <Section style={content}>
-            <Text style={greeting}>¡Hola, {username}!</Text>
             <Text style={description}>{config.description}</Text>
 
             {/* Custom Content */}
@@ -74,16 +74,18 @@ export default function EmailTemplate({
               </Section>
             )}
 
-            {/* Verification Code Section */}
-            <Section style={verificationSection}>
-              <Text style={verificationLabel}>CÓDIGO DE VERIFICACIÓN</Text>
-              <Text style={verificationCodeStyle}>
-                {formatVerificationCode(verificationCode)}
-              </Text>
-              <Text style={verificationNote}>
-                Ingresa este código en la aplicación
-              </Text>
-            </Section>
+            {/* Verification Code Section - Solo para tipos que no sean password-reset */}
+            {!isPasswordReset && (
+              <Section style={verificationSection}>
+                <Text style={verificationLabel}>CÓDIGO DE VERIFICACIÓN</Text>
+                <Text style={verificationCodeStyle}>
+                  {formatVerificationCode(verificationCode)}
+                </Text>
+                <Text style={verificationNote}>
+                  Ingresa este código en la aplicación
+                </Text>
+              </Section>
+            )}
 
             {/* Action Button */}
             {actionUrl && (
@@ -94,18 +96,33 @@ export default function EmailTemplate({
               </Section>
             )}
 
-            {/* Expiration Notice */}
-            <Section style={expirationSection}>
-              <Text style={expirationText}>
-                <strong>⏰ Importante:</strong> Este código expirará en{" "}
-                {expirationTime}. Si no lo usas dentro de este tiempo, deberás
-                solicitar uno nuevo.
-              </Text>
-            </Section>
+            {/* Fallback Link Section */}
+            {actionUrl && (
+              <Section style={fallbackLinkSection}>
+                <Text style={fallbackText}>
+                  ¿No funciona el botón? Copia y pega este enlace:
+                </Text>
+                <Text style={fallbackLink}>
+                  <Link href={actionUrl} style={linkStyle}>
+                    {actionUrl}
+                  </Link>
+                </Text>
+              </Section>
+            )}
           </Section>
 
           {/* Footer Section */}
           <Section style={footer}>
+            {/* Expiration Notice */}
+            <Section style={expirationSection}>
+              <Text style={expirationText}>
+                <strong>Importante:</strong> Este{" "}
+                {isPasswordReset ? "enlace" : "código"} expirará en{" "}
+                {expirationTime}. Si no lo usas dentro de este tiempo, deberás
+                solicitar uno nuevo.
+              </Text>
+            </Section>
+
             {config.footerText && (
               <Text style={footerText}>{config.footerText}</Text>
             )}
@@ -134,7 +151,7 @@ export default function EmailTemplate({
 
             <Hr style={hr} />
 
-            <Text style={brandName}>HUDLab</Text>
+            <Text style={brandName}>HUDLab ©2025</Text>
             <Text style={brandTagline}>
               La comunidad definitiva para diseñadores de HUDs
             </Text>
@@ -147,55 +164,46 @@ export default function EmailTemplate({
 
 // Estilos usando objetos JavaScript (React Email style)
 const main = {
-  backgroundColor: "#f9fafb",
+  backgroundColor: "#fff",
   fontFamily:
     "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 };
 
 const container = {
   margin: "0 auto",
-  padding: "20px 0",
-  maxWidth: "600px",
-  backgroundColor: "#ffffff",
-  borderRadius: "12px",
+  maxWidth: "780px",
+  backgroundColor: "#000000",
   boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
   overflow: "hidden",
 };
 
 const header = {
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  padding: "32px 24px",
-  textAlign: "center" as const,
+  padding: "80px 80px 0px 80px",
+  textAlign: "left" as const,
   position: "relative" as const,
 };
 
 const logo = {
-  margin: "0 auto 16px auto",
+  width: "88px",
+  height: "88px",
+  margin: "0 auto 16px 0",
   display: "block",
 };
 
 const headerTitle = {
   color: "#ffffff",
-  fontSize: "28px",
+  fontSize: "36px",
   fontWeight: "700",
   margin: "0",
-  textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
 };
 
 const content = {
-  padding: "40px 32px",
-};
-
-const greeting = {
-  fontSize: "18px",
-  fontWeight: "600",
-  color: "#111827",
-  margin: "0 0 24px 0",
+  padding: "20px 80px 80px 80px",
 };
 
 const description = {
-  fontSize: "16px",
-  color: "#4b5563",
+  fontSize: "18px",
+  color: "#d6d6d6",
   margin: "0 0 32px 0",
   lineHeight: "1.7",
 };
@@ -216,8 +224,8 @@ const customContentText = {
 };
 
 const verificationSection = {
-  background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
-  border: "2px dashed #9ca3af",
+  background: "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
+  border: "2px dashed #374151",
   borderRadius: "12px",
   padding: "24px",
   textAlign: "center" as const,
@@ -227,7 +235,7 @@ const verificationSection = {
 const verificationLabel = {
   fontSize: "14px",
   fontWeight: "500",
-  color: "#6b7280",
+  color: "#9ca3af",
   margin: "0 0 8px 0",
   textTransform: "uppercase" as const,
   letterSpacing: "0.5px",
@@ -236,55 +244,54 @@ const verificationLabel = {
 const verificationCodeStyle = {
   fontSize: "32px",
   fontWeight: "700",
-  color: "#1f2937",
+  color: "#67e8f9",
   fontFamily: "'Courier New', monospace",
   letterSpacing: "8px",
   margin: "8px 0",
-  textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+  textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
 };
 
 const verificationNote = {
   fontSize: "12px",
-  color: "#9ca3af",
+  color: "#6b7280",
   margin: "8px 0 0 0",
 };
 
 const buttonSection = {
+  backgroundColor: "#141414",
+  padding: "32px 16px",
   textAlign: "center" as const,
-  margin: "24px 0",
+  margin: "24px 0 0 0",
 };
 
 const button = {
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  color: "#ffffff",
+  background: "linear-gradient(90deg, #67e8f9 0%, #38bdf8 100%)",
+  color: "#083344",
   textDecoration: "none",
   padding: "16px 32px",
   borderRadius: "8px",
   fontWeight: "600",
-  fontSize: "16px",
+  fontSize: "18px",
   display: "inline-block",
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+  border: "none",
 };
 
 const expirationSection = {
-  backgroundColor: "#fef3c7",
-  borderLeft: "4px solid #f59e0b",
+  backgroundColor: "#fff",
   padding: "16px",
-  borderRadius: "6px",
-  margin: "24px 0",
+  margin: "0 0 32px 0",
 };
 
 const expirationText = {
-  color: "#92400e",
-  fontSize: "14px",
+  color: "#374151",
+  fontSize: "16px",
   margin: "0",
 };
 
 const footer = {
-  backgroundColor: "#f9fafb",
-  padding: "32px 24px",
+  backgroundColor: "#fff",
+  padding: "32px 0",
   textAlign: "center" as const,
-  borderTop: "1px solid #e5e7eb",
 };
 
 const footerText = {
@@ -320,4 +327,28 @@ const brandTagline = {
   fontSize: "12px",
   color: "#9ca3af",
   margin: "0",
+};
+
+const fallbackLinkSection = {
+  padding: "24px 0",
+  margin: "16px 0",
+  textAlign: "center" as const,
+};
+
+const fallbackText = {
+  fontSize: "18px",
+  color: "#d6d6d6",
+  margin: "0 0 8px 0",
+  fontWeight: "400",
+};
+
+const fallbackLink = {
+  fontSize: "16px",
+  margin: "0",
+  wordBreak: "break-all" as const,
+};
+
+const linkStyle = {
+  color: "#67e8f9",
+  textDecoration: "underline",
 };

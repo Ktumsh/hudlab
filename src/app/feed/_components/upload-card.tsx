@@ -1,17 +1,10 @@
 "use client";
 
-import {
-  IconDots,
-  IconHeart,
-  IconMessageCircle,
-  IconStar,
-  IconStarFilled,
-} from "@tabler/icons-react";
+import { IconDots, IconStar, IconStarFilled } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,10 +19,8 @@ interface UploadCardProps {
 }
 
 const UploadCard = ({ upload }: UploadCardProps) => {
-  const displayName = upload.profile.displayName || upload.profile.username;
-  const avatarFallback = displayName.charAt(0).toUpperCase();
-
   const router = useRouter();
+
   const { elementRef, isHovered } = useForceHover();
 
   const [favorite, setFavorite] = useState(false);
@@ -79,7 +70,7 @@ const UploadCard = ({ upload }: UploadCardProps) => {
           style={{ willChange: "opacity" }}
         >
           <CardContent className="flex flex-1 flex-col gap-4 p-4">
-            <div className="absolute top-3 right-3 flex gap-2">
+            <div className="absolute top-3 right-3 z-10 flex gap-2">
               <BetterTooltip
                 content={
                   favorite ? "Quitar de favoritos" : "Añadir a favoritos"
@@ -102,47 +93,15 @@ const UploadCard = ({ upload }: UploadCardProps) => {
               </BetterTooltip>
             </div>
             <div className="absolute right-0 bottom-0 left-0 p-4">
-              <h3 className="mb-2 truncate text-lg font-semibold text-white drop-shadow-lg">
+              <h3 className="mb-2 truncate font-semibold text-white drop-shadow-lg">
                 {upload.title}
               </h3>
 
               {upload.description && (
-                <p className="mb-3 line-clamp-2 text-sm text-white/90 drop-shadow">
+                <p className="line-clamp-2 text-sm text-white/90 drop-shadow">
                   {upload.description}
                 </p>
               )}
-
-              {/* Información del autor */}
-              <div className="flex items-end justify-between">
-                <div className="flex items-center gap-2">
-                  <Avatar className="border-content-muted border-2">
-                    <AvatarImage src={upload.profile.avatarUrl || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {avatarFallback}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="truncate text-sm font-medium text-white drop-shadow">
-                      {displayName}
-                    </p>
-                    <p className="text-xs text-white/80 drop-shadow">
-                      @{upload.profile.username}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center gap-3 text-white/90">
-                  <div className="flex items-center gap-1">
-                    <IconHeart className="size-4" />
-                    <span className="text-sm">{upload.likesCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <IconMessageCircle className="size-4" />
-                    <span className="text-sm">{upload.commentsCount}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </CardContent>
         </div>

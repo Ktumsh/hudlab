@@ -32,12 +32,14 @@ const MasonryGrid = ({
 }: MasonryGridProps) => {
   const isMobile = useIsMobile();
 
+  const feedSkeletonCount = initialLoading ? 20 : 10;
+
   const galleryItems = useGalleryItems(
     uploads ?? [],
     loading ?? false,
     initialLoading ?? false,
     isReachingEnd ?? true,
-    8,
+    feedSkeletonCount,
   );
 
   const relatedItems = useGalleryItems(
@@ -45,17 +47,15 @@ const MasonryGrid = ({
     loading ?? false,
     initialLoading ?? false,
     isReachingEnd ?? true,
-    8,
+    10,
   );
 
-  // Feed: usa el hook y los props originales
   if (layout === "feed" && uploads) {
     return (
       <Masonry
         items={galleryItems}
         columnWidth={isMobile ? 160 : 240}
         columnGutter={isMobile ? 4 : 20}
-        overscanBy={3}
         render={({ data }) => {
           if (data.type === "upload") {
             return <UploadCard upload={data.upload} />;
@@ -69,14 +69,12 @@ const MasonryGrid = ({
     );
   }
 
-  // Detalles: recibe los items ya preparados
   if (layout === "details" && relatedUploads) {
     return (
       <Masonry
         items={relatedItems}
         columnWidth={isMobile ? 160 : 240}
         columnGutter={isMobile ? 4 : 20}
-        overscanBy={3}
         render={({ data }) => {
           if (data.type === "upload") {
             return <UploadCard upload={data.upload} />;

@@ -9,24 +9,15 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import FooterStatus from "./footer-status";
 import { usePaginatedUploads } from "../_hooks/use-paginated-uploads";
 
-import type { UploadWithDetails } from "@/lib/types";
-
 const MasonryGrid = dynamic(() => import("./masonry-grid"), {
   ssr: false,
 });
 
-interface GalleryFeedProps {
-  initialData?: {
-    uploads: UploadWithDetails[];
-    nextCursor: string | null;
-  };
-}
-
-const GalleryFeed = ({ initialData }: GalleryFeedProps) => {
+const GalleryFeed = () => {
   const { filters, setFilters } = useFilters();
 
   const { uploads, loadMore, isLoadingInitial, isLoadingMore, isReachingEnd } =
-    usePaginatedUploads(filters, initialData);
+    usePaginatedUploads(filters);
 
   useInfiniteScroll({
     disabled: isLoadingInitial || isLoadingMore || isReachingEnd,

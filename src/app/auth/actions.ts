@@ -5,7 +5,7 @@ import {
   getVerificationCode,
   insertEmailSendsCode,
   updateEmailSends,
-  verifyResetToken,
+  verifyResetToken as verifyResetTokenDB,
 } from "@/db/querys/email-querys";
 import {
   createUser,
@@ -164,7 +164,7 @@ export async function verifyCode(
     return {
       success: true,
       message,
-      token, // <-- 🔥 ahora sí
+      token,
     };
   } catch (error) {
     console.error("Error al verificar el código:", error);
@@ -191,7 +191,7 @@ export async function onSendEmail(
   payload: Payload,
 ): Promise<{ status: boolean; message: string }> {
   try {
-    const isPasswordRecovery = actionType === "password_recovery";
+    const isPasswordRecovery = actionType === "reset_password";
     const basePayload = payload as EmailBasePayload;
     const changePayload = payload as EmailChangePayload;
 
@@ -208,42 +208,69 @@ export async function onSendEmail(
 
     const user = await getUserByEmail(emailToCheck);
 
-    if (!user) {
-      return {
-        status: false,
-        message: resultMessages.EMAIL_INVALID,
-      };
-    }
+    // Para reset de contraseña, usar timing-safe comparison para evitar ataques de enumeración
+    if (isPasswordRecovery) {
+      // Simular delay para evitar timing attacks
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.random() * 100 + 50),
+      );
 
-    if (isPasswordRecovery && user.status === "disabled") {
-      return {
-        status: false,
-        message: resultMessages.EMAIL_DISABLED,
-      };
-    }
+      if (!user) {
+        // Retornar éxito incluso si el usuario no existe para evitar enumeración de usuarios
+        return {
+          status: true,
+          message: resultMessages.EMAIL_SENT,
+        };
+      }
 
-    if (!isPasswordRecovery && user.email === changePayload.newEmail) {
-      return {
-        status: false,
-        message: resultMessages.EMAIL_SAME,
-      };
+      if (user.status === "disabled") {
+        return {
+          status: false,
+          message: resultMessages.EMAIL_DISABLED,
+        };
+      }
+    } else {
+      if (!user) {
+        return {
+          status: false,
+          message: resultMessages.EMAIL_INVALID,
+        };
+      }
+
+      if (user.email === changePayload.newEmail) {
+        return {
+          status: false,
+          message: resultMessages.EMAIL_SAME,
+        };
+      }
     }
 
     const userId = user.id;
-    const code = generateVerificationCode();
+    const code = isPasswordRecovery ? "" : generateVerificationCode();
 
-    const token = await insertEmailSendsCode(userId, code, actionType);
+    const token = await insertEmailSendsCode(
+      userId,
+      code || generateVerificationCode(),
+      actionType,
+    );
 
-    const emailResult = await sendEmailAction(actionType, {
-      code,
-      token,
-      ...(actionType === "password_recovery"
-        ? { email: basePayload.email }
-        : {
-            currentEmail: changePayload.currentEmail,
-            newEmail: changePayload.newEmail,
-          }),
-    });
+    const emailPayload = isPasswordRecovery
+      ? {
+          email: basePayload.email,
+          token,
+        }
+      : {
+          code,
+          token,
+          ...(actionType === "email_change"
+            ? {
+                currentEmail: changePayload.currentEmail,
+                newEmail: changePayload.newEmail,
+              }
+            : { email: basePayload.email }),
+        };
+
+    const emailResult = await sendEmailAction(actionType, emailPayload);
 
     if (!emailResult) {
       return {
@@ -266,14 +293,28 @@ export async function onSendEmail(
 }
 
 export async function resetPassword(token: string, newPassword: string) {
-  console.log("Token:", token);
   try {
-    const record = await verifyResetToken(token);
+    const record = await verifyResetTokenDB(token);
 
     if (!record) {
       return {
         type: "error",
         message: resultMessages.TOKEN_INVALID,
+      };
+    }
+
+    const currentDate = new Date();
+    if (currentDate > record.expiresAt) {
+      return {
+        type: "error",
+        message: resultMessages.CODE_EXPIRED,
+      };
+    }
+
+    if (record.verifiedAt) {
+      return {
+        type: "error",
+        message: resultMessages.CODE_ALREADY_USED,
       };
     }
 
@@ -288,6 +329,8 @@ export async function resetPassword(token: string, newPassword: string) {
 
     await updateUserPassword(record.userId, newPassword);
 
+    await updateEmailSends(record.userId, "reset_password");
+
     return {
       type: "success",
       message: resultMessages.PASSWORD_UPDATED,
@@ -297,6 +340,51 @@ export async function resetPassword(token: string, newPassword: string) {
     return {
       type: "error",
       message: resultMessages.PASSWORD_RESET_ERROR,
+    };
+  }
+}
+
+export async function verifyResetToken(token: string) {
+  try {
+    const record = await verifyResetTokenDB(token);
+
+    if (!record) {
+      return {
+        success: false,
+        message: resultMessages.TOKEN_INVALID,
+      };
+    }
+
+    // Verificar que el token no haya expirado
+    const currentDate = new Date();
+    if (currentDate > record.expiresAt) {
+      return {
+        success: false,
+        message: resultMessages.CODE_EXPIRED,
+      };
+    }
+
+    // Verificar que el token no haya sido usado
+    if (record.verifiedAt) {
+      return {
+        success: false,
+        message: resultMessages.CODE_ALREADY_USED,
+      };
+    }
+
+    // Obtener el email del usuario
+    const user = await getUserById(record.userId);
+
+    return {
+      success: true,
+      message: "Token válido",
+      email: user?.email || "",
+    };
+  } catch (error) {
+    console.error("Error al verificar el token:", error);
+    return {
+      success: false,
+      message: resultMessages.CODE_ERROR,
     };
   }
 }

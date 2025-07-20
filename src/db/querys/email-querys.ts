@@ -8,7 +8,7 @@ import { type EmailSend, emailSends } from "../schema";
 
 export type EmailSendsActionType =
   | "email_verification"
-  | "password_recovery"
+  | "reset_password"
   | "email_change";
 
 export async function getVerificationCode(
@@ -49,7 +49,9 @@ export async function insertEmailSendsCode(
   actionType: string,
 ): Promise<string> {
   const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+  // Para reset de contraseña, dar 15 minutos; para otros, 10 minutos
+  const minutesToAdd = actionType === "reset_password" ? 15 : 10;
+  expiresAt.setMinutes(expiresAt.getMinutes() + minutesToAdd);
   const token = nanoid(64);
 
   try {
