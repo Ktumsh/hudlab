@@ -38,6 +38,7 @@ const SessionTracker = () => {
               }
             } catch (e) {
               // If URL parsing fails, leave provider as "credentials"
+              console.error("Error parsing user image URL:", e);
             }
           }
 
