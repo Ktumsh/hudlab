@@ -37,24 +37,26 @@ const CommentItem = ({
   replyReference,
   children,
 }: CommentItemProps) => (
-  <div className="mb-2 flex items-start gap-2">
+  <div className="mb-2 flex items-start gap-2 last:mb-0">
     <Avatar className={expanded ? "size-7 md:size-8" : "size-6 md:size-7"}>
       <AvatarImage src={user.avatarUrl || undefined} />
       <AvatarFallback>{user.displayName.charAt(0)}</AvatarFallback>
     </Avatar>
     <div className="flex-1">
-      <div className="flex gap-2">
-        <span className="text-base-content cursor-pointer text-sm font-semibold hover:underline md:text-base">
+      <div className="flex items-center gap-2">
+        <span className="text-neutral-content cursor-pointer text-sm font-semibold text-nowrap hover:underline md:text-base">
           {user.displayName}
         </span>
+        <span className="text-base-content/60 text-xxs md:text-xs">
+          {formatDateToNow(createdAt)}
+        </span>
+      </div>
+      <div className="flex gap-2">
         {replyReference}
         <p className="text-base-content text-sm md:text-base">{content}</p>
       </div>
       {expanded && (
         <div className="text-xxs flex items-center gap-2 md:text-xs">
-          <span className="text-base-content/60">
-            {formatDateToNow(createdAt)}
-          </span>
           <div className="flex items-center">
             <Button
               variant="ghost"

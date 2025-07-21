@@ -19,7 +19,7 @@ export function usePaginatedUploads(filters: FilterState) {
   ) => {
     if (previousPageData && !previousPageData.nextCursor) return null;
 
-    const limit = pageIndex === 0 ? 20 : 10;
+    const limit = pageIndex === 0 ? 30 : 10;
     const cursor = previousPageData?.nextCursor;
 
     const queryString = new URLSearchParams({
@@ -28,7 +28,7 @@ export function usePaginatedUploads(filters: FilterState) {
       sortBy: filters.sortBy || "newest",
       platform: filters.platform || "",
       releaseYear: filters.releaseYear?.toString() || "",
-      isFavorited: filters.isFavorited ? "1" : "",
+      inMyCollections: filters.inMyCollections ? "1" : "",
       tags: filters.tags.join(",") || "",
     }).toString();
 
@@ -39,8 +39,6 @@ export function usePaginatedUploads(filters: FilterState) {
     useSWRInfinite<UploadsResponse>(getKey, fetcher, {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
-      keepPreviousData: true,
     });
 
   const previousQueryRef = useRef("");

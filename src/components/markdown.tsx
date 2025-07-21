@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -14,6 +15,18 @@ const components: Partial<Components> = {
   },
   h3({ children }) {
     return <h3 className="mt-4">{children}</h3>;
+  },
+  a({ children, href }) {
+    return (
+      <Link
+        href={href || "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary hover:text-primary/80 underline"
+      >
+        {children}
+      </Link>
+    );
   },
 };
 

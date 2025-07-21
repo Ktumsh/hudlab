@@ -14,9 +14,9 @@ import { cn } from "@/lib";
 import { SearchSuggestion, FilterOptions } from "@/lib/types";
 
 import Filters from "./filters";
+import Search from "./search/search";
 import { BetterTooltip } from "./ui/tooltip";
 import UserOptions from "./user-options";
-import Search from "../app/feed/_components/search";
 
 interface AppHeaderProps {
   filterOptionsPromise: Promise<FilterOptions>;
@@ -62,7 +62,7 @@ const AppHeader = ({
             tags: [],
             platform: undefined,
             releaseYear: undefined,
-            isFavorited: false,
+            inMyCollections: false,
             sortBy: "newest",
           });
           router.push("/feed");
@@ -101,7 +101,7 @@ const AppHeader = ({
             <Button
               size="icon-lg"
               onClick={() => router.back()}
-              className="text-base-300 border-0 bg-white/80"
+              className="text-base-300 mb-1 border-0 bg-white/80"
             >
               <IconChevronLeft className="-ms-0.5 size-7" />
               <span className="sr-only">Volver</span>

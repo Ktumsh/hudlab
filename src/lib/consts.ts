@@ -37,7 +37,7 @@ export const DEFAULT_FILTERS: FilterState = {
   tags: [],
   platform: "none",
   releaseYear: "none",
-  isFavorited: false,
+  inMyCollections: false,
   sortBy: "newest",
 };
 

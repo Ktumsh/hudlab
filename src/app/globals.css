@@ -46,6 +46,15 @@
   scrollbar-width: thin;
 }
 
+@utility scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari and Chrome */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @utility transition-inherit-all {
   transition-property: inherit;
   transition-duration: inherit;

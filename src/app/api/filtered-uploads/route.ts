@@ -14,10 +14,8 @@ export async function GET(req: NextRequest) {
       searchText: searchParams.get("searchText") || "",
       sortBy: (searchParams.get("sortBy") as FilterState["sortBy"]) || "newest",
       platform: searchParams.get("platform") || undefined,
-      releaseYear: searchParams.get("releaseYear")
-        ? parseInt(searchParams.get("releaseYear")!)
-        : undefined,
-      isFavorited: searchParams.get("isFavorited") === "1",
+      releaseYear: searchParams.get("releaseYear") || undefined,
+      inMyCollections: searchParams.get("inMyCollections") === "1",
       tags: searchParams.get("tags")
         ? searchParams
             .get("tags")!

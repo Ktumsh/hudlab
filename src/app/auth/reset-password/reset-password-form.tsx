@@ -17,8 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib";
 import { resetPasswordSchema, ResetPasswordData } from "@/lib/form-schemas";
-import { cn } from "@/lib/utils";
 
 import BackToLoginButton from "../_components/back-to-login-button";
 import SubmitButton from "../_components/submit-button";

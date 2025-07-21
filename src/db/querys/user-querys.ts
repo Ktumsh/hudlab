@@ -2,7 +2,7 @@
 
 import { createAvatar } from "@dicebear/core";
 import * as funEmojis from "@dicebear/fun-emoji";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 import { generateHashedPassword } from "@/lib/utils";
 
@@ -249,6 +249,33 @@ export async function getExistingUsernamesStartingWith(
     return usernames.map((u) => u.username);
   } catch (error) {
     console.error("Error al obtener los nombres de usuario existentes:", error);
+    throw error;
+  }
+}
+
+export async function searchUsers(query: string, limit: number = 10) {
+  try {
+    const searchText = query.trim().toLowerCase();
+    if (!searchText) return [];
+
+    const users = await db.query.profiles.findMany({
+      where: (p, { or }) =>
+        or(
+          sql`unaccent(lower(${p.displayName})) LIKE unaccent(lower(${"%" + searchText + "%"}))`,
+          sql`unaccent(lower(${p.username})) LIKE unaccent(lower(${"%" + searchText + "%"}))`,
+        ),
+      columns: {
+        id: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+      },
+      limit,
+    });
+
+    return users;
+  } catch (error) {
+    console.error("Error al buscar usuarios:", error);
     throw error;
   }
 }

@@ -1,4 +1,12 @@
-import type { Game, Profile, Upload, User } from "@/db/schema";
+import type {
+  Game,
+  Profile,
+  Upload,
+  User,
+  Collection,
+  CollectionItem,
+  UploadImage,
+} from "@/db/schema";
 
 export interface ApplicationError extends Error {
   info: string;
@@ -41,22 +49,42 @@ export interface UploadWithFullDetails extends Upload {
   profile: Profile;
   game: Game;
   comments: CommentWithRelations[];
+  images: UploadImage[];
 }
 
 export interface UploadWithDetails extends Upload {
   profile: Profile;
   game: Game;
+  images: UploadImage[];
 }
 
 export interface UploadWithProfileAndAspect extends UploadWithDetails {
   aspectRatio: string;
+}
+
+// ─────────────────────────────
+// 🗂️ COLLECTION TYPES
+// ─────────────────────────────
+
+export interface CollectionWithDetails extends Collection {
+  profile: Profile;
+  items: CollectionItemWithUpload[];
+}
+
+export interface CollectionItemWithUpload extends CollectionItem {
+  upload: UploadWithDetails;
+}
+
+export interface CollectionPreview extends Collection {
+  profile: Profile;
+  previewUploads: UploadWithDetails[];
 }
 export interface FilterState {
   searchText: string;
   tags: string[];
   platform: string | undefined;
   releaseYear: string | number | undefined;
-  isFavorited: boolean;
+  inMyCollections: boolean;
   sortBy: "newest" | "oldest" | "popular";
 }
 
@@ -81,4 +109,11 @@ export interface SearchSuggestion {
   imageUrl: string;
   category: string;
   publicId: number;
+}
+
+export interface UserSearchResult {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
 }

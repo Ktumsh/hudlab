@@ -8,7 +8,7 @@ interface UploadSkeletonProps {
 
 const UploadSkeleton = ({ aspectRatio }: UploadSkeletonProps) => {
   return (
-    <div data-masonry-item data-skeleton>
+    <div>
       <Card className="overflow-hidden py-0">
         <Skeleton className={cn("w-full", aspectRatio)} />
       </Card>

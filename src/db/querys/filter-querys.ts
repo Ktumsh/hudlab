@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, isNotNull, eq, inArray } from "drizzle-orm";
+import { desc, isNotNull } from "drizzle-orm";
 
 import { db } from "../db";
 import { uploads, games } from "../schema";
@@ -47,37 +47,25 @@ export async function getFilterOptions(): Promise<FilterOptions> {
 
 export async function getSearchSuggestions(): Promise<SearchSuggestion[]> {
   try {
-    const popularUploads = await db
-      .select({
-        id: uploads.id,
-        title: uploads.title,
-        imageUrl: uploads.imageUrl,
-        gameId: uploads.gameId,
-        publicId: uploads.publicId,
-      })
-      .from(uploads)
-      .orderBy(desc(uploads.createdAt))
-      .limit(12);
-
-    const gameIds = popularUploads.map((u) => u.gameId).filter(Boolean);
-    let gameNames: Record<string, string> = {};
-    if (gameIds.length > 0) {
-      const gamesResult = await db
-        .select({ id: games.id, name: games.name })
-        .from(games)
-        .where(
-          gameIds.length === 1
-            ? eq(games.id, gameIds[0])
-            : inArray(games.id, gameIds),
-        );
-      gameNames = Object.fromEntries(gamesResult.map((g) => [g.id, g.name]));
-    }
+    const popularUploads = await db.query.uploads.findMany({
+      orderBy: [desc(uploads.createdAt)],
+      limit: 12,
+      with: {
+        images: {
+          where: (uploadImages, { eq }) => eq(uploadImages.isMain, true),
+          limit: 1,
+        },
+        game: {
+          columns: { name: true },
+        },
+      },
+    });
 
     return popularUploads.map((upload) => ({
       id: upload.id,
       title: upload.title,
-      imageUrl: upload.imageUrl,
-      category: gameNames[upload.gameId] || "HUD",
+      imageUrl: upload.images[0]?.imageUrl || "/placeholder-image.jpg",
+      category: upload.game?.name || "HUD",
       publicId: upload.publicId,
     }));
   } catch (error) {

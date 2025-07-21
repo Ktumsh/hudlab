@@ -2,10 +2,10 @@
 
 import dynamic from "next/dynamic";
 
-import { Button } from "@/components/ui/button";
 import { useFilters } from "@/hooks/use-filters";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
+import EmptyState from "./empty-state";
 import FooterStatus from "./footer-status";
 import { usePaginatedUploads } from "../_hooks/use-paginated-uploads";
 
@@ -25,30 +25,19 @@ const GalleryFeed = () => {
   });
 
   if (uploads.length === 0 && !isLoadingInitial) {
+    const baseFilters = {
+      searchText: "",
+      tags: [],
+      platform: undefined,
+      releaseYear: undefined,
+      inMyCollections: false,
+    };
+
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-4 text-6xl">🎮</div>
-        <h3 className="mb-2 text-xl font-semibold">No hay HUDs disponibles</h3>
-        <p className="text-muted-foreground max-w-md text-center">
-          No hemos encontrado HUDs que coincidan con tu búsqueda. Intenta
-          ajustar los filtros o buscar por otro término.
-        </p>
-        <Button
-          outline
-          onClick={() => {
-            setFilters({
-              searchText: "",
-              tags: [],
-              platform: undefined,
-              releaseYear: undefined,
-              isFavorited: false,
-              sortBy: "newest",
-            });
-          }}
-        >
-          Limpiar filtros
-        </Button>
-      </div>
+      <EmptyState
+        onClearFilters={() => setFilters({ ...baseFilters, sortBy: "newest" })}
+        onShowPopular={() => setFilters({ ...baseFilters, sortBy: "popular" })}
+      />
     );
   }
 

@@ -18,6 +18,7 @@ interface CommentFieldProps {
   onSave: () => void;
   actionButtonText?: string;
   placeholder?: string;
+  isLoading?: boolean;
 }
 
 const CommentField = ({
@@ -31,6 +32,7 @@ const CommentField = ({
   onSave,
   actionButtonText = "Enviar",
   placeholder = "Responder...",
+  isLoading = false,
 }: CommentFieldProps) => {
   return (
     <div className="relative mt-2 flex flex-col gap-2">
@@ -60,12 +62,12 @@ const CommentField = ({
           Cancelar
         </Button>
         <Button
-          disabled={!value.trim()}
+          disabled={!value.trim() || isLoading}
           size="sm"
           variant="primary"
           onClick={onSave}
         >
-          {actionButtonText}
+          {isLoading ? "Guardando..." : actionButtonText}
         </Button>
       </div>
     </div>

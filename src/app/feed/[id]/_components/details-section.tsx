@@ -7,39 +7,74 @@ import {
   IconStar,
   IconStarFilled,
 } from "@tabler/icons-react";
-import Image from "next/image";
+import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BetterTooltip } from "@/components/ui/tooltip";
+import UserAvatar from "@/components/user-avatar";
+import { useExpandableText } from "@/hooks/use-expandable-text";
+import { useFilters } from "@/hooks/use-filters";
+import { useInteractions } from "@/hooks/use-interactions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUser } from "@/hooks/use-user";
 
 import CommentsBox from "./comments-box";
 import GameInfoSection from "./game-info-section";
+import ImageCarousel from "./image-carousel";
 import UnauthenticatedComments from "./unauthenticated-comments";
-import { mapComment } from "../../_lib/utils";
 
 import type { UploadWithDetails, UploadWithFullDetails } from "@/lib/types";
 
 interface DetailsSectionProps {
   upload: UploadWithDetails;
+  initialLiked?: boolean;
 }
 
-const DetailsSection = ({ upload }: DetailsSectionProps) => {
+const DetailsSection = ({
+  upload,
+  initialLiked = false,
+}: DetailsSectionProps) => {
   const displayName = upload.profile.displayName || upload.profile.username;
-  const avatarFallback = displayName.charAt(0).toUpperCase();
 
   const [favorite, setFavorite] = useState(false);
-  const [liked, setLiked] = useState(false);
-
   const [openComments, setOpenComments] = useState(false);
 
   const isMobile = useIsMobile();
-
   const { user } = useUser();
+  const router = useRouter();
+  const { setFilters } = useFilters();
+
+  const {
+    isLiked,
+    likesCount,
+    commentsCount,
+    isCommentLoading,
+    handleToggleLike,
+    updateCommentsCount,
+  } = useInteractions({
+    uploadId: upload.id,
+    initialLiked: initialLiked,
+    initialLikesCount: upload.likesCount || 0,
+    initialCommentsCount: upload.commentsCount || 0,
+  });
+
+  const {
+    contentRef: descriptionRef,
+    isExpanded: isDescriptionExpanded,
+    showExpandButton: showDescriptionExpandButton,
+    contentHeight: descriptionHeight,
+    toggleExpanded: toggleDescriptionExpanded,
+  } = useExpandableText(upload.description, {
+    collapsedHeight: 24,
+  });
+
+  const adjustedDescriptionHeight =
+    isDescriptionExpanded && showDescriptionExpandButton
+      ? descriptionHeight + 32
+      : descriptionHeight;
 
   const scrollToComments = () => {
     const el = document.getElementById("comments-box");
@@ -49,26 +84,36 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
     }
   };
 
+  const handleToggleDescription = () => {
+    toggleDescriptionExpanded();
+  };
+
+  const handleTagClick = (tag: string) => {
+    const cleanTag = tag.trim();
+
+    setFilters({
+      searchText: cleanTag, // Sin # para que la búsqueda funcione
+      tags: [cleanTag],
+      platform: undefined,
+      releaseYear: undefined,
+      inMyCollections: false,
+      sortBy: "newest",
+    });
+
+    // Redirigir al feed
+    router.push("/feed");
+  };
+
   const favoriteTooltip = favorite
-    ? "Quitar de favoritos"
-    : "Añadir a favoritos";
-
-  const currentUserId = undefined;
-
-  const mappedComments = Array.isArray(
-    (upload as UploadWithFullDetails).comments,
-  )
-    ? (upload as UploadWithFullDetails).comments.map((c) =>
-        mapComment(c, currentUserId),
-      )
-    : [];
+    ? "Quitar de colecciones"
+    : "Añadir a colección";
 
   return (
     <>
-      <article className="bg-base-100 relative gap-0 p-0">
+      <article className="bg-base-100 relative z-2 gap-0 p-0">
         <section className="rounded-box md:border">
           <div className="relative flex flex-col md:mx-4">
-            <div className="bg-base-100 top-20 order-2 flex items-center justify-between gap-2 py-4 pr-3 pl-0.5 md:sticky md:order-0 md:px-0">
+            <div className="bg-base-100 top-20 z-1 order-2 flex items-center justify-between gap-2 py-4 pr-3 pl-0.5 md:sticky md:order-0 md:px-0">
               {user && (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center">
@@ -76,9 +121,9 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
                       <Button
                         variant="ghost"
                         size="icon-lg"
-                        onClick={() => setLiked(!liked)}
+                        onClick={handleToggleLike}
                       >
-                        {liked ? (
+                        {isLiked ? (
                           <IconHeartFilled className="size-6 text-red-500" />
                         ) : (
                           <IconHeart className="size-6" />
@@ -86,7 +131,7 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
                         <span className="sr-only">Me gusta</span>
                       </Button>
                     </BetterTooltip>
-                    <span>{upload.likesCount}</span>
+                    <span>{likesCount}</span>
                   </div>
                   <div className="flex items-center">
                     <BetterTooltip content="Comentar">
@@ -105,7 +150,7 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
                         <span className="sr-only">Comentar</span>
                       </Button>
                     </BetterTooltip>
-                    <span className="md:hidden">{upload.commentsCount}</span>
+                    <span className="md:hidden">{commentsCount}</span>
                   </div>
                 </div>
               )}
@@ -125,44 +170,102 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
                 </Button>
               </BetterTooltip>
             </div>
-            <div className="hidden aspect-3/2 flex-1 place-content-center md:grid">
-              <Image
-                priority
-                src={upload.imageUrl}
-                alt={upload.title}
-                width={900}
-                height={600}
-                className="rounded-box w-auto object-contain"
-              />
-            </div>
-            <Image
-              priority
-              src={upload.imageUrl}
-              alt={upload.title}
-              width={900}
-              height={600}
-              className="rounded-box mt-2 h-full w-auto object-cover md:hidden"
-            />
+            <ImageCarousel images={upload.images} title={upload.title} />
           </div>
           <div className="p-3 pt-0 md:p-4">
             <div className="mb-2 flex items-center gap-2">
-              <Avatar className="border-content-muted size-7 border-2">
-                <AvatarImage src={upload.profile.avatarUrl || undefined} />
-                <AvatarFallback className="text-xs">
-                  {avatarFallback}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar className="border-content-muted size-7 border-2" />
               <p className="text-base-content truncate text-sm font-medium">
                 {displayName}
               </p>
             </div>
-            <h1 className="text-base-content mb-1 text-xl font-bold">
+            <h1 className="text-neutral-content mb-1 text-xl font-bold">
               {upload.title}
             </h1>
             {upload.description && (
-              <p className="text-base-content/80 mb-2 truncate text-base">
-                {upload.description}
-              </p>
+              <div className="mb-2">
+                <motion.div
+                  className="overflow-hidden"
+                  initial={false}
+                  animate={{
+                    height: adjustedDescriptionHeight,
+                  }}
+                  transition={{
+                    duration: 0.3,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <div className="relative">
+                    <motion.div
+                      ref={descriptionRef}
+                      className="overflow-hidden"
+                      initial={false}
+                      animate={{
+                        maxHeight: isDescriptionExpanded
+                          ? descriptionHeight
+                          : 24,
+                      }}
+                      transition={{
+                        duration: 0.3,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <span className="text-base-content/80 block text-base leading-6">
+                        {upload.description}
+                      </span>
+                    </motion.div>
+                    {!isDescriptionExpanded && showDescriptionExpandButton && (
+                      <motion.div
+                        key="expand-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          ease: "easeInOut",
+                          delay: 0.4,
+                        }}
+                        className="to-base-100 pointer-events-none absolute right-14 bottom-0 left-0 h-6 bg-gradient-to-r from-transparent from-80%"
+                      />
+                    )}
+                    {!isDescriptionExpanded && showDescriptionExpandButton && (
+                      <motion.button
+                        key="expand-button"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          ease: "easeInOut",
+                          delay: 0.4,
+                        }}
+                        onClick={handleToggleDescription}
+                        className="text-primary bg-base-100 absolute right-0 bottom-0 pl-2 font-semibold transition-colors hover:underline"
+                      >
+                        ... más
+                      </motion.button>
+                    )}
+                  </div>
+                  <AnimatePresence>
+                    {isDescriptionExpanded && showDescriptionExpandButton && (
+                      <motion.button
+                        key="collapse-button"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          ease: "easeInOut",
+                        }}
+                        onClick={handleToggleDescription}
+                        className="text-primary mt-1 font-semibold transition-colors hover:underline"
+                      >
+                        ... menos
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </div>
             )}
             <div className="mb-2 flex flex-wrap gap-2">
               {upload.tags &&
@@ -171,7 +274,8 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
                 upload.tags.split(",").map((tag: string) => (
                   <span
                     key={tag}
-                    className="bg-base-300 text-base-content/80 rounded-full px-3 py-1 text-xs font-medium"
+                    onClick={() => handleTagClick(tag)}
+                    className="text-info-content cursor-pointer text-sm transition-colors hover:underline"
                   >
                     #{tag.trim()}
                   </span>
@@ -181,10 +285,12 @@ const DetailsSection = ({ upload }: DetailsSectionProps) => {
             {user ? (
               <div id="comments-box" className="mt-3">
                 <CommentsBox
-                  commentCount={upload.commentsCount!}
-                  comments={mappedComments}
+                  upload={upload as UploadWithFullDetails}
+                  commentCount={commentsCount}
                   open={openComments}
                   onOpenChange={setOpenComments}
+                  isLoading={isCommentLoading}
+                  onCommentsCountChange={updateCommentsCount}
                 />
               </div>
             ) : (

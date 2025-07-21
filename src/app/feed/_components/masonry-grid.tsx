@@ -32,7 +32,7 @@ const MasonryGrid = ({
 }: MasonryGridProps) => {
   const isMobile = useIsMobile();
 
-  const feedSkeletonCount = initialLoading ? 20 : 10;
+  const feedSkeletonCount = initialLoading ? 30 : 10;
 
   const galleryItems = useGalleryItems(
     uploads ?? [],

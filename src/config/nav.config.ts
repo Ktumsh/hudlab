@@ -33,8 +33,8 @@ export const navConfig = {
       iconFilled: IconSquareRoundedPlusFilled,
     },
     {
-      title: "Favoritos",
-      href: "/favorites",
+      title: "Colecciones",
+      href: "/collections",
       icon: IconStar,
       iconFilled: IconStarFilled,
     },

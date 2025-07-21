@@ -37,7 +37,7 @@ const Filters = ({ filterOptions, onFilterChange }: FiltersProps) => {
     filters.tags.length > 0 ||
     filters.platform !== "none" ||
     filters.releaseYear !== "none" ||
-    filters.isFavorited ||
+    filters.inMyCollections ||
     filters.sortBy !== "newest";
 
   const updateFilter = useCallback(

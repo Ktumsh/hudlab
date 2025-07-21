@@ -19,7 +19,7 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     tags: [],
     platform: undefined,
     releaseYear: undefined,
-    isFavorited: false,
+    inMyCollections: false,
     sortBy: "newest",
   });
 

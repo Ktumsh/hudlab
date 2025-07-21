@@ -37,3 +37,13 @@ export function formatDateToNow(
     locale,
   });
 }
+
+export function formatRating(rating: number | null | undefined): string | null {
+  if (!rating || rating <= 0) return null;
+
+  const scaledRating = rating / 10;
+
+  return scaledRating % 1 === 0
+    ? scaledRating.toString()
+    : scaledRating.toFixed(1);
+}

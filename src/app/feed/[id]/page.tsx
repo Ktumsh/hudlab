@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { auth } from "@/app/auth/auth";
+import { getLikeStatus } from "@/db/querys/interactions-querys";
 import { getUploadByPublicId } from "@/db/querys/uploads-querys";
 
 import UploadDetails from "./_components/upload-details";
@@ -30,5 +32,11 @@ export default async function UploadPage({ params }: UploadPageProps) {
 
   if (!upload) redirect("/feed");
 
-  return <UploadDetails upload={upload} />;
+  // Obtener estado de like del usuario actual
+  const session = await auth();
+  const likeStatus = session?.user?.id
+    ? await getLikeStatus(upload.id, session.user.id)
+    : { isLiked: false };
+
+  return <UploadDetails upload={upload} initialLiked={likeStatus.isLiked} />;
 }

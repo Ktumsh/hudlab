@@ -9,6 +9,7 @@ import {
   boolean,
   primaryKey,
   serial,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ─────────────────────────────
@@ -58,18 +59,29 @@ export const lastSessions = table("last_sessions", {
 // ─────────────────────────────
 // 👤 PROFILES
 // ─────────────────────────────
-export const profiles = table("profiles", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .unique()
-    .references(() => users.id, { onDelete: "cascade" }),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  displayName: varchar("display_name", { length: 100 }),
-  avatarUrl: text("avatar_url"),
-  bio: text("bio"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const profiles = table(
+  "profiles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "cascade" }),
+    username: varchar("username", { length: 50 }).notNull().unique(),
+    displayName: varchar("display_name", { length: 100 }),
+    avatarUrl: text("avatar_url"),
+    bio: text("bio"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // 🔍 Índice optimizado para búsqueda de usuarios
+    index("idx_profiles_search_optimized").on(
+      table.username,
+      table.displayName,
+      table.createdAt,
+    ),
+  ],
+);
 
 // ─────────────────────────────
 // 👥 USER FOLLOWS (N:M)
@@ -151,24 +163,97 @@ export const gameTags = table(
 // ─────────────────────────────
 // 🖼️ UPLOADS
 // ─────────────────────────────
-export const uploads = table("uploads", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  profileId: uuid("profile_id")
-    .notNull()
-    .references(() => profiles.id),
-  gameId: uuid("game_id")
-    .notNull()
-    .references(() => games.id),
-  title: varchar("title", { length: 150 }).notNull(),
-  description: text("description"),
-  imageUrl: text("image_url").notNull(),
-  type: varchar("type", { length: 30 }).notNull(),
-  tags: text("tags"),
-  likesCount: integer("likes_count").default(0),
-  commentsCount: integer("comments_count").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  publicId: serial("public_id").notNull().unique(),
-});
+export const uploads = table(
+  "uploads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    gameId: uuid("game_id")
+      .notNull()
+      .references(() => games.id),
+    title: varchar("title", { length: 150 }).notNull(),
+    description: text("description"),
+    type: varchar("type", { length: 30 }).notNull(),
+    tags: text("tags"),
+    likesCount: integer("likes_count").default(0),
+    commentsCount: integer("comments_count").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    publicId: serial("public_id").notNull().unique(),
+  },
+  (table) => [
+    // 🔍 Índice optimizado para búsqueda básica (title, description)
+    index("idx_uploads_search_optimized").on(
+      table.title,
+      table.description,
+      table.createdAt,
+    ),
+    // 📊 Índice para popularidad (likes_count, created_at)
+    index("idx_uploads_popular_search").on(
+      table.likesCount.desc(),
+      table.createdAt.desc(),
+    ),
+    //  Índice para joins frecuentes uploads->profiles
+    index("idx_uploads_profile_join").on(
+      table.profileId,
+      table.createdAt.desc(),
+    ),
+    // 🎮 Índice para filtros por juego
+    index("idx_uploads_game_filter").on(
+      table.gameId,
+      table.createdAt.desc(),
+      table.likesCount.desc(),
+    ),
+    // ⏰ Índice para contenido reciente
+    index("idx_uploads_recent_search").on(
+      table.createdAt.desc(),
+      table.title,
+      table.likesCount.desc(),
+    ),
+    // 🔥 Índice para trending/populares
+    index("idx_uploads_trending").on(
+      table.likesCount.desc(),
+      table.createdAt.desc(),
+    ),
+    // 🔤 Índice para autocompletado
+    index("idx_uploads_autocomplete").on(table.title),
+  ],
+);
+
+// ─────────────────────────────
+// 🖼️ UPLOAD IMAGES (Nueva tabla para múltiples imágenes)
+// ─────────────────────────────
+export const uploadImages = table(
+  "upload_images",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    uploadId: uuid("upload_id")
+      .notNull()
+      .references(() => uploads.id, { onDelete: "cascade" }),
+    imageUrl: text("image_url").notNull(),
+    order: integer("order").default(0),
+    caption: varchar("caption", { length: 200 }),
+    isMain: boolean("is_main").default(false),
+    width: integer("width"),
+    height: integer("height"),
+    format: varchar("format", { length: 10 }),
+    resolution: varchar("resolution", { length: 20 }),
+    gameVersion: varchar("game_version", { length: 50 }),
+    thumbnailUrl: text("thumbnail_url"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // 🔗 Índice para obtener imágenes por upload (MUY usado)
+    index("idx_upload_images_upload_id").on(table.uploadId, table.order),
+    // 🖼️ Índice para primera imagen (order=1, isMain=true)
+    index("idx_upload_images_main").on(
+      table.uploadId,
+      table.isMain,
+      table.order,
+    ),
+  ],
+);
 
 // ─────────────────────────────
 // 📌 UPLOAD TAGS (N:M)
@@ -178,7 +263,7 @@ export const uploadTags = table(
   {
     uploadId: uuid("upload_id")
       .notNull()
-      .references(() => uploads.id),
+      .references(() => uploads.id, { onDelete: "cascade" }),
     tagId: uuid("tag_id")
       .notNull()
       .references(() => tags.id),
@@ -187,46 +272,82 @@ export const uploadTags = table(
 );
 
 // ─────────────────────────────
-// 🧡 FAVORITES
+// 📂 COLLECTIONS (Colecciones de uploads)
 // ─────────────────────────────
-export const favorites = table("favorites", {
+export const collections = table("collections", {
   id: uuid("id").primaryKey().defaultRandom(),
   profileId: uuid("profile_id")
     .notNull()
-    .references(() => profiles.id),
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  isPublic: boolean("is_public").default(true),
+  coverImageUrl: text("cover_image_url"),
+  itemsCount: integer("items_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ─────────────────────────────
+// 📌 COLLECTION ITEMS (N:M entre collections y uploads)
+// ─────────────────────────────
+export const collectionItems = table("collection_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  collectionId: uuid("collection_id")
+    .notNull()
+    .references(() => collections.id, { onDelete: "cascade" }),
   uploadId: uuid("upload_id")
     .notNull()
-    .references(() => uploads.id),
-  createdAt: timestamp("created_at").defaultNow(),
+    .references(() => uploads.id, { onDelete: "cascade" }),
+  addedAt: timestamp("added_at").defaultNow(),
+  order: integer("order").default(0),
 });
 
 // ❤️ LIKES
-export const likes = table("likes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  profileId: uuid("profile_id")
-    .notNull()
-    .references(() => profiles.id),
-  uploadId: uuid("upload_id")
-    .notNull()
-    .references(() => uploads.id),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const likes = table(
+  "likes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    uploadId: uuid("upload_id")
+      .notNull()
+      .references(() => uploads.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // ❤️ Índice para verificar si user ya dio like (MUY usado)
+    index("idx_likes_user_upload").on(table.profileId, table.uploadId),
+    // 📊 Índice para contar likes por upload
+    index("idx_likes_upload_count").on(table.uploadId, table.createdAt.desc()),
+  ],
+);
 
 // ─────────────────────────────
 // 💬 COMMENTS
 // ─────────────────────────────
-export const uploadComments = table("upload_comments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  uploadId: uuid("upload_id")
-    .notNull()
-    .references(() => uploads.id),
-  profileId: uuid("profile_id")
-    .notNull()
-    .references(() => profiles.id),
-  content: text("content").notNull(),
-  replyTo: uuid("reply_to"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const uploadComments = table(
+  "upload_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    uploadId: uuid("upload_id")
+      .notNull()
+      .references(() => uploads.id, { onDelete: "cascade" }),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id),
+    content: text("content").notNull(),
+    replyTo: uuid("reply_to"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // 💬 Índice para obtener comentarios por upload (MUY usado)
+    index("idx_comments_upload").on(table.uploadId, table.createdAt.desc()),
+    // 💬 Índice para respuestas (threads de comentarios)
+    index("idx_comments_replies").on(table.replyTo, table.createdAt),
+  ],
+);
 
 // ─────────────────────────────
 // 💬 COMMENT LIKES
@@ -236,10 +357,10 @@ export const commentLikes = table(
   {
     commentId: uuid("comment_id")
       .notNull()
-      .references(() => uploadComments.id),
+      .references(() => uploadComments.id, { onDelete: "cascade" }),
     profileId: uuid("profile_id")
       .notNull()
-      .references(() => profiles.id),
+      .references(() => profiles.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.commentId, t.profileId] })],
@@ -266,7 +387,7 @@ export const reports = table("reports", {
   id: uuid("id").primaryKey().defaultRandom(),
   uploadId: uuid("upload_id")
     .notNull()
-    .references(() => uploads.id),
+    .references(() => uploads.id, { onDelete: "cascade" }),
   profileId: uuid("profile_id")
     .notNull()
     .references(() => profiles.id),
@@ -313,7 +434,7 @@ export const profilesRelations = relations(profiles, ({ one, many }) => ({
     references: [users.id],
   }),
   uploads: many(uploads),
-  favorites: many(favorites),
+  collections: many(collections),
   comments: many(uploadComments),
   notifications: many(notifications),
 }));
@@ -363,21 +484,40 @@ export const uploadsRelations = relations(uploads, ({ one, many }) => ({
     fields: [uploads.gameId],
     references: [games.id],
   }),
-  favoritedBy: many(favorites),
+  collectionItems: many(collectionItems),
   tags: many(uploadTags),
   comments: many(uploadComments),
+  images: many(uploadImages),
 }));
 
-export const favoritesRelations = relations(favorites, ({ one }) => ({
-  profile: one(profiles, {
-    fields: [favorites.profileId],
-    references: [profiles.id],
-  }),
+export const uploadImagesRelations = relations(uploadImages, ({ one }) => ({
   upload: one(uploads, {
-    fields: [favorites.uploadId],
+    fields: [uploadImages.uploadId],
     references: [uploads.id],
   }),
 }));
+
+export const collectionsRelations = relations(collections, ({ one, many }) => ({
+  profile: one(profiles, {
+    fields: [collections.profileId],
+    references: [profiles.id],
+  }),
+  items: many(collectionItems),
+}));
+
+export const collectionItemsRelations = relations(
+  collectionItems,
+  ({ one }) => ({
+    collection: one(collections, {
+      fields: [collectionItems.collectionId],
+      references: [collections.id],
+    }),
+    upload: one(uploads, {
+      fields: [collectionItems.uploadId],
+      references: [uploads.id],
+    }),
+  }),
+);
 
 export const likesRelations = relations(likes, ({ one }) => ({
   upload: one(uploads, {
@@ -464,7 +604,9 @@ export type Profile = InferSelectModel<typeof profiles>;
 export type UserFollow = InferSelectModel<typeof userFollows>;
 export type EmailSend = InferSelectModel<typeof emailSends>;
 export type Upload = InferSelectModel<typeof uploads>;
-export type Favorite = InferSelectModel<typeof favorites>;
+export type UploadImage = InferSelectModel<typeof uploadImages>;
+export type Collection = InferSelectModel<typeof collections>;
+export type CollectionItem = InferSelectModel<typeof collectionItems>;
 export type Game = InferSelectModel<typeof games>;
 export type Tag = InferSelectModel<typeof tags>;
 export type GameTag = InferSelectModel<typeof gameTags>;

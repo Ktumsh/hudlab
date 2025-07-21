@@ -19,9 +19,13 @@ const MasonryGrid = dynamic(() => import("../../_components/masonry-grid"), {
 
 interface UploadDetailsProps {
   upload: UploadWithDetails;
+  initialLiked?: boolean;
 }
 
-const UploadDetails = ({ upload }: UploadDetailsProps) => {
+const UploadDetails = ({
+  upload,
+  initialLiked = false,
+}: UploadDetailsProps) => {
   const router = useRouter();
   const {
     uploads: relatedUploads,
@@ -51,8 +55,8 @@ const UploadDetails = ({ upload }: UploadDetailsProps) => {
         <IconArrowLeft className="size-6!" />
         <span className="sr-only">Volver</span>
       </Button>
-      <div className="max-w-4xl md:mr-5">
-        <DetailsSection upload={upload} />
+      <div className="w-full max-w-4xl md:mr-5">
+        <DetailsSection upload={upload} initialLiked={initialLiked} />
       </div>
       <div className="w-full">
         <h2 className="mb-2 px-3 font-semibold">Subidas relacionadas</h2>
