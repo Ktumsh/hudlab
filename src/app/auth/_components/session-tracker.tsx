@@ -29,10 +29,15 @@ const SessionTracker = () => {
 
           // Intentar determinar el provider basado en el avatar URL
           if (user.image) {
-            if (user.image.includes("googleusercontent.com")) {
-              provider = "google";
-            } else if (user.image.includes("cdn.discordapp.com")) {
-              provider = "discord";
+            try {
+              const imageUrl = new URL(user.image);
+              if (imageUrl.hostname === "googleusercontent.com") {
+                provider = "google";
+              } else if (imageUrl.hostname === "cdn.discordapp.com") {
+                provider = "discord";
+              }
+            } catch (e) {
+              // If URL parsing fails, leave provider as "credentials"
             }
           }
 
