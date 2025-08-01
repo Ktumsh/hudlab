@@ -1,11 +1,11 @@
 import { IconMoodSmile } from "@tabler/icons-react";
 
+import type { Emoji } from "frimousse";
+import type { ChangeEvent } from "react";
+
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Textarea } from "@/components/ui/textarea";
-
-import type { Emoji } from "frimousse";
-import type { ChangeEvent } from "react";
 
 interface CommentFieldProps {
   ref?: React.Ref<HTMLTextAreaElement>;
@@ -40,7 +40,7 @@ const CommentField = ({
         ref={ref}
         rows={1}
         placeholder={placeholder}
-        className="min-h-14 pr-12"
+        className="input-neutral input-ghost bg-base-200 focus-visible:bg-base-300! min-h-14 pr-12 focus:ring-0! md:text-base"
         value={value}
         onChange={onChange}
       />

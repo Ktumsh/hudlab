@@ -2,13 +2,13 @@
 
 import { motion } from "motion/react";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
 import { memo } from "react";
+
+import { useLastSession } from "../../../hooks/use-last-session";
 
 import { Discord, Google } from "@/components/icons/social";
 import { Button } from "@/components/ui/button";
-
-import { useLastSession } from "../../../hooks/use-last-session";
+import { apiUrl } from "@/lib";
 
 const PureLastSessionButton = () => {
   const { lastSession, isLoading, hasValidSession } = useLastSession();
@@ -17,10 +17,8 @@ const PureLastSessionButton = () => {
     if (!lastSession || isLoading) return;
 
     try {
-      await signIn(lastSession.provider, {
-        callbackUrl: "/feed",
-        loginHint: lastSession.userDisplayName,
-      });
+      // Redirigir al endpoint OAuth del backend
+      window.location.href = `${apiUrl}/api/auth/signin/${lastSession.provider}?callbackUrl=${encodeURIComponent(window.location.origin + "/feed")}`;
     } catch (error) {
       console.error("Error during sign in:", error);
     }
@@ -81,7 +79,7 @@ const PureLastSessionButton = () => {
           <div className="text-foreground text-sm font-medium">
             Continuar como {lastSession!.userDisplayName}
           </div>
-          <div className="text-muted-foreground text-xs">
+          <div className="text-content-muted text-xs">
             {getProviderName(lastSession!.provider)}
           </div>
         </div>

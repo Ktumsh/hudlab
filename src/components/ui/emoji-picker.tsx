@@ -1,15 +1,18 @@
 "use client";
 
-import { cn } from "@/lib";
+import { IconLoader, IconSearch } from "@tabler/icons-react";
 import {
   type EmojiPickerListCategoryHeaderProps,
   type EmojiPickerListEmojiProps,
   type EmojiPickerListRowProps,
   EmojiPicker as EmojiPickerPrimitive,
 } from "frimousse";
-import { LoaderIcon, SearchIcon } from "lucide-react";
-import type * as React from "react";
+
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+
+import type * as React from "react";
+
+import { cn } from "@/lib";
 
 function PureEmojiPicker({
   className,
@@ -37,7 +40,7 @@ function EmojiPickerSearch({
       className={cn("flex h-9 items-center gap-2 border-b px-3", className)}
       data-slot="emoji-picker-search-wrapper"
     >
-      <SearchIcon className="size-4 shrink-0 opacity-50" />
+      <IconSearch className="size-4 shrink-0 opacity-50" />
       <EmojiPickerPrimitive.Search
         placeholder="Buscar..."
         className="placeholder:text-content-muted flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
@@ -104,7 +107,7 @@ function EmojiPickerContent({
         className="text-content-muted absolute inset-0 flex items-center justify-center"
         data-slot="emoji-picker-loading"
       >
-        <LoaderIcon className="size-4 animate-spin" />
+        <IconLoader className="size-4 animate-spin" />
       </EmojiPickerPrimitive.Loading>
       <EmojiPickerPrimitive.Empty
         className="text-content-muted absolute inset-0 flex items-center justify-center text-sm"

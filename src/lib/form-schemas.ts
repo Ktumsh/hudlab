@@ -61,3 +61,17 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
+
+export const createCollectionSchema = z.object({
+  name: z
+    .string()
+    .min(1, "El nombre es obligatorio")
+    .max(100, "El nombre no puede exceder 100 caracteres"),
+  description: z
+    .string()
+    .max(500, "La descripción no puede exceder 500 caracteres")
+    .optional(),
+  visibility: z.enum(["public", "private", "restricted"]),
+});
+
+export type CreateCollectionFormData = z.infer<typeof createCollectionSchema>;

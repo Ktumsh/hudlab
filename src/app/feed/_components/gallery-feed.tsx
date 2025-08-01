@@ -2,12 +2,13 @@
 
 import dynamic from "next/dynamic";
 
-import { useFilters } from "@/hooks/use-filters";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 import EmptyState from "./empty-state";
 import FooterStatus from "./footer-status";
 import { usePaginatedUploads } from "../_hooks/use-paginated-uploads";
+
+import { useFilters } from "@/hooks/use-filters";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 const MasonryGrid = dynamic(() => import("./masonry-grid"), {
   ssr: false,

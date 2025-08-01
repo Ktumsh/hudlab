@@ -6,11 +6,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import AuthDecoration from "./auth-decoration";
+import { useAuthForm } from "../_hooks/use-auth-form";
+
 import Logo from "@/components/logo";
 import { BetterTooltip } from "@/components/ui/tooltip";
 
-import AuthDecoration from "./auth-decoration";
-import { useAuthForm } from "../_hooks/use-auth-form";
 
 const AuthHeader = () => {
   const router = useRouter();

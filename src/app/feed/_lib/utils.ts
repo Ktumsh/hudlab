@@ -1,4 +1,4 @@
-import { GAME_GENRE_MAP } from "@/lib/consts";
+import { GAME_GENRE_MAP } from "@/lib";
 
 export function getTranslatedGenres(genres: string): string[] {
   if (!genres) return [];

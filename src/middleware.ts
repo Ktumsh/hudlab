@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "./app/auth/auth";
-
 const PUBLIC_AUTH_ROUTES = [
   "/auth/login",
   "/auth/signup",
@@ -21,12 +19,28 @@ const PROTECTED_ROUTES = [
   "/payment/canceled",
 ];
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+async function checkAuthentication(request: NextRequest): Promise<boolean> {
+  try {
+    const response = await fetch(`${apiUrl}/api/user`, {
+      headers: {
+        Cookie: request.headers.get("cookie") || "",
+      },
+      cache: "no-store",
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const session = await auth();
-  const userId = session?.user?.id as string;
+  const isAuthenticated = await checkAuthentication(request);
 
-  if (userId && PUBLIC_AUTH_ROUTES.includes(pathname)) {
+  if (isAuthenticated && PUBLIC_AUTH_ROUTES.includes(pathname)) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 
@@ -34,7 +48,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route),
   );
 
-  if (isProtected && !userId) {
+  if (isProtected && !isAuthenticated) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 
@@ -44,5 +58,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/auth/(login|signup|forgot-password|reset-password|verify-email|account-deleted)",
+    "/account/:path*",
+    "/settings/:path*",
+    "/profiles/:path*",
+    "/payment/:path*",
   ],
 };

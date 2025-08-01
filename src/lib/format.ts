@@ -47,3 +47,8 @@ export function formatRating(rating: number | null | undefined): string | null {
     ? scaledRating.toString()
     : scaledRating.toFixed(1);
 }
+
+export function formatDisplayName(displayName: string | undefined): string {
+  if (!displayName) return "U";
+  return displayName.charAt(0).toUpperCase();
+}

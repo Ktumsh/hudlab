@@ -1,20 +1,16 @@
 import "./globals.css";
 
+import SessionTracker from "./auth/_components/session-tracker";
+
+import type { Viewport } from "next";
+
 import AppFooter from "@/components/app-footer";
 import AppHeader from "@/components/app-header";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { inter } from "@/config/font.config";
 import { metadataConfig } from "@/config/metadata.config";
-import {
-  getFilterOptions,
-  getSearchSuggestions,
-} from "@/db/querys/filter-querys";
 import { cn } from "@/lib";
-
-import SessionTracker from "./auth/_components/session-tracker";
-
-import type { Viewport } from "next";
 
 export const metadata = metadataConfig;
 
@@ -32,18 +28,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const filterOptions = getFilterOptions();
-  const suggestions = getSearchSuggestions();
-
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={cn(inter.variable, "antialiased")}>
         <Providers>
           <SessionTracker />
-          <AppHeader
-            filterOptionsPromise={filterOptions}
-            suggestionsPromise={suggestions}
-          />
+          <AppHeader />
           {children}
           <AppFooter />
         </Providers>

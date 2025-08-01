@@ -3,9 +3,6 @@
 import { IconFingerprint, IconLogout, IconSettings } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-
-import { useUser } from "@/hooks/use-user";
 
 import { Button } from "./ui/button";
 import {
@@ -19,15 +16,15 @@ import {
 } from "./ui/dropdown-menu";
 import UserAvatar from "./user-avatar";
 
+import { useAuth } from "@/hooks/use-auth";
+import { useUser } from "@/hooks/use-user";
+
 const UserOptions = () => {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    // Solo proceder con el logout de NextAuth
-    // NO limpiamos localStorage para mantener la funcionalidad "Continuar como [usuario]"
-    signOut({ redirectTo: "/auth/login" });
-  };
+  if (isLoading) return null;
 
   if (!user) {
     return (
@@ -84,7 +81,12 @@ const UserOptions = () => {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={handleLogout}>
+        <DropdownMenuItem
+          onSelect={async () => {
+            await signOut();
+            window.location.href = "/auth/login";
+          }}
+        >
           <IconLogout />
           Cerrar sesión
         </DropdownMenuItem>

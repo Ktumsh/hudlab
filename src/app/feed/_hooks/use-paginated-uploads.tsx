@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import useSWRInfinite from "swr/infinite";
 
+import type { UploadWithDetails, FilterState } from "@/lib/types";
+
 import { fetcher } from "@/lib";
 
-import type { UploadWithDetails, FilterState } from "@/lib/types";
 
 type UploadsResponse = {
   uploads: UploadWithDetails[];

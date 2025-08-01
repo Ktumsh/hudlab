@@ -1,36 +1,34 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 
-import { getFirstName } from "@/lib";
-
 import { useLastSession } from "../../../hooks/use-last-session";
+
+import { useAuth } from "@/hooks/use-auth";
+import { getFirstName } from "@/lib";
 
 /**
  * Componente para manejar automáticamente el guardado de sesiones
  * cuando el usuario inicia sesión exitosamente
  */
 const SessionTracker = () => {
-  const { data: session, status } = useSession();
+  const { user, isLoading } = useAuth();
   const { saveLastSession } = useLastSession();
   const lastSavedSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleSessionSave = async () => {
-      // Solo procesar cuando la sesión esté autenticada y cargada completamente
-      if (status === "authenticated" && session?.user) {
-        const { user } = session;
-
+      // Solo procesar cuando el usuario esté cargado completamente
+      if (!isLoading && user) {
         // Verificar que tengamos la información necesaria
         if (user.id && user.email) {
           // Determinar el provider basado en la información de la sesión
           let provider = "credentials"; // default
 
           // Intentar determinar el provider basado en el avatar URL
-          if (user.image) {
+          if (user.profile?.avatarUrl) {
             try {
-              const imageUrl = new URL(user.image);
+              const imageUrl = new URL(user.profile.avatarUrl);
               if (imageUrl.hostname === "googleusercontent.com") {
                 provider = "google";
               } else if (imageUrl.hostname === "cdn.discordapp.com") {
@@ -48,12 +46,13 @@ const SessionTracker = () => {
 
             // Evitar guardar la misma sesión múltiples veces
             if (lastSavedSessionRef.current !== sessionKey) {
-              const displayName = user.name || user.email.split("@")[0];
+              const displayName =
+                user.profile?.displayName || user.email.split("@")[0];
               const sessionData = {
                 userId: user.id,
                 provider: provider,
                 userDisplayName: getFirstName(displayName),
-                userAvatarUrl: user.image || undefined,
+                userAvatarUrl: user.profile?.avatarUrl || undefined,
               };
 
               try {
@@ -73,7 +72,7 @@ const SessionTracker = () => {
     };
 
     handleSessionSave();
-  }, [session, status, saveLastSession]);
+  }, [user, isLoading, saveLastSession]);
   return null;
 };
 

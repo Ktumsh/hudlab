@@ -1,8 +1,9 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import type { UserSearchResult } from "@/lib/types";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDisplayName } from "@/lib";
 
 interface UserResultCardProps {
   user: UserSearchResult;
@@ -10,8 +11,6 @@ interface UserResultCardProps {
 }
 
 const UserResultCard = ({ user, onSelect }: UserResultCardProps) => {
-  const displayName = user.displayName || user.username;
-
   return (
     <button
       className="group/result relative h-14 w-full text-left"
@@ -22,14 +21,14 @@ const UserResultCard = ({ user, onSelect }: UserResultCardProps) => {
         <Avatar className="size-9">
           <AvatarImage src={user.avatarUrl || undefined} />
           <AvatarFallback className="text-xs font-medium">
-            {displayName.charAt(0).toUpperCase()}
+            {formatDisplayName(user.displayName)}
           </AvatarFallback>
         </Avatar>
 
         {/* Información del usuario */}
         <div className="min-w-0 flex-1">
           <h3 className="group-hover/result:text-neutral-content truncate text-sm font-medium transition-colors">
-            {displayName}
+            {user.displayName}
           </h3>
           <p className="text-base-content/60 group-hover/result:text-base-content/80 truncate text-xs transition-colors">
             @{user.username}

@@ -8,7 +8,14 @@ import {
   IconSend2,
 } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
+
+import CommentField from "./comment-field";
+import CommentItem from "./comment-item";
+import CommentSkeleton from "./comment-skeleton";
+import RepliesToggleButton from "./replies-toggle-button";
+
+import type { Comment } from "@/lib/types";
 
 import { useCommentEditing } from "@/app/feed/[id]/_hooks/use-comment-editing";
 import { useCommentLikes } from "@/app/feed/[id]/_hooks/use-comment-likes";
@@ -27,66 +34,54 @@ import {
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Textarea } from "@/components/ui/textarea";
 import UserAvatar from "@/components/user-avatar";
-import { useInteractions } from "@/hooks/use-interactions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib";
 
-import CommentField from "./comment-field";
-import CommentItem from "./comment-item";
-import RepliesToggleButton from "./replies-toggle-button";
-import { countTotalReplies, flattenReplies } from "../_lib/utils";
-
-import type { Comment, UploadWithFullDetails } from "@/lib/types";
-
 interface CommentsBoxProps {
-  upload: UploadWithFullDetails;
   commentCount: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isLoading?: boolean;
   onCommentsCountChange?: (change: number) => void;
+  uploadId: string;
+  publicId: string;
 }
 
 const CommentsBox = ({
-  upload,
   commentCount,
   open,
   onOpenChange,
-  isLoading = false,
   onCommentsCountChange,
+  uploadId,
+  publicId,
 }: CommentsBoxProps) => {
   const isMobile = useIsMobile();
 
-  // Hooks para manejar comentarios y likes
   const {
     comments,
-    setComments,
     currentUserProfileId,
+    mutate: refetchComments,
+    handleAddComment,
+    handleAddReply,
     handleDeleteComment,
     handleUpdateComment,
+    isLoading,
     isUpdating,
-  } = useComments({ upload });
+    isCommentLoading,
+    deletingCommentIds,
+  } = useComments({ publicId, uploadId, onCommentsCountChange });
 
   const { handleToggleCommentLike } = useCommentLikes({
-    // NO pasamos setComments para evitar reordenamientos inmediatos
     onCommentsUpdate: undefined,
-  });
-
-  const {
-    handleAddComment: addComment,
-    handleAddReply: addReply,
-    isCommentLoading,
-  } = useInteractions({
-    uploadId: upload.id,
-    initialLiked: false,
-    initialLikesCount: 0,
-    initialCommentsCount: commentCount,
   });
 
   const [expanded, setExpanded] = useState(isMobile);
   const [newComment, setNewComment] = useState("");
 
-  // Custom hooks para organizar la lógica
+  const [postingComment, setPostingComment] = useState<string | null>(null);
+  const [postingReplies, setPostingReplies] = useState<{
+    [parentId: string]: string;
+  }>({});
+
   const {
     editingId,
     editingContent,
@@ -124,130 +119,10 @@ const CommentsBox = ({
     }
   }, [isMobile]);
 
-  // Calcular el orden inicial de comentarios solo una vez o cuando cambian los comentarios base
-  const [sortedComments, setSortedComments] = useState<Comment[]>([]);
-  // Referencia para trackear la estructura de comentarios (IDs)
-  const lastCommentsStructure = useRef<string>("");
-  // Estado para manejar likes optimistas SIN afectar el orden
   const [optimisticLikes, setOptimisticLikes] = useState<{
     [commentId: string]: { liked: boolean; likes: number };
   }>({});
 
-  useEffect(() => {
-    // Crear signature de la estructura actual (solo IDs y replies, NO likes)
-    const createStructureSignature = (commentsList: Comment[]): string => {
-      return JSON.stringify(
-        commentsList.map((c) => ({
-          id: c.id,
-          replyTo: c.replyTo,
-          replies: c.replies
-            ? c.replies.map((r) => ({ id: r.id, replyTo: r.replyTo }))
-            : [],
-        })),
-      );
-    };
-
-    const currentStructure = createStructureSignature(comments);
-    const structureChanged = currentStructure !== lastCommentsStructure.current;
-
-    // Solo recalcular si la estructura cambió (agregar/eliminar comentarios)
-    if (comments.length === 0 || structureChanged) {
-      const sorted = [
-        // Primero: comentarios propios ordenados por fecha (más recientes primero)
-        ...comments
-          .filter((c) =>
-            currentUserProfileId ? c.user.id === currentUserProfileId : false,
-          )
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          ),
-        // Segundo: otros comentarios ordenados por popularidad (likes)
-        ...comments
-          .filter((c) =>
-            currentUserProfileId ? c.user.id !== currentUserProfileId : true,
-          )
-          .sort((a, b) => b.likes - a.likes),
-      ];
-
-      setSortedComments(sorted);
-      lastCommentsStructure.current = currentStructure;
-      // Limpiar likes optimistas cuando cambian los comentarios base
-      setOptimisticLikes({});
-    }
-  }, [comments, currentUserProfileId]);
-
-  // Efecto separado para limpiar comentarios temporales duplicados
-  const cleanTemporaryComments = useCallback(() => {
-    const hasTemporaryComments = comments.some((c) => c.id.startsWith("temp-"));
-    const hasRealComments = comments.some((c) => !c.id.startsWith("temp-"));
-
-    // Solo ejecutar limpieza si tenemos tanto temporales como reales
-    if (!hasTemporaryComments || !hasRealComments) return;
-
-    const cleanComments = comments.filter((c) => {
-      // Si es temporal, verificar si ya existe una versión real
-      if (c.id.startsWith("temp-")) {
-        // Buscar si existe un comentario real con contenido similar y mismo usuario
-        const hasRealVersion = comments.some(
-          (realComment) =>
-            !realComment.id.startsWith("temp-") &&
-            realComment.content.trim() === c.content.trim() &&
-            realComment.user.id === c.user.id &&
-            Math.abs(
-              new Date(realComment.createdAt).getTime() -
-                new Date(c.createdAt).getTime(),
-            ) < 10000, // 10 segundos
-        );
-        return !hasRealVersion;
-      }
-      return true;
-    });
-
-    // Solo actualizar si realmente hay comentarios para limpiar
-    if (cleanComments.length !== comments.length) {
-      setComments(cleanComments);
-    }
-  }, [comments, setComments]);
-
-  useEffect(() => {
-    cleanTemporaryComments();
-  }, [cleanTemporaryComments]);
-
-  const handleLike = async (id: string) => {
-    // Implementar likes optimistas localmente sin afectar el orden
-    const comment = findCommentById(displayComments, id);
-    if (!comment) return;
-
-    const currentLiked = optimisticLikes[id]?.liked ?? comment.liked;
-    const currentLikes = optimisticLikes[id]?.likes ?? comment.likes;
-
-    // Actualización optimista local
-    setOptimisticLikes((prev) => ({
-      ...prev,
-      [id]: {
-        liked: !currentLiked,
-        likes: currentLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
-      },
-    }));
-
-    // Llamar al servidor
-    if (handleToggleCommentLike) {
-      const result = await handleToggleCommentLike(id);
-      if (!result.success) {
-        // Revertir si falló
-        setOptimisticLikes((prev) => ({
-          ...prev,
-          [id]: {
-            liked: currentLiked,
-            likes: currentLikes,
-          },
-        }));
-      }
-    }
-  };
-
-  // Función auxiliar para encontrar un comentario por ID recursivamente
   const findCommentById = (
     commentsList: Comment[],
     id: string,
@@ -262,7 +137,6 @@ const CommentsBox = ({
     return null;
   };
 
-  // Función para aplicar likes optimistas a los comentarios sin cambiar el orden
   const applyOptimisticLikes = (commentsList: Comment[]): Comment[] => {
     return commentsList.map((comment) => {
       const optimistic = optimisticLikes[comment.id];
@@ -270,7 +144,6 @@ const CommentsBox = ({
         ? { ...comment, liked: optimistic.liked, likes: optimistic.likes }
         : comment;
 
-      // Aplicar recursivamente a las replies
       const updatedReplies = comment.replies
         ? applyOptimisticLikes(comment.replies)
         : comment.replies;
@@ -279,109 +152,77 @@ const CommentsBox = ({
     });
   };
 
-  // Comentarios con likes optimistas aplicados, manteniendo el orden original
-  const displayComments = applyOptimisticLikes(sortedComments);
+  const displayComments = applyOptimisticLikes(comments);
 
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !addComment) return;
+  const handleLike = async (id: string) => {
+    const comment = findCommentById(displayComments, id);
+    if (!comment) return;
 
-    // Estado optimista: agregar el comentario inmediatamente
-    const tempComment: Comment = {
-      id: `temp-${Date.now()}`, // ID temporal
-      content: newComment,
-      createdAt: new Date(),
-      likes: 0,
-      liked: false,
-      replyTo: undefined,
-      user: {
-        id: currentUserProfileId || "",
-        displayName: "Tú",
-        username: "",
-        avatarUrl: undefined,
+    const currentLiked = optimisticLikes[id]?.liked ?? comment.liked;
+    const currentLikes = optimisticLikes[id]?.likes ?? comment.likes;
+
+    setOptimisticLikes((prev) => ({
+      ...prev,
+      [id]: {
+        liked: !currentLiked,
+        likes: currentLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
       },
-      replies: [],
-    };
+    }));
 
-    setComments((prev) => [tempComment, ...prev]);
-    const originalComment = newComment;
-    setNewComment("");
-
-    const result = await addComment(originalComment);
-    if (result.success) {
-      // ✅ MEJOR: No eliminar el temporal inmediatamente
-      // El useComments se actualizará con los datos del servidor automáticamente
-      // y eso disparará el useEffect que recalculará el orden
-
-      // Notificar el cambio en el contador (+1 comentario)
-      onCommentsCountChange?.(1);
-    } else {
-      // Revertir el estado optimista solo si falló
-      setComments((prev) => prev.filter((c) => c.id !== tempComment.id));
-      setNewComment(originalComment); // Restaurar el texto
+    if (handleToggleCommentLike) {
+      const result = await handleToggleCommentLike(id);
+      if (!result.success) {
+        setOptimisticLikes((prev) => ({
+          ...prev,
+          [id]: {
+            liked: currentLiked,
+            likes: currentLikes,
+          },
+        }));
+      }
     }
   };
 
-  const handleAddReply = async (parentId: string) => {
-    const replyContent = getReplyContent(parentId);
-    if (!replyContent.trim() || !addReply) return;
+  const handleNewComment = async () => {
+    if (!newComment.trim()) return;
 
-    // Estado optimista: agregar la reply inmediatamente
-    const tempReply: Comment = {
-      id: `temp-reply-${Date.now()}`,
-      content: replyContent,
-      createdAt: new Date(),
-      likes: 0,
-      liked: false,
-      replyTo: parentId,
-      user: {
-        id: currentUserProfileId || "",
-        displayName: "Tú",
-        username: "",
-        avatarUrl: undefined,
-      },
-      replies: [],
-    };
+    const originalComment = newComment;
 
-    // Función para agregar reply optimistamente de forma recursiva
-    function addReplyRecursive(list: Comment[]): Comment[] {
-      return list.map((c) =>
-        c.id === parentId
-          ? { ...c, replies: [...(c.replies || []), tempReply] }
-          : {
-              ...c,
-              replies: c.replies ? addReplyRecursive(c.replies) : [],
-            },
-      );
+    setPostingComment(originalComment);
+    setNewComment("");
+
+    const result = await handleAddComment(originalComment);
+    if (result.success) {
+      refetchComments();
+    } else {
+      setNewComment(originalComment);
     }
 
-    setComments((prev) => addReplyRecursive(prev));
+    setPostingComment(null);
+  };
+
+  const handleNewReply = async (parentId: string) => {
+    const replyContent = getReplyContent(parentId);
+    if (!replyContent.trim()) return;
+
+    setPostingReplies((prev) => ({ ...prev, [parentId]: replyContent }));
+
     clearReplyContent(parentId);
     cancelReply();
 
-    const result = await addReply(parentId, replyContent);
-    if (!result.success) {
-      // Revertir el estado optimista si falló
-      function removeReplyRecursive(list: Comment[]): Comment[] {
-        return list.map((c) =>
-          c.id === parentId
-            ? {
-                ...c,
-                replies: (c.replies || []).filter((r) => r.id !== tempReply.id),
-              }
-            : {
-                ...c,
-                replies: c.replies ? removeReplyRecursive(c.replies) : [],
-              },
-        );
-      }
-      setComments((prev) => removeReplyRecursive(prev));
-      // Restaurar el contenido de la reply
+    const result = await handleAddReply(parentId, replyContent);
+    if (result.success) {
+      refetchComments();
+    } else {
       setReplyContent(parentId, replyContent);
       startReply(parentId);
-    } else {
-      // Notificar el cambio en el contador (+1 comentario por la reply)
-      onCommentsCountChange?.(1);
     }
+
+    setPostingReplies((prev) => {
+      const updated = { ...prev };
+      delete updated[parentId];
+      return updated;
+    });
   };
 
   const handleCancelReply = () => {
@@ -391,53 +232,22 @@ const CommentsBox = ({
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSaveEdit = async () => {
-    if (!handleUpdateComment) {
-      // Fallback local para desarrollo
-      function editRecursive(list: Comment[]): Comment[] {
-        return list.map((c) =>
-          c.id === editingId
-            ? { ...c, content: editingContent }
-            : {
-                ...c,
-                replies: c.replies ? editRecursive(c.replies) : [],
-              },
-        );
-      }
-      setComments((prev) => editRecursive(prev));
-      cancelEdit();
-      return;
-    }
-
     if (!editingId || !editingContent.trim()) return;
 
     const result = await handleUpdateComment(editingId, editingContent);
     if (result.success) {
-      // Actualizar localmente también para UI optimista
-      function editRecursive(list: Comment[]): Comment[] {
-        return list.map((c) =>
-          c.id === editingId
-            ? { ...c, content: editingContent }
-            : {
-                ...c,
-                replies: c.replies ? editRecursive(c.replies) : [],
-              },
-        );
-      }
-      setComments((prev) => editRecursive(prev));
       cancelEdit();
     }
   };
 
   const handleDelete = async (id: string) => {
-    // Función para contar todos los comentarios/replies que se eliminarán (including nested)
     const countCommentsToDelete = (
       comments: Comment[],
       targetId: string,
     ): number => {
       for (const comment of comments) {
         if (comment.id === targetId) {
-          // Contar el comentario principal + todas sus replies recursivamente
-          return 1 + (comment.replies ? countTotalReplies(comment.replies) : 0);
+          return 1 + (comment.replies ? comment.replies.length : 0);
         }
         if (comment.replies) {
           const count = countCommentsToDelete(comment.replies, targetId);
@@ -449,43 +259,19 @@ const CommentsBox = ({
 
     const deleteCount = countCommentsToDelete(comments, id);
 
-    if (!handleDeleteComment) {
-      // Fallback local para desarrollo
-      function deleteRecursive(list: Comment[]): Comment[] {
-        return list
-          .filter((c) => c.id !== id)
-          .map((c) => ({
-            ...c,
-            replies: c.replies ? deleteRecursive(c.replies) : [],
-          }));
-      }
-      setComments((prev) => deleteRecursive(prev));
-      onCommentsCountChange?.(-deleteCount);
-      return;
-    }
-
     const result = await handleDeleteComment(id);
+
     if (result.success) {
-      // Actualizar localmente también para UI optimista
-      function deleteRecursive(list: Comment[]): Comment[] {
-        return list
-          .filter((c) => c.id !== id)
-          .map((c) => ({
-            ...c,
-            replies: c.replies ? deleteRecursive(c.replies) : [],
-          }));
-      }
-      setComments((prev) => deleteRecursive(prev));
-      // Notificar el cambio en el contador (número negativo)
       onCommentsCountChange?.(-deleteCount);
     }
   };
 
-  // Función para encontrar una reply por referencia
   function renderReplyReference(reply: Comment, replies?: Comment[]) {
     if (!reply.replyTo || !replies) return null;
-    const allReplies = flattenReplies(replies);
-    const ref = allReplies.find((r) => r.id === reply.replyTo);
+
+    // Buscar la referencia en las replies del comentario actual
+    const ref = replies.find((r) => r.id === reply.replyTo);
+
     if (!ref) return null;
 
     const isOwnReference = currentUserProfileId
@@ -532,6 +318,8 @@ const CommentsBox = ({
               expanded && "mb-4 overflow-y-auto p-4 md:max-h-[600px] md:p-2",
             )}
           >
+            {postingComment && <CommentSkeleton content={postingComment} />}
+
             {displayComments.map((comment, idx) => {
               if (!expanded && idx > 0) return null;
               const isOwn = currentUserProfileId
@@ -554,6 +342,7 @@ const CommentsBox = ({
                   liked={comment.liked}
                   isOwn={isOwn}
                   expanded={expanded}
+                  isDeleting={deletingCommentIds.includes(comment.id)}
                   onLike={() => handleLike(comment.id)}
                   onReply={() => startReply(comment.id)}
                   onEdit={() => startEdit(comment.id, comment.content)}
@@ -576,7 +365,7 @@ const CommentsBox = ({
                         setEmojiPickerOpen(comment.id, open)
                       }
                       onCancel={handleCancelReply}
-                      onSave={() => handleAddReply(comment.id)}
+                      onSave={() => handleNewReply(comment.id)}
                       isLoading={isCommentLoading}
                     />
                   )}
@@ -606,36 +395,42 @@ const CommentsBox = ({
                     comment.replies.length > 0 &&
                     (expanded || idx > 0) && (
                       <div className="mt-1 md:ml-1">
-                        {countTotalReplies(comment.replies) > 1 && (
+                        {(comment.replies || []).length > 1 && (
                           <RepliesToggleButton
                             expanded={isRepliesExpanded(comment.id)}
-                            count={countTotalReplies(comment.replies)}
+                            count={(comment.replies || []).length}
                             onClick={() => toggleReplies(comment.id)}
                           />
                         )}
+
+                        {postingReplies[comment.id] && (
+                          <CommentSkeleton
+                            content={postingReplies[comment.id]}
+                          />
+                        )}
+
                         {(isRepliesExpanded(comment.id)
-                          ? flattenReplies(comment.replies)
-                          : countTotalReplies(comment.replies) === 1
-                            ? flattenReplies(comment.replies).slice(0, 1) // Si solo hay 1 reply, mostrarla siempre
+                          ? comment.replies || []
+                          : (comment.replies || []).length === 1
+                            ? comment.replies.slice(0, 1)
                             : !hasBeenExpanded(comment.id)
-                              ? flattenReplies(comment.replies).slice(0, 1) // Estado inicial: mostrar primera reply
+                              ? (comment.replies || []).slice(0, 1)
                               : []
-                        ) // Ya fue expandido y ahora colapsado: no mostrar ninguna
-                          .map((reply: Comment) => {
-                            const isOwnReply = currentUserProfileId
-                              ? reply.user.id === currentUserProfileId
-                              : false;
+                        ).map((reply: Comment) => {
+                          const isOwnReply = currentUserProfileId
+                            ? reply.user.id === currentUserProfileId
+                            : false;
 
-                            const displayReplyUser = {
-                              ...reply.user,
-                              displayName: isOwnReply
-                                ? "Tú"
-                                : reply.user.displayName,
-                            };
+                          const displayReplyUser = {
+                            ...reply.user,
+                            displayName: isOwnReply
+                              ? "Tú"
+                              : reply.user.displayName,
+                          };
 
-                            return (
+                          return (
+                            <div key={reply.id}>
                               <CommentItem
-                                key={reply.id}
                                 user={displayReplyUser}
                                 content={reply.content}
                                 createdAt={reply.createdAt}
@@ -643,6 +438,9 @@ const CommentsBox = ({
                                 liked={reply.liked}
                                 isOwn={isOwnReply}
                                 expanded={expanded}
+                                isDeleting={deletingCommentIds.includes(
+                                  reply.id,
+                                )}
                                 onLike={() => handleLike(reply.id)}
                                 replyReference={renderReplyReference(
                                   reply,
@@ -671,7 +469,7 @@ const CommentsBox = ({
                                       setEmojiPickerOpen(reply.id, open)
                                     }
                                     onCancel={handleCancelReply}
-                                    onSave={() => handleAddReply(reply.id)}
+                                    onSave={() => handleNewReply(reply.id)}
                                     isLoading={isCommentLoading}
                                   />
                                 )}
@@ -702,8 +500,15 @@ const CommentsBox = ({
                                   />
                                 )}
                               </CommentItem>
-                            );
-                          })}
+
+                              {postingReplies[reply.id] && (
+                                <CommentSkeleton
+                                  content={postingReplies[reply.id]}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                 </CommentItem>
@@ -718,13 +523,21 @@ const CommentsBox = ({
   const footer = (
     <div className="relative flex gap-2">
       <UserAvatar className="mt-2" />
-      <Textarea
-        rows={1}
-        placeholder="Agregar un comentario"
-        className="min-h-12 border-0 py-2.5 pr-20"
-        value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
-      />
+      <div className="flex-1">
+        <Textarea
+          rows={1}
+          placeholder="Agregar un comentario"
+          className="input-neutral input-ghost bg-base-200 focus-visible:bg-base-300! min-h-12 border-0 py-2.5 pr-20 focus:ring-0! md:text-base"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          disabled={postingComment !== null}
+        />
+        {postingComment && (
+          <p className="text-base-content/60 mt-1 text-xs">
+            Publicando comentario...
+          </p>
+        )}
+      </div>
       <div className="absolute top-2 right-2 flex items-center gap-1">
         <EmojiPicker
           open={showEmojiPicker}
@@ -743,8 +556,8 @@ const CommentsBox = ({
           <Button
             size="icon"
             variant="primary"
-            onClick={() => handleAddComment()}
-            disabled={isLoading}
+            onClick={() => handleNewComment()}
+            disabled={isLoading || postingComment !== null}
           >
             <IconSend2 />
           </Button>

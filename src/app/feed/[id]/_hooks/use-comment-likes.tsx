@@ -2,10 +2,9 @@
 
 import { useCallback } from "react";
 
-import { toggleCommentLike } from "@/db/querys/interactions-querys";
-import { useRequestProtection } from "@/hooks/use-request-protection";
-
 import type { Comment } from "@/lib/types";
+
+import { useApiMutation } from "@/lib/use-mutation";
 
 interface UseCommentLikesOptions {
   onCommentsUpdate?: (updater: (prev: Comment[]) => Comment[]) => void;
@@ -23,14 +22,9 @@ interface UseCommentLikesReturn {
 export const useCommentLikes = ({
   onCommentsUpdate,
 }: UseCommentLikesOptions): UseCommentLikesReturn => {
-  // Protección de peticiones HTTP (NO afecta el estado optimista)
-  const { executeRequest: protectedToggleCommentLike } = useRequestProtection(
-    toggleCommentLike,
-    {
-      debounceMs: 300,
-      throttleMs: 1000,
-      maxRetries: 3,
-    },
+  const toggleCommentLikeMutation = useApiMutation(
+    "/api/interactions/toggle-comment-like",
+    "POST",
   );
 
   const updateCommentInStructure = useCallback(
@@ -52,68 +46,94 @@ export const useCommentLikes = ({
             commentId,
             updateFn,
           );
-
-          // Solo actualizar si realmente cambió algo
-          if (updatedReplies !== comment.replies) {
-            return { ...comment, replies: updatedReplies };
-          }
+          return { ...comment, replies: updatedReplies };
         }
 
         return comment;
       });
     },
-    [], // Sin dependencias - es una función pura
+    [],
   );
 
   const handleToggleCommentLike = useCallback(
-    async (
-      commentId: string,
-    ): Promise<{ success: boolean; isLiked?: boolean; error?: string }> => {
-      // Función helper para crear actualizaciones de like
-      const createLikeUpdate = (isToggling: boolean) => (comment: Comment) => ({
-        ...comment,
-        liked: isToggling ? !comment.liked : comment.liked,
-        likes: isToggling
-          ? comment.liked
-            ? Math.max(0, comment.likes - 1)
-            : comment.likes + 1
-          : comment.likes,
-      });
+    async (commentId: string) => {
+      // Actualización optimista del estado de like del comentario
+      onCommentsUpdate?.((prevComments) =>
+        updateCommentInStructure(prevComments, commentId, (comment) => {
+          const newIsLiked = !comment.liked;
+          const newLikesCount = newIsLiked
+            ? comment.likes + 1
+            : comment.likes - 1;
+
+          return {
+            ...comment,
+            liked: newIsLiked,
+            likes: newLikesCount,
+          };
+        }),
+      );
 
       try {
-        // ✅ ESTADO OPTIMISTA: Actualización INMEDIATA (sin protecciones)
-        onCommentsUpdate?.((prev) =>
-          updateCommentInStructure(prev, commentId, createLikeUpdate(true)),
-        );
-
-        // 🛡️ PETICIÓN HTTP: Protegida contra abuso
-        const result = await protectedToggleCommentLike(commentId);
-
-        if (!result.success) {
-          // Revertir la actualización optimista en caso de error
-          onCommentsUpdate?.(
-            (prev) =>
-              updateCommentInStructure(prev, commentId, createLikeUpdate(true)), // Volver a togglear = revertir
-          );
-        }
-
-        return result;
-      } catch (error) {
-        console.error("Error toggling comment like:", error);
-
-        // Revertir la actualización optimista
-        onCommentsUpdate?.(
-          (prev) =>
-            updateCommentInStructure(prev, commentId, createLikeUpdate(true)), // Volver a togglear = revertir
-        );
-
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Error desconocido",
+        const result = (await toggleCommentLikeMutation.mutateAsync({
+          commentId,
+        })) as {
+          success: boolean;
+          isLiked?: boolean;
+          likesCount?: number;
+          error?: string;
         };
+
+        if (result.success) {
+          // Actualizar con valores reales del servidor
+          onCommentsUpdate?.((prevComments) =>
+            updateCommentInStructure(prevComments, commentId, (comment) => ({
+              ...comment,
+              liked: result.isLiked || false,
+              likes: result.likesCount || 0,
+            })),
+          );
+
+          return { success: true, isLiked: result.isLiked };
+        } else {
+          // Revertir la actualización optimista
+          onCommentsUpdate?.((prevComments) =>
+            updateCommentInStructure(prevComments, commentId, (comment) => {
+              const revertIsLiked = !comment.liked;
+              const revertLikesCount = revertIsLiked
+                ? comment.likes + 1
+                : comment.likes - 1;
+
+              return {
+                ...comment,
+                liked: revertIsLiked,
+                likes: revertLikesCount,
+              };
+            }),
+          );
+
+          return { success: false, error: result.error };
+        }
+      } catch {
+        // Revertir la actualización optimista en caso de error
+        onCommentsUpdate?.((prevComments) =>
+          updateCommentInStructure(prevComments, commentId, (comment) => {
+            const revertIsLiked = !comment.liked;
+            const revertLikesCount = revertIsLiked
+              ? comment.likes + 1
+              : comment.likes - 1;
+
+            return {
+              ...comment,
+              liked: revertIsLiked,
+              likes: revertLikesCount,
+            };
+          }),
+        );
+
+        return { success: false, error: "Error al toggle like del comentario" };
       }
     },
-    [onCommentsUpdate, updateCommentInStructure, protectedToggleCommentLike],
+    [onCommentsUpdate, updateCommentInStructure, toggleCommentLikeMutation],
   );
 
   return {

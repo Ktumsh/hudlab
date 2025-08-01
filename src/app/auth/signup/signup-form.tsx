@@ -6,6 +6,13 @@ import { useState, useCallback, useMemo } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 
+import ErrorMessage from "../_components/error-message";
+import FooterForm from "../_components/footer-form";
+import LastSessionButton from "../_components/last-session-button";
+import SocialButtons from "../_components/social-buttons";
+import SubmitButton from "../_components/submit-button";
+import { useAuthForm } from "../_hooks/use-auth-form";
+
 import { ButtonPassword } from "@/components/ui/button";
 import {
   Form,
@@ -16,18 +23,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { getExistingEmail } from "@/db/querys/user-querys";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib";
+import { apiUrl } from "@/lib";
 import { signupSchema, type SignupFormData } from "@/lib/form-schemas";
 import { resultMessages } from "@/lib/result";
-
-import ErrorMessage from "../_components/error-message";
-import FooterForm from "../_components/footer-form";
-import LastSessionButton from "../_components/last-session-button";
-import SocialButtons from "../_components/social-buttons";
-import SubmitButton from "../_components/submit-button";
-import { useAuthForm } from "../_hooks/use-auth-form";
-import { signup } from "../actions";
 
 const SignupForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +36,7 @@ const SignupForm = () => {
   const [error, setError] = useState<string | null>(null);
 
   const { setEmail, setStep: setFormStep } = useAuthForm();
+  const { signUp } = useAuth();
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -70,7 +71,17 @@ const SignupForm = () => {
     try {
       setIsSubmitting(true);
       const emailValue = getValues("email");
-      const exists = await getExistingEmail(emailValue);
+
+      const response = await fetch(`${apiUrl}/api/check-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: emailValue }),
+      });
+
+      const { exists } = await response.json();
+
       if (exists) {
         setError(resultMessages.EMAIL_ALREADY_EXISTS);
         return;
@@ -92,14 +103,19 @@ const SignupForm = () => {
       if (isSubmitting) return;
       try {
         setIsSubmitting(true);
-        const result = await signup(data);
-        if (result.type === "success") {
-          toast.success(result.message);
+
+        const success = await signUp({
+          email: data.email,
+          password: data.password,
+          username: data.email.split("@")[0], // Generar username desde email
+          displayName: data.displayName,
+        });
+
+        if (success) {
+          toast.success("Cuenta creada exitosamente");
           setTimeout(() => {
-            window.location.href = result.redirectUrl || "/feed";
+            window.location.href = "/feed";
           }, 500);
-        } else {
-          toast.error(result.message);
         }
       } catch (error) {
         console.error("Error al registrar:", error);
@@ -108,7 +124,7 @@ const SignupForm = () => {
         setIsSubmitting(false);
       }
     },
-    [isSubmitting],
+    [isSubmitting, signUp],
   );
 
   const formOnSubmit = useMemo(() => {

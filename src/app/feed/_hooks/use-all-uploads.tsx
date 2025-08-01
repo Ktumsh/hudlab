@@ -2,9 +2,10 @@
 
 import useSWR from "swr";
 
+import type { UploadWithDetails } from "@/lib/types";
+
 import { fetcher } from "@/lib";
 
-import type { UploadWithDetails } from "@/lib/types";
 
 export function useAllUploads() {
   const { data = [], isLoading } = useSWR<UploadWithDetails[]>(

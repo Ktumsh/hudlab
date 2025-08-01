@@ -1,12 +1,12 @@
 import { Slot } from "@radix-ui/react-slot";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "@/lib/index";
-import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 const buttonVariants = cva(
-  "btn [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
+  "btn rounded-field [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

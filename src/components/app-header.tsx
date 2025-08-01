@@ -4,24 +4,19 @@ import { IconChevronLeft } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { use } from "react";
-
-import { Button } from "@/components/ui/button";
-import { useFilters } from "@/hooks/use-filters";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useUser } from "@/hooks/use-user";
-import { cn } from "@/lib";
-import { SearchSuggestion, FilterOptions } from "@/lib/types";
 
 import Filters from "./filters";
 import Search from "./search/search";
 import { BetterTooltip } from "./ui/tooltip";
 import UserOptions from "./user-options";
 
-interface AppHeaderProps {
-  filterOptionsPromise: Promise<FilterOptions>;
-  suggestionsPromise: Promise<SearchSuggestion[]>;
-}
+import { Button } from "@/components/ui/button";
+import { useFilterOptions } from "@/hooks/use-filter-options";
+import { useFilters } from "@/hooks/use-filters";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSearchSuggestions } from "@/hooks/use-search-suggestions";
+import { useUser } from "@/hooks/use-user";
+import { cn } from "@/lib";
 
 const PAGES_TO_HIDE = [
   "/auth/login",
@@ -32,12 +27,9 @@ const PAGES_TO_HIDE = [
   "/auth/account-deleted",
 ];
 
-const AppHeader = ({
-  filterOptionsPromise,
-  suggestionsPromise,
-}: AppHeaderProps) => {
-  const filterOptions = use(filterOptionsPromise);
-  const suggestions = use(suggestionsPromise);
+const AppHeader = () => {
+  const { filterOptions } = useFilterOptions();
+  const { searchSuggestions } = useSearchSuggestions();
 
   const { setFilters, onFilterChange } = useFilters();
   const router = useRouter();
@@ -85,8 +77,8 @@ const AppHeader = ({
     return (
       <header
         className={cn(
-          "bg-base-100/80 sticky top-0 z-50 w-full backdrop-blur",
-          !isHome && "fixed bg-transparent backdrop-blur-none",
+          "bg-base-100 sticky top-0 z-50 w-full",
+          !isHome && "fixed bg-transparent",
         )}
       >
         <div
@@ -125,11 +117,14 @@ const AppHeader = ({
     );
   }
   return (
-    <header className="bg-base-100/80 sticky top-0 z-50 w-full backdrop-blur">
+    <header className="bg-base-100 sticky top-0 z-50 w-full">
       <div className="flex h-20 items-center justify-between gap-4 px-6">
         {logo}
         <div className="mx-auto w-full">
-          <Search suggestions={suggestions} onFilterChange={onFilterChange}>
+          <Search
+            suggestions={searchSuggestions}
+            onFilterChange={onFilterChange}
+          >
             {isHome && (
               <Filters
                 filterOptions={filterOptions}

@@ -86,8 +86,10 @@
 }
 
 .input:focus,
-.input:focus-within {
-  @apply ring-primary border-0 ring-2 ring-offset-0 outline-0 transition duration-300!;
+.input:focus-within,
+textarea:focus,
+textarea:focus-within {
+  @apply ring-primary ring-2 ring-offset-0 outline-0 transition duration-300!;
 }
 
 input:-webkit-autofill {

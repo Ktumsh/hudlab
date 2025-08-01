@@ -2,9 +2,10 @@
 
 import useSWR from "swr";
 
+import type { UserSearchResult } from "@/lib/types";
+
 import { fetcher } from "@/lib";
 
-import type { UserSearchResult } from "@/lib/types";
 
 export function useUserSearch(query: string) {
   const shouldFetch = query.trim().length > 0;

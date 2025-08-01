@@ -1,8 +1,9 @@
 "use client";
 
-import { useUser } from "@/hooks/use-user";
-
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+
+import { useUser } from "@/hooks/use-user";
+import { formatDisplayName } from "@/lib";
 
 interface UserAvatarProps {
   className?: string;
@@ -13,8 +14,9 @@ const UserAvatar = ({ className }: UserAvatarProps) => {
 
   if (!user) return null;
 
-  const avatarAlt =
-    `Avatar de ${user.profile.displayName}` || "Avatar de usuario";
+  const avatarAlt = user.profile.displayName
+    ? `Avatar de ${user.profile.displayName}`
+    : "Avatar de usuario";
 
   return (
     <Avatar className={className}>
@@ -22,7 +24,7 @@ const UserAvatar = ({ className }: UserAvatarProps) => {
         <AvatarImage src={user.profile.avatarUrl} alt={avatarAlt} />
       ) : (
         <AvatarFallback>
-          {user?.profile.displayName?.charAt(0) ?? "U"}
+          {formatDisplayName(user.profile.displayName)}
         </AvatarFallback>
       )}
     </Avatar>

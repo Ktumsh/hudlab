@@ -3,12 +3,13 @@
 import { useEffect } from "react";
 import useSWRInfinite from "swr/infinite";
 
-import { fetcher } from "@/lib";
-
 import type {
   UploadWithDetails,
   UploadWithProfileAndAspect,
 } from "@/lib/types";
+
+import { fetcher } from "@/lib";
+
 
 type UploadsResponse = {
   uploads: UploadWithDetails[];

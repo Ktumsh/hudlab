@@ -4,13 +4,13 @@ import { motion, LayoutGroup } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { Button } from "./ui/button";
+import UserAvatar from "./user-avatar";
+
 import { navConfig } from "@/config/nav.config";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib";
-
-import { Button } from "./ui/button";
-import UserAvatar from "./user-avatar";
 
 const PAGES_TO_HIDE = [
   "/auth/login",
@@ -25,7 +25,7 @@ const AppFooter = () => {
   const pathname = usePathname();
   const isMobile = useIsMobile();
 
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
 
   if (PAGES_TO_HIDE.includes(pathname)) return null;
 
@@ -40,6 +40,39 @@ const AppFooter = () => {
     ? navigationMobile.slice(0, -1)
     : navigationMobile.filter((_, idx) => idx !== 2 && idx !== 4);
 
+  if (isLoading) {
+    return (
+      <>
+        <footer className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-center md:hidden">
+          <nav className="bg-base-100 w-full border-t">
+            <ul className="flex items-center justify-between px-4">
+              {navigationMobile.slice(0, -1).map((_, idx) => (
+                <li
+                  key={idx}
+                  className="relative flex h-14 flex-1 items-center justify-center"
+                >
+                  <div className="bg-base-200 size-6 animate-pulse rounded-full" />
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </footer>
+
+        <footer className="pointer-events-none fixed bottom-0 left-0 z-50 mb-5 hidden w-full md:flex">
+          <nav className="bg-base-100/80 pointer-events-auto mx-auto max-w-[360px] rounded-[22px] border p-1.5 backdrop-blur md:max-w-none">
+            <ul className="grid grid-cols-5 gap-2">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <li key={idx}>
+                  <div className="rounded-box bg-base-200 h-14 w-20 animate-pulse" />
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </footer>
+      </>
+    );
+  }
+
   if (isMobile) {
     return (
       <footer className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-center">
@@ -53,7 +86,7 @@ const AppFooter = () => {
               return (
                 <li
                   key={item.title}
-                  className="relative flex h-16 flex-1 items-center justify-center"
+                  className="relative flex h-14 flex-1 items-center justify-center"
                 >
                   <Button variant="ghost" size="icon" asChild>
                     <Link

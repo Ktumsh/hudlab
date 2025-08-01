@@ -5,6 +5,10 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import BackToLoginButton from "../_components/back-to-login-button";
+import SubmitButton from "../_components/submit-button";
+import { useAuthForm } from "../_hooks/use-auth-form";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,12 +19,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { apiUrl } from "@/lib";
 import { forgotPasswordSchema, ForgotPasswordData } from "@/lib/form-schemas";
-
-import BackToLoginButton from "../_components/back-to-login-button";
-import SubmitButton from "../_components/submit-button";
-import { useAuthForm } from "../_hooks/use-auth-form";
-import { onSendEmail } from "../actions";
 
 export default function ForgotPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +40,19 @@ export default function ForgotPasswordForm() {
     try {
       const { email } = data;
       setIsSubmitting(true);
-      const res = await onSendEmail("reset_password", { email });
+
+      const response = await fetch(`${apiUrl}/api/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          actionType: "reset_password",
+          payload: { email },
+        }),
+      });
+
+      const res = await response.json();
 
       if (!res.status) {
         toast.error(res.message);
@@ -69,7 +81,19 @@ export default function ForgotPasswordForm() {
 
     try {
       setIsSubmitting(true);
-      const res = await onSendEmail("reset_password", { email });
+
+      const response = await fetch(`${apiUrl}/api/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          actionType: "reset_password",
+          payload: { email },
+        }),
+      });
+
+      const res = await response.json();
 
       if (res.status) {
         toast.success("Enlace reenviado exitosamente");

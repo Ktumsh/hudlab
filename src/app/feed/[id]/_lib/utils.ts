@@ -4,6 +4,29 @@ export function mapComment(
   comment: CommentWithRelations,
   currentUserId?: string,
 ): Comment {
+  // Aplastar todas las replies al mismo nivel
+  const flattenAllReplies = (
+    replies: CommentWithRelations[],
+  ): CommentWithRelations[] => {
+    const flattened: CommentWithRelations[] = [];
+
+    const processReplies = (replyList: CommentWithRelations[]) => {
+      replyList.forEach((reply) => {
+        flattened.push(reply);
+        if (reply.replies && reply.replies.length > 0) {
+          processReplies(reply.replies);
+        }
+      });
+    };
+
+    processReplies(replies);
+    return flattened;
+  };
+
+  const allReplies = Array.isArray(comment.replies)
+    ? flattenAllReplies(comment.replies)
+    : [];
+
   return {
     id: comment.id,
     user: {
@@ -17,11 +40,24 @@ export function mapComment(
     likes: Array.isArray(comment.likes) ? comment.likes.length : 0,
     liked: Array.isArray(comment.likes)
       ? !!currentUserId &&
-        comment.likes.some((l: any) => l.profileId === currentUserId)
+        comment.likes.some((l) => l.profileId === currentUserId)
       : false,
-    replies: Array.isArray(comment.replies)
-      ? comment.replies.map((r: any) => mapComment(r, currentUserId))
-      : [],
+    replies: allReplies.map((r) => ({
+      id: r.id,
+      user: {
+        id: r.profile?.id ?? "",
+        displayName: r.profile?.displayName || r.profile?.username || "",
+        avatarUrl: r.profile?.avatarUrl ?? undefined,
+      },
+      content: r.content,
+      createdAt: r.createdAt ? new Date(r.createdAt) : new Date(0),
+      likes: Array.isArray(r.likes) ? r.likes.length : 0,
+      liked: Array.isArray(r.likes)
+        ? !!currentUserId && r.likes.some((l) => l.profileId === currentUserId)
+        : false,
+      replies: [], // Las replies no tienen sub-replies en la estructura final
+      replyTo: r.replyTo ?? undefined,
+    })),
     replyTo: comment.replyTo ?? undefined,
   };
 }

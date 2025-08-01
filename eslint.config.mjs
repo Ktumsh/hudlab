@@ -1,44 +1,59 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import js from "@eslint/js";
+import pluginNext from "@next/eslint-plugin-next";
+import eslintConfigPrettier from "eslint-config-prettier";
+import pluginImport from "eslint-plugin-import";
+import onlyWarn from "eslint-plugin-only-warn";
+import pluginReact from "eslint-plugin-react";
+import pluginReactHooks from "eslint-plugin-react-hooks";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
-import { fixupConfigRules } from "@eslint/compat";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
 const eslintConfig = [
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    ignores: ["node_modules", ".next", "out", "**/ui/*", "public"],
+    plugins: {
+      onlyWarn,
+    },
   },
-  ...fixupConfigRules(
-    compat.extends(
-      "next/core-web-vitals",
-      "next/typescript",
-      "plugin:react/recommended",
-      "plugin:react-hooks/recommended",
-      "plugin:import/recommended",
-      "plugin:import/typescript",
-    ),
-  ),
   {
-    settings: {
-      react: {
-        version: "detect",
-      },
-      "import/resolver": {
-        typescript: {
-          alwaysTryTypes: true,
-          project: "./tsconfig.json",
-        },
+    ignores: ["dist/**"],
+  },
+  {
+    ...pluginReact.configs.flat.recommended,
+    languageOptions: {
+      ...pluginReact.configs.flat.recommended.languageOptions,
+      globals: {
+        ...globals.serviceworker,
+        ...globals.browser,
       },
     },
+  },
+  {
+    plugins: {
+      "@next/next": pluginNext,
+    },
     rules: {
-      "tailwindcss/no-custom-classname": "off",
-      "tailwindcss/classnames-order": "off",
+      ...pluginNext.configs.recommended.rules,
+      ...pluginNext.configs["core-web-vitals"].rules,
+    },
+  },
+  {
+    plugins: {
+      "react-hooks": pluginReactHooks,
+    },
+    settings: { react: { version: "detect" } },
+    rules: {
+      ...pluginReactHooks.configs.recommended.rules,
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
+    },
+  },
+  {
+    plugins: {
+      import: pluginImport,
+    },
+    rules: {
       "import/order": [
         "warn",
         {
@@ -58,18 +73,9 @@ const eslintConfig = [
           },
         },
       ],
-      "react/react-in-jsx-scope": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          vars: "all",
-          args: "after-used",
-          ignoreRestSiblings: true,
-        },
-      ],
     },
   },
+  eslintConfigPrettier,
 ];
 
 export default eslintConfig;

@@ -1,46 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useState, useMemo, useTransition } from "react";
+import useSWR from "swr";
 
-import {
-  mapComment,
-  flattenReplies,
-  countTotalReplies,
-  findReplyReference,
-} from "@/app/feed/[id]/_lib/utils";
-import { deleteComment, updateComment } from "@/db/querys/interactions-querys";
+import type { Comment, CommentWithRelations } from "@/lib/types";
+
+import { mapComment } from "@/app/feed/[id]/_lib/utils";
+import { useRequestProtection } from "@/hooks/use-request-protection";
 import { useUser } from "@/hooks/use-user";
-
-import type { Comment, UploadWithFullDetails } from "@/lib/types";
+import { fetcher } from "@/lib";
+import { useApiMutation } from "@/lib/use-mutation";
 
 interface UseCommentsOptions {
-  upload: UploadWithFullDetails;
+  publicId: string;
+  uploadId: string;
+  onCommentsCountChange?: (change: number) => void;
 }
 
 interface UseCommentsReturn {
   comments: Comment[];
-  setComments: React.Dispatch<React.SetStateAction<Comment[]>>;
-
-  // Utility functions
-  flattenReplies: (replies: Comment[]) => Comment[];
-  countTotalReplies: (replies: Comment[]) => number;
-  findReplyReference: (reply: Comment, replies?: Comment[]) => Comment | null;
-
-  // UI states
-  expandedReplies: { [key: string]: boolean };
-  setExpandedReplies: React.Dispatch<
-    React.SetStateAction<{ [key: string]: boolean }>
-  >;
-  toggleReplies: (commentId: string) => void;
-
-  // Loading states
-  isUpdating: boolean;
-  isDeleting: boolean;
-
-  // Current user
-  currentUserProfileId?: string;
-
-  // Database operations
+  isLoading: boolean;
+  error: Error | null;
+  mutate: () => void;
+  currentUserProfileId: string | null;
+  // Funciones de mutación
+  handleAddComment: (
+    content: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  handleAddReply: (
+    commentId: string,
+    content: string,
+  ) => Promise<{ success: boolean; error?: string }>;
   handleDeleteComment: (
     commentId: string,
   ) => Promise<{ success: boolean; error?: string }>;
@@ -48,60 +38,138 @@ interface UseCommentsReturn {
     commentId: string,
     content: string,
   ) => Promise<{ success: boolean; error?: string }>;
+  isUpdating: boolean;
+  isDeleting: boolean;
+  isCommentLoading: boolean;
+  deletingCommentIds: string[];
 }
 
-export const useComments = ({
-  upload,
-}: UseCommentsOptions): UseCommentsReturn => {
+export function useComments({
+  publicId,
+  uploadId,
+  onCommentsCountChange,
+}: UseCommentsOptions): UseCommentsReturn {
   const { user } = useUser();
-  const currentUserProfileId = user?.profile?.id;
+  const currentUserProfileId = user?.profile?.id || null;
 
-  // Mapear comentarios iniciales
-  const initialMappedComments = Array.isArray(upload.comments)
-    ? upload.comments.map((c) => mapComment(c, currentUserProfileId))
-    : [];
-
-  const [comments, setComments] = useState<Comment[]>(initialMappedComments);
-  const [expandedReplies, setExpandedReplies] = useState<{
-    [key: string]: boolean;
-  }>({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
+  const [isCommentLoading, startCommentTransition] = useTransition();
 
-  // Actualizar comentarios cuando cambie el upload
-  useEffect(() => {
-    const mappedComments = Array.isArray(upload.comments)
-      ? upload.comments.map((c) => mapComment(c, currentUserProfileId))
-      : [];
-    setComments(mappedComments);
-  }, [upload.comments, currentUserProfileId]);
+  const deleteCommentMutation = useApiMutation(
+    "/api/interactions/delete-comment",
+    "DELETE",
+  );
+  const updateCommentMutation = useApiMutation(
+    "/api/interactions/update-comment",
+    "PUT",
+  );
+  const addCommentMutation = useApiMutation(
+    "/api/interactions/add-comment",
+    "POST",
+  );
+  const addReplyMutation = useApiMutation(
+    "/api/interactions/add-reply",
+    "POST",
+  );
 
-  const toggleReplies = useCallback((commentId: string) => {
-    setExpandedReplies((prev) => ({
-      ...prev,
-      [commentId]: !prev[commentId],
-    }));
-  }, []);
+  // Protección de peticiones HTTP
+  const { executeRequest: protectedAddComment } = useRequestProtection(
+    (uploadId: string, content: string) =>
+      addCommentMutation.mutateAsync({ uploadId, content }),
+    {
+      debounceMs: 500,
+      throttleMs: 2000,
+      maxRetries: 3,
+    },
+  );
 
-  const handleDeleteComment = useCallback(async (commentId: string) => {
-    try {
-      setIsDeleting(true);
-      const result = await deleteComment(commentId);
-      return { success: result.success, error: result.error };
-    } catch (error) {
-      console.error("Error deleting comment:", error);
-      return { success: false, error: "Error al eliminar el comentario" };
-    } finally {
-      setIsDeleting(false);
-    }
-  }, []);
+  const { executeRequest: protectedAddReply } = useRequestProtection(
+    (commentId: string, content: string) =>
+      addReplyMutation.mutateAsync({ commentId, content }),
+    {
+      debounceMs: 500,
+      throttleMs: 1500,
+      maxRetries: 3,
+    },
+  );
+
+  const {
+    data: response,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<{ comments: CommentWithRelations[] }>(
+    `/api/uploads/${publicId}/comments`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    },
+  );
+
+  const comments: Comment[] = useMemo(() => {
+    if (!response?.comments) return [];
+
+    const mappedComments = response.comments.map((c) =>
+      mapComment(c, currentUserProfileId || undefined),
+    );
+
+    const sorted = [
+      ...mappedComments
+        .filter((c) =>
+          currentUserProfileId ? c.user.id === currentUserProfileId : false,
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+      ...mappedComments
+        .filter((c) =>
+          currentUserProfileId ? c.user.id !== currentUserProfileId : true,
+        )
+        .sort((a, b) => b.likes - a.likes),
+    ];
+
+    return sorted;
+  }, [response?.comments, currentUserProfileId]);
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      try {
+        setIsDeleting(true);
+        setDeletingCommentIds((prev) => [...prev, commentId]);
+
+        await deleteCommentMutation.mutateAsync({
+          commentId,
+        });
+
+        await mutate();
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting comment:", error);
+        return { success: false, error: "Error al eliminar el comentario" };
+      } finally {
+        setIsDeleting(false);
+        setDeletingCommentIds((prev) => prev.filter((id) => id !== commentId));
+      }
+    },
+    [deleteCommentMutation, mutate],
+  );
 
   const handleUpdateComment = useCallback(
     async (commentId: string, content: string) => {
       try {
         setIsUpdating(true);
-        const result = await updateComment(commentId, content);
-        return { success: result.success, error: result.error };
+        await updateCommentMutation.mutateAsync({
+          commentId,
+          content,
+        });
+
+        await mutate();
+
+        return { success: true };
       } catch (error) {
         console.error("Error updating comment:", error);
         return { success: false, error: "Error al actualizar el comentario" };
@@ -109,32 +177,110 @@ export const useComments = ({
         setIsUpdating(false);
       }
     },
-    [],
+    [updateCommentMutation, mutate],
+  );
+
+  const handleAddComment = useCallback(
+    async (content: string): Promise<{ success: boolean; error?: string }> => {
+      if (!user || isCommentLoading || !content.trim()) {
+        return {
+          success: false,
+          error: "Usuario no autenticado o comentario vacío",
+        };
+      }
+
+      return new Promise((resolve) => {
+        startCommentTransition(async () => {
+          try {
+            const result = (await protectedAddComment(
+              uploadId,
+              content.trim(),
+            )) as {
+              success: boolean;
+              comment?: unknown;
+              error?: string;
+            };
+
+            if (result.success) {
+              await mutate();
+              onCommentsCountChange?.(1);
+              resolve({ success: true });
+            } else {
+              resolve({ success: false, error: result.error });
+            }
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : "Error desconocido";
+            resolve({ success: false, error: errorMessage });
+          }
+        });
+      });
+    },
+    [
+      user,
+      isCommentLoading,
+      uploadId,
+      onCommentsCountChange,
+      protectedAddComment,
+      mutate,
+    ],
+  );
+
+  const handleAddReply = useCallback(
+    async (
+      commentId: string,
+      content: string,
+    ): Promise<{ success: boolean; error?: string }> => {
+      if (!user || isCommentLoading || !content.trim()) {
+        return {
+          success: false,
+          error: "Usuario no autenticado o respuesta vacía",
+        };
+      }
+
+      return new Promise((resolve) => {
+        startCommentTransition(async () => {
+          try {
+            const result = (await protectedAddReply(
+              commentId,
+              content.trim(),
+            )) as {
+              success: boolean;
+              reply?: unknown;
+              error?: string;
+            };
+
+            if (result.success) {
+              await mutate();
+              onCommentsCountChange?.(1);
+              resolve({ success: true });
+            } else {
+              resolve({ success: false, error: result.error });
+            }
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : "Error desconocido";
+            resolve({ success: false, error: errorMessage });
+          }
+        });
+      });
+    },
+    [user, isCommentLoading, onCommentsCountChange, protectedAddReply, mutate],
   );
 
   return {
     comments,
-    setComments,
-
-    // Utility functions
-    flattenReplies,
-    countTotalReplies,
-    findReplyReference,
-
-    // UI states
-    expandedReplies,
-    setExpandedReplies,
-    toggleReplies,
-
-    // Loading states
-    isUpdating,
-    isDeleting,
-
-    // Current user
+    isLoading,
+    error,
+    mutate,
     currentUserProfileId,
-
-    // Database operations
+    handleAddComment,
+    handleAddReply,
     handleDeleteComment,
     handleUpdateComment,
+    isUpdating,
+    isDeleting,
+    isCommentLoading,
+    deletingCommentIds,
   };
-};
+}

@@ -7,6 +7,12 @@ import { useTransition, useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useLocalStorage } from "usehooks-ts";
 
+import ErrorMessage from "../_components/error-message";
+import FooterForm from "../_components/footer-form";
+import LastSessionButton from "../_components/last-session-button";
+import SocialButtons from "../_components/social-buttons";
+import SubmitButton from "../_components/submit-button";
+
 import { ButtonPassword } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,21 +24,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
 import { resultMessages } from "@/lib";
 import { loginSchema, LoginFormData } from "@/lib/form-schemas";
-
-import ErrorMessage from "../_components/error-message";
-import FooterForm from "../_components/footer-form";
-import LastSessionButton from "../_components/last-session-button";
-import SocialButtons from "../_components/social-buttons";
-import SubmitButton from "../_components/submit-button";
-import { login } from "../actions";
 
 const STORAGE_KEY = "hudlab-remembered-email";
 
 const LoginForm = () => {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("next") || "/feed";
+  const { signIn } = useAuth();
 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +77,15 @@ const LoginForm = () => {
 
   const onSubmit = (data: LoginFormData) => {
     startTransition(async () => {
+      setError(null);
+
       try {
-        const result = await login(data);
-        if (result.type === "success") {
-          handleSuccess(data);
+        const success = await signIn(data.email, data.password);
+
+        if (success) {
+          await handleSuccess(data);
         } else {
-          setError(result.message);
+          setError(resultMessages.INVALID_CREDENTIALS);
         }
       } catch (error) {
         console.error("Login error:", error);

@@ -11,15 +11,15 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import TurndownService from "turndown";
 
+import { getTranslatedGenres } from "../../_lib/utils";
+
+import type { Game } from "@/lib/types";
+
 import { Markdown } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useExpandableText } from "@/hooks/use-expandable-text";
 import { parsePlatforms, formatRating } from "@/lib";
-
-import { getTranslatedGenres } from "../../_lib/utils";
-
-import type { Game } from "@/db/schema";
 
 interface GameInfoSectionProps {
   game: Game;

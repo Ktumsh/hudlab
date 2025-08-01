@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import * as React from "react";
 
-import { cn } from "@/lib";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib";
 
 function TooltipProvider({
   delayDuration,

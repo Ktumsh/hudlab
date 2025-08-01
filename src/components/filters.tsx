@@ -3,15 +3,6 @@
 import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 import { useCallback, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { DEFAULT_FILTERS } from "@/lib/consts";
-
 import FilterItem from "./filter-item";
 
 import type {
@@ -19,6 +10,18 @@ import type {
   FilterOptions,
   FilterState,
 } from "@/lib/types";
+
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib";
+import { DEFAULT_FILTERS } from "@/lib/consts";
+
+
 
 interface FiltersProps {
   filterOptions: FilterOptions;
@@ -74,7 +77,11 @@ const Filters = ({ filterOptions, onFilterChange }: FiltersProps) => {
   return (
     <Popover>
       <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-        <Button outline size={isMobile ? "icon-lg" : "lg"}>
+        <Button
+          outline={!isMobile}
+          size={isMobile ? "icon" : "lg"}
+          className={cn(isMobile && "size-9")}
+        >
           <IconAdjustmentsHorizontal className="size-5!" />
         </Button>
       </PopoverTrigger>

@@ -2,8 +2,6 @@
 
 import { Masonry } from "masonic";
 
-import { useIsMobile } from "@/hooks/use-mobile";
-
 import UploadCard from "./upload-card";
 import UploadSkeleton from "./upload-skeleton";
 import { useGalleryItems } from "../_hooks/use-gallery-items";
@@ -12,6 +10,8 @@ import type {
   UploadWithDetails,
   UploadWithProfileAndAspect,
 } from "@/lib/types";
+
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MasonryGridProps {
   uploads?: UploadWithDetails[];

@@ -1,18 +1,16 @@
 "use client";
 
-import { IconDots, IconStar } from "@tabler/icons-react";
+import { IconDots } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { BetterTooltip } from "@/components/ui/tooltip";
-import { useForceHover } from "@/hooks/use-force-hover";
-import { cn } from "@/lib";
 
 import type { UploadWithProfileAndAspect } from "@/lib/types";
+
+import AddToCollectionButton from "@/components/add-to-collection-button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { useForceHover } from "@/hooks/use-force-hover";
+import { cn } from "@/lib";
 
 interface UploadCardProps {
   upload: UploadWithProfileAndAspect;
@@ -23,16 +21,14 @@ const UploadCard = ({ upload }: UploadCardProps) => {
 
   const { elementRef, isHovered } = useForceHover();
 
-  const [showCollections, setShowCollections] = useState(false);
-
   return (
     <div className="flex flex-col">
       <Card
         ref={elementRef}
         onClick={() => router.push(`/feed/${upload.publicId}`)}
         className={cn(
-          "group bg-base-100 pointer-events-auto relative transform-gpu cursor-pointer touch-manipulation overflow-hidden py-0 transition-all duration-300 ease-out will-change-transform backface-hidden hover:-translate-y-1 hover:shadow-lg",
-          isHovered && "-translate-y-1 transform shadow-lg",
+          "group bg-base-100 pointer-events-auto relative transform-gpu cursor-pointer touch-manipulation overflow-hidden py-0 transition-all duration-300 ease-out will-change-transform backface-hidden hover:shadow-lg",
+          isHovered && "shadow-lg",
         )}
       >
         <Image
@@ -49,7 +45,7 @@ const UploadCard = ({ upload }: UploadCardProps) => {
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
 
-        {upload.game.name && (
+        {upload.game && (
           <div
             className={cn(
               "absolute inset-x-0 top-0 hidden overflow-hidden p-3 transition-opacity duration-300 ease-out will-change-[opacity] group-hover:opacity-0 md:block",
@@ -57,7 +53,9 @@ const UploadCard = ({ upload }: UploadCardProps) => {
             )}
           >
             <Badge className="max-w-full border-0 bg-black/70 text-white">
-              <span className="truncate">{upload.game.name}</span>
+              <span className="truncate">
+                {upload.game?.name || "Sin juego"}
+              </span>
             </Badge>
           </div>
         )}
@@ -69,19 +67,7 @@ const UploadCard = ({ upload }: UploadCardProps) => {
           )}
         >
           <div className="pointer-events-auto z-10">
-            <BetterTooltip content="Agregar a colección">
-              <Button
-                variant="default"
-                size="icon"
-                className="bg-base-100/70 transition duration-150 hover:scale-105"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCollections(!showCollections);
-                }}
-              >
-                <IconStar />
-              </Button>
-            </BetterTooltip>
+            <AddToCollectionButton uploadId={upload.id} />
           </div>
           <div className="pointer-events-auto max-w-full">
             <h3 className="mb-2 truncate font-semibold text-white drop-shadow-lg">
@@ -98,7 +84,7 @@ const UploadCard = ({ upload }: UploadCardProps) => {
       </Card>
       <div className="flex items-center justify-between gap-1 p-1 md:hidden">
         <h2 className="text-xxs truncate font-semibold tracking-wide">
-          {upload.game.name}
+          {upload.game?.name || "Sin juego"}
         </h2>
         <button className="relative after:absolute after:-inset-1 after:block">
           <IconDots className="size-4" />

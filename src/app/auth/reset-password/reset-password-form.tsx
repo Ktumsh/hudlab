@@ -7,6 +7,10 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import BackToLoginButton from "../_components/back-to-login-button";
+import SubmitButton from "../_components/submit-button";
+
+import Loader from "@/components/loader";
 import { ButtonPassword } from "@/components/ui/button";
 import {
   Form,
@@ -18,13 +22,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib";
+import { apiUrl } from "@/lib";
 import { resetPasswordSchema, ResetPasswordData } from "@/lib/form-schemas";
 
-import BackToLoginButton from "../_components/back-to-login-button";
-import SubmitButton from "../_components/submit-button";
-import { resetPassword, verifyResetToken } from "../actions";
-
-export default function ResetPasswordForm() {
+const ResetPasswordForm = () => {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("tk") || "";
@@ -55,7 +56,16 @@ export default function ResetPasswordForm() {
       }
 
       try {
-        const result = await verifyResetToken(token);
+        const response = await fetch(`${apiUrl}/api/verify-reset-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const result = await response.json();
+
         if (result.success) {
           setIsValidToken(true);
         } else {
@@ -80,7 +90,7 @@ export default function ResetPasswordForm() {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="border-primary mx-auto mb-4 size-8 animate-spin rounded-full border-b-2"></div>
+          <Loader className="mb-4" />
           <p className="text-content-muted">Verificando enlace...</p>
         </div>
       </div>
@@ -118,7 +128,19 @@ export default function ResetPasswordForm() {
     if (isSubmitting) return;
     try {
       setIsSubmitting(true);
-      const res = await resetPassword(token, data.password);
+
+      const response = await fetch(`${apiUrl}/api/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          newPassword: data.password,
+        }),
+      });
+
+      const res = await response.json();
 
       if (res.type === "success") {
         toast.success(res.message);
@@ -214,4 +236,6 @@ export default function ResetPasswordForm() {
       <BackToLoginButton />
     </Form>
   );
-}
+};
+
+export default ResetPasswordForm;

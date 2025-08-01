@@ -2,9 +2,10 @@
 
 import useSWR from "swr";
 
+import type { UploadWithDetails } from "@/lib/types";
+
 import { fetcher } from "@/lib";
 
-import type { UploadWithDetails } from "@/lib/types";
 
 export function useUploadSearch(query: string) {
   const shouldFetch = query.trim().length >= 2;

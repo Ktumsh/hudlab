@@ -4,13 +4,19 @@ import {
   IconHeart,
   IconHeartFilled,
   IconMessageCircle,
-  IconStar,
-  IconStarFilled,
 } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import CommentsBox from "./comments-box";
+import GameInfoSection from "./game-info-section";
+import ImageCarousel from "./image-carousel";
+import UnauthenticatedComments from "./unauthenticated-comments";
+
+import type { UploadWithDetails } from "@/lib/types";
+
+import AddToCollectionButton from "@/components/add-to-collection-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BetterTooltip } from "@/components/ui/tooltip";
@@ -20,13 +26,6 @@ import { useFilters } from "@/hooks/use-filters";
 import { useInteractions } from "@/hooks/use-interactions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUser } from "@/hooks/use-user";
-
-import CommentsBox from "./comments-box";
-import GameInfoSection from "./game-info-section";
-import ImageCarousel from "./image-carousel";
-import UnauthenticatedComments from "./unauthenticated-comments";
-
-import type { UploadWithDetails, UploadWithFullDetails } from "@/lib/types";
 
 interface DetailsSectionProps {
   upload: UploadWithDetails;
@@ -39,7 +38,6 @@ const DetailsSection = ({
 }: DetailsSectionProps) => {
   const displayName = upload.profile.displayName || upload.profile.username;
 
-  const [favorite, setFavorite] = useState(false);
   const [openComments, setOpenComments] = useState(false);
 
   const isMobile = useIsMobile();
@@ -51,7 +49,6 @@ const DetailsSection = ({
     isLiked,
     likesCount,
     commentsCount,
-    isCommentLoading,
     handleToggleLike,
     updateCommentsCount,
   } = useInteractions({
@@ -92,7 +89,7 @@ const DetailsSection = ({
     const cleanTag = tag.trim();
 
     setFilters({
-      searchText: cleanTag, // Sin # para que la búsqueda funcione
+      searchText: cleanTag,
       tags: [cleanTag],
       platform: undefined,
       releaseYear: undefined,
@@ -100,13 +97,8 @@ const DetailsSection = ({
       sortBy: "newest",
     });
 
-    // Redirigir al feed
     router.push("/feed");
   };
-
-  const favoriteTooltip = favorite
-    ? "Quitar de colecciones"
-    : "Añadir a colección";
 
   return (
     <>
@@ -154,21 +146,11 @@ const DetailsSection = ({
                   </div>
                 </div>
               )}
-              <BetterTooltip content={favoriteTooltip}>
-                <Button
-                  variant={favorite ? "primary" : "default"}
-                  size="icon-lg"
-                  onClick={() => setFavorite(!favorite)}
-                  className="ms-auto"
-                >
-                  {favorite ? (
-                    <IconStarFilled className="size-6" />
-                  ) : (
-                    <IconStar className="size-6" />
-                  )}
-                  <span className="sr-only">{favoriteTooltip}</span>
-                </Button>
-              </BetterTooltip>
+              <AddToCollectionButton
+                uploadId={upload.id}
+                variant="details"
+                className="ms-auto"
+              />
             </div>
             <ImageCarousel images={upload.images} title={upload.title} />
           </div>
@@ -285,12 +267,12 @@ const DetailsSection = ({
             {user ? (
               <div id="comments-box" className="mt-3">
                 <CommentsBox
-                  upload={upload as UploadWithFullDetails}
                   commentCount={commentsCount}
                   open={openComments}
                   onOpenChange={setOpenComments}
-                  isLoading={isCommentLoading}
                   onCommentsCountChange={updateCommentsCount}
+                  uploadId={upload.id}
+                  publicId={upload.publicId.toString()}
                 />
               </div>
             ) : (

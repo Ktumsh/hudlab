@@ -4,6 +4,14 @@ import { IconSearch, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 
+import RecentSearchChip from "./recent-search-chip";
+import ResultCard from "./result-card";
+import SearchEmptyState from "./search-empty-state";
+import SuggestionCard from "./suggestion-card";
+import UploadSearchSkeleton from "./upload-search-skeleton";
+import UserResultCard from "./user-result-card";
+import UserSearchSkeleton from "./user-search-skeleton";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,13 +28,6 @@ import { useUploadSearch } from "@/hooks/use-upload-search";
 import { useUserSearch } from "@/hooks/use-user-search";
 import { FilterChangeEvent, RecentSearch, SearchSuggestion } from "@/lib/types";
 
-import RecentSearchChip from "./recent-search-chip";
-import ResultCard from "./result-card";
-import SearchEmptyState from "./search-empty-state";
-import SuggestionCard from "./suggestion-card";
-import UploadSearchSkeleton from "./upload-search-skeleton";
-import UserResultCard from "./user-result-card";
-import UserSearchSkeleton from "./user-search-skeleton";
 
 interface SearchProps {
   suggestions: SearchSuggestion[];

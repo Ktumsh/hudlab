@@ -1,29 +1,28 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
+
+import { useAuth } from "./use-auth";
 
 import type { UserWithProfile } from "@/lib/types";
 
 interface UserContextType {
-  user: UserWithProfile | null;
-  setUser: React.Dispatch<React.SetStateAction<UserWithProfile | null>>;
+  user: UserWithProfile | undefined;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 interface UserProviderProps {
-  initialUserData: UserWithProfile | null;
   children: ReactNode;
 }
 
-export const UserProvider = ({
-  initialUserData,
-  children,
-}: UserProviderProps) => {
-  const [user, setUser] = useState<UserWithProfile | null>(initialUserData);
+export const UserProvider = ({ children }: UserProviderProps) => {
+  const { user, isLoading, error } = useAuth();
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user: user || undefined, isLoading, error }}>
       {children}
     </UserContext.Provider>
   );

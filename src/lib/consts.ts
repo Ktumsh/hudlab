@@ -6,8 +6,11 @@ export const brevoKey = process.env.BREVO_API_KEY;
 
 export const localUrl = "http://localhost:3000";
 export const productionUrl = "https://hudlab.vercel.app";
+export const localApiUrl = "http://localhost:3001";
+export const productionApiUrl = "https://api-hudlab.vercel.app";
 
 export const siteUrl = isDevelopmentEnvironment ? localUrl : productionUrl;
+export const apiUrl = isDevelopmentEnvironment ? localApiUrl : productionApiUrl;
 
 export const GAME_GENRE_MAP: Record<string, string> = {
   Action: "Acción",

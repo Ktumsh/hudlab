@@ -1,5 +1,6 @@
-import { IconLoader2, IconArrowUp } from "@tabler/icons-react";
+import { IconArrowUp } from "@tabler/icons-react";
 
+import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import useScrollToUp from "@/hooks/use-scroll-to-up";
 import { cn } from "@/lib";
@@ -27,9 +28,7 @@ const FooterStatus = ({
         className,
       )}
     >
-      {isLoadingMore && (
-        <IconLoader2 className="text-content-muted mx-auto size-6 animate-spin" />
-      )}
+      {isLoadingMore && <Loader className="mx-auto size-6" />}
       {isReachingEnd && !isLoadingInitial && hasUploads && (
         <div className="animate-in fade-in-0 flex w-full max-w-xs flex-col items-center">
           <span className="text-primary mb-2 text-base font-semibold">

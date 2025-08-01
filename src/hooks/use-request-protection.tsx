@@ -8,7 +8,7 @@ interface RequestProtectionConfig {
   maxRetries?: number; // Máximo número de reintentos
 }
 
-interface RequestProtectionReturn<T extends any[], R> {
+interface RequestProtectionReturn<T extends unknown[], R> {
   executeRequest: (...args: T) => Promise<R>;
   isThrottled: boolean;
   hasRecentRequest: boolean;
@@ -20,7 +20,7 @@ interface RequestProtectionReturn<T extends any[], R> {
  * IMPORTANTE: Este hook SOLO controla las peticiones HTTP, NO el estado optimista.
  * El estado optimista debe actualizarse inmediatamente independientemente de las protecciones.
  */
-export const useRequestProtection = <T extends any[], R>(
+export const useRequestProtection = <T extends unknown[], R>(
   requestFunction: (...args: T) => Promise<R>,
   config: RequestProtectionConfig = {},
 ): RequestProtectionReturn<T, R> => {

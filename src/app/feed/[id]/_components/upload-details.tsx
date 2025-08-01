@@ -4,14 +4,16 @@ import { IconArrowLeft } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
-import { usePaginatedRelatedUploads } from "@/app/feed/_hooks/use-paginated-related-uploads";
-import { Button } from "@/components/ui/button";
-import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-
 import DetailsSection from "./details-section";
 import FooterStatus from "../../_components/footer-status";
 
 import type { UploadWithDetails } from "@/lib/types";
+
+import { usePaginatedRelatedUploads } from "@/app/feed/_hooks/use-paginated-related-uploads";
+import { Button } from "@/components/ui/button";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+
+
 
 const MasonryGrid = dynamic(() => import("../../_components/masonry-grid"), {
   ssr: false,

@@ -2,12 +2,12 @@
 
 import { useMemo, useRef } from "react";
 
-import { aspectRatios } from "@/lib";
-
 import type {
   UploadWithDetails,
   UploadWithProfileAndAspect,
 } from "@/lib/types";
+
+import { aspectRatios } from "@/lib";
 
 type GalleryItem =
   | { type: "upload"; id: string; upload: UploadWithProfileAndAspect }
@@ -47,7 +47,7 @@ export function useGalleryItems(
       // Actualizar historial
       lastRatiosRef.current.push(ratio);
       if (lastRatiosRef.current.length > 5) {
-        lastRatiosRef.current.shift(); // Mantener solo los últimos 5
+        lastRatiosRef.current.shift();
       }
 
       return ratio;
@@ -57,7 +57,6 @@ export function useGalleryItems(
       const upload = uploads[i];
 
       if (upload) {
-        // Asignar aspect ratio inteligente pero consistente para cada upload
         if (!aspectRatioMap.current.has(upload.id)) {
           const ratio = selectSmartRatio();
           aspectRatioMap.current.set(upload.id, ratio);
@@ -77,7 +76,7 @@ export function useGalleryItems(
           id: `skeleton-${i}`,
           aspectRatio: aspectRatios[i % aspectRatios.length],
           hidden: !loading && !initialLoading && isReachingEnd,
-        } as any);
+        } as GalleryItem);
       }
     }
 

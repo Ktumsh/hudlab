@@ -9,7 +9,7 @@ import React, {
   useMemo,
 } from "react";
 
-import { isProductionEnvironment } from "@/lib/consts";
+import { isProductionEnvironment } from "@/lib";
 
 interface LastSession {
   userId: string;
