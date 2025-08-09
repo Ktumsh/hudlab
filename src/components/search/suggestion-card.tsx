@@ -21,7 +21,7 @@ const SuggestionCard = ({ suggestion, onSelect }: SuggestionCardProps) => {
           alt={suggestion.title}
           width={150}
           height={150}
-          className="w-full object-cover transition group-hover/suggestion:scale-105 group-hover/suggestion:contrast-125"
+          className="h-36 w-full object-cover transition group-hover/suggestion:scale-105 group-hover/suggestion:contrast-125"
         />
       </figure>
       <div className="card-body p-4">

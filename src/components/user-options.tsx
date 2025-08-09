@@ -47,7 +47,7 @@ const UserOptions = () => {
           size="icon"
           className="outline-content-muted bg-base-200 rounded-full border-0 outline-2 outline-offset-2"
         >
-          <UserAvatar />
+          <UserAvatar profile={user.profile} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -58,7 +58,7 @@ const UserOptions = () => {
       >
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-            <UserAvatar />
+            <UserAvatar profile={user.profile} />
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">
                 {user?.profile.displayName}

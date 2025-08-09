@@ -13,8 +13,11 @@ interface AuthSession {
     email: string;
     name?: string;
     image?: string;
+    username?: string;
   };
 }
+
+export type { AuthSession };
 
 export const getServerAuth = cache(async (): Promise<AuthSession | null> => {
   try {
@@ -42,6 +45,7 @@ export const getServerAuth = cache(async (): Promise<AuthSession | null> => {
         email: user.email,
         name: user.profile?.displayName || user.profile?.username,
         image: user.profile?.avatarUrl,
+        username: user.profile?.username,
       },
     };
   } catch (error) {

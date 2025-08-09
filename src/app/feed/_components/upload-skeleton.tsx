@@ -3,16 +3,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib";
 
 interface UploadSkeletonProps {
-  aspectRatio: string;
+  height?: number; // altura fija en px (236 o 256)
 }
 
-const UploadSkeleton = ({ aspectRatio }: UploadSkeletonProps) => {
+const UploadSkeleton = ({ height = 256 }: UploadSkeletonProps) => {
   return (
-    <div>
-      <Card className="overflow-hidden py-0">
-        <Skeleton className={cn("w-full", aspectRatio)} />
-      </Card>
-    </div>
+    <Card className="overflow-hidden py-0">
+      <Skeleton className={cn("w-full")} style={{ height }} />
+    </Card>
   );
 };
 

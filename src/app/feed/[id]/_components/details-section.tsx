@@ -41,7 +41,7 @@ const DetailsSection = ({
   const [openComments, setOpenComments] = useState(false);
 
   const isMobile = useIsMobile();
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
   const router = useRouter();
   const { setFilters } = useFilters();
 
@@ -116,7 +116,7 @@ const DetailsSection = ({
                         onClick={handleToggleLike}
                       >
                         {isLiked ? (
-                          <IconHeartFilled className="size-6 text-red-500" />
+                          <IconHeartFilled className="text-error size-6" />
                         ) : (
                           <IconHeart className="size-6" />
                         )}
@@ -156,7 +156,7 @@ const DetailsSection = ({
           </div>
           <div className="p-3 pt-0 md:p-4">
             <div className="mb-2 flex items-center gap-2">
-              <UserAvatar className="border-content-muted size-7 border-2" />
+              <UserAvatar profile={upload.profile} className="size-5" />
               <p className="text-base-content truncate text-sm font-medium">
                 {displayName}
               </p>
@@ -263,8 +263,8 @@ const DetailsSection = ({
                   </span>
                 ))}
             </div>
-            <Separator className="mt-6" />
-            {user ? (
+            {!isLoading && <Separator className="mt-6" />}
+            {isLoading ? null : user ? (
               <div id="comments-box" className="mt-3">
                 <CommentsBox
                   commentCount={commentsCount}

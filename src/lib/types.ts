@@ -98,6 +98,7 @@ export interface CollectionPermission {
   permission: string;
   grantedAt: Date | null;
   grantedBy: string;
+  status?: "pending" | "accepted";
 }
 
 export interface Tag {
@@ -168,35 +169,11 @@ export interface UploadWithDetails extends Upload {
   images: UploadImage[];
 }
 
-export interface UploadWithProfileAndAspect extends UploadWithDetails {
-  aspectRatio: string;
-}
-
 // ─────────────────────────────
 // 🗂️ COLLECTION TYPES
 // ─────────────────────────────
-
-export interface CollectionWithDetails extends Collection {
-  profile: Profile;
-  items: CollectionItemWithUpload[];
-  _count?: {
-    followers: number;
-    items: number;
-  };
-}
-
 export interface CollectionWithItems extends Collection {
   items: CollectionItem[];
-}
-
-export interface CollectionWithFullDetails extends Collection {
-  profile: Profile;
-  items: CollectionItemWithUpload[];
-  followers: CollectionFollower[];
-  permissions: CollectionPermissionWithProfile[];
-  isFollowing?: boolean;
-  canEdit?: boolean;
-  canView?: boolean;
 }
 
 export interface CollectionFollower {
@@ -223,6 +200,11 @@ export interface CollectionPreview extends Collection {
   };
 }
 
+export interface CollectionPreviewWithDetails extends CollectionPreview {
+  followers: CollectionFollower[];
+  permissions: CollectionPermissionWithProfile[];
+}
+
 export interface CollectionWithUpload extends Collection {
   hasUpload: boolean;
 }
@@ -230,9 +212,10 @@ export interface CollectionWithUpload extends Collection {
 export interface CreateCollectionData {
   name: string;
   description?: string;
-  visibility: "public" | "private" | "restricted";
+  visibility: CollectionVisibility;
   coverImageUrl?: string;
   collaborators?: string[]; // Array de IDs de perfiles colaboradores
+  collaboratorsPermission?: CollaboratorPermission; // Permiso global aplicado a todos los colaboradores
 }
 
 export interface FilterState {
@@ -367,10 +350,72 @@ export type SortOrder = "asc" | "desc";
 
 export type UploadType = "screenshot" | "artwork" | "meme" | "guide";
 
-export type CollectionVisibility = "public" | "private" | "restricted";
+export type CollaboratorPermission = "view" | "designer" | "admin";
+
+export type CollectionVisibility = "public" | "private";
 
 export type NotificationType = "like" | "comment" | "follow" | "collection_add";
 
 export type UserRole = "user" | "admin" | "moderator";
 
 export type UserStatus = "active" | "suspended" | "pending";
+
+// ─────────────────────────────
+// ✉️ COLLECTION INVITATIONS
+// ─────────────────────────────
+
+export interface CollectionInvitationCollectionMini {
+  id: string;
+  name: string;
+  slug: string;
+  profile: Profile;
+}
+
+export interface CollectionInvitation {
+  id: string;
+  permission: CollaboratorPermission;
+  status?: "pending" | "accepted";
+  collection: CollectionInvitationCollectionMini;
+  grantedBy: Profile;
+}
+
+// ─────────────────────────────
+// 📦 API payload/response helpers
+// ─────────────────────────────
+
+export interface CreateCollectionResponse {
+  success: boolean;
+  error?: string;
+  collection?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+}
+
+export interface UpdateCollectionResponse {
+  success: boolean;
+  error?: string;
+  collection?: {
+    id: string;
+    name: string;
+    description?: string;
+    visibility: CollectionVisibility;
+    coverImageUrl?: string;
+  };
+}
+
+// ─────────────────────────────
+// Profile
+// ─────────────────────────────
+
+export interface ProfileData {
+  profile: Profile | null;
+  stats: {
+    followers: number;
+    following: number;
+    uploads: number;
+  };
+  isFollowing: boolean;
+  isSelf: boolean;
+}

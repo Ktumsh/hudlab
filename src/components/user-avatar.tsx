@@ -1,30 +1,46 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Skeleton } from "./ui/skeleton";
 
-import { useUser } from "@/hooks/use-user";
+import type { Profile, UserComment, UserSearchResult } from "@/lib/types";
+
 import { formatDisplayName } from "@/lib";
 
 interface UserAvatarProps {
+  profile: Profile | UserComment | UserSearchResult | undefined;
+  loading?: boolean;
   className?: string;
 }
 
-const UserAvatar = ({ className }: UserAvatarProps) => {
-  const { user } = useUser();
+const UserAvatar = ({ profile, loading, className }: UserAvatarProps) => {
+  if (loading) {
+    return (
+      <Avatar className={className}>
+        <Skeleton className="size-full rounded-full" />
+      </Avatar>
+    );
+  }
 
-  if (!user) return null;
+  if (!profile) {
+    return (
+      <Avatar className={className}>
+        <AvatarFallback>U</AvatarFallback>
+      </Avatar>
+    );
+  }
 
-  const avatarAlt = user.profile.displayName
-    ? `Avatar de ${user.profile.displayName}`
+  const avatarAlt = profile.displayName
+    ? `Avatar de ${profile.displayName}`
     : "Avatar de usuario";
 
   return (
     <Avatar className={className}>
-      {user?.profile.avatarUrl ? (
-        <AvatarImage src={user.profile.avatarUrl} alt={avatarAlt} />
+      {profile.avatarUrl ? (
+        <AvatarImage src={profile.avatarUrl} alt={avatarAlt} />
       ) : (
         <AvatarFallback>
-          {formatDisplayName(user.profile.displayName)}
+          {formatDisplayName(profile.displayName)}
         </AvatarFallback>
       )}
     </Avatar>

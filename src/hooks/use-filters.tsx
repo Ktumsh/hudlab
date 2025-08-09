@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useMemo } from "react";
 
 import type { FilterChangeEvent, FilterState } from "@/lib/types";
 
@@ -9,6 +9,7 @@ const FilterContext = createContext<
       filters: FilterState;
       setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
       onFilterChange: (e: FilterChangeEvent) => void;
+      hasActiveFilters: boolean;
     }
   | undefined
 >(undefined);
@@ -37,9 +38,24 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const hasActiveFilters = useMemo(() => {
+    return (
+      filters.searchText.trim() !== "" ||
+      filters.tags.length > 0 ||
+      filters.platform !== undefined ||
+      filters.releaseYear !== undefined ||
+      filters.inMyCollections === true
+    );
+  }, [filters]);
+
   return (
     <FilterContext.Provider
-      value={{ filters, setFilters, onFilterChange: handleFilterChange }}
+      value={{
+        filters,
+        setFilters,
+        onFilterChange: handleFilterChange,
+        hasActiveFilters,
+      }}
     >
       {children}
     </FilterContext.Provider>

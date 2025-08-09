@@ -122,65 +122,21 @@ export function useDebounce<T>(
   };
 }
 
-/**
- * Hook simplificado para casos de uso básicos
- */
-export function useSimpleDebounce<T>(value: T, delay: number = 300): T {
-  const { debouncedValue } = useDebounce(value, delay);
-  return debouncedValue;
-}
-
-/**
- * Hook para debounce de funciones de callback
- */
-export function useDebounceCallback<TArgs extends any[]>(
-  callback: (...args: TArgs) => void,
+export function useSimpleSearchDebounce(
+  value: string,
   delay: number = 300,
-) {
-  const callbackRef = useRef(callback);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+): string {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
-  // Actualizar callback ref
   useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
 
-  const debouncedCallback = useMemo(() => {
-    return (...args: TArgs) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        callbackRef.current(...args);
-      }, delay);
-    };
-  }, [delay]);
-
-  const cancel = useMemo(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
+      clearTimeout(handler);
     };
-  }, []);
+  }, [value, delay]);
 
-  const flush = useMemo(() => {
-    return (...args: TArgs) => {
-      cancel();
-      callbackRef.current(...args);
-    };
-  }, [cancel]);
-
-  // Cleanup al desmontar
-  useEffect(() => {
-    return cancel;
-  }, [cancel]);
-
-  return {
-    debouncedCallback,
-    cancel,
-    flush,
-  };
+  return debouncedValue;
 }

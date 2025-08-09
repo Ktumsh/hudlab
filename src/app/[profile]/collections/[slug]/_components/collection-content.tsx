@@ -1,31 +1,34 @@
 "use client";
 
 import { IconFolderOpen } from "@tabler/icons-react";
-import { Masonry } from "masonic";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 
-import type { CollectionWithFullDetails } from "@/lib/types";
+import type { CollectionPreviewWithDetails } from "@/lib/types";
 
-import UploadCard from "@/app/feed/_components/upload-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useIsMobile } from "@/hooks/use-mobile";
+
+const MasonryGrid = dynamic(
+  () => import("@/app/feed/_components/masonry-grid"),
+  {
+    ssr: false,
+  },
+);
 
 interface CollectionContentProps {
-  collection: CollectionWithFullDetails;
+  collection: CollectionPreviewWithDetails;
   canEdit: boolean;
 }
 
 const CollectionContent = ({ collection, canEdit }: CollectionContentProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const isMobile = useIsMobile();
 
   // Filtrar items basado en el término de búsqueda
-  const filteredItems = collection.items.filter((item) => {
+  const filteredItems = collection.previewUploads.filter((upload) => {
     if (!searchTerm.trim()) return true;
 
     const searchLower = searchTerm.toLowerCase();
-    const upload = item.upload;
 
     return (
       upload.title.toLowerCase().includes(searchLower) ||
@@ -35,16 +38,7 @@ const CollectionContent = ({ collection, canEdit }: CollectionContentProps) => {
     );
   });
 
-  // Transformar para Masonry con aspectRatio
-  const masonryItems = filteredItems.map((item) => ({
-    id: item.id,
-    upload: {
-      ...item.upload,
-      aspectRatio: "aspect-auto", // o calcular basado en las imágenes
-    },
-  }));
-
-  if (collection.items.length === 0) {
+  if (collection.previewUploads.length === 0) {
     return (
       <div className="py-16 text-center">
         <div className="bg-base-200 mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full">
@@ -64,7 +58,7 @@ const CollectionContent = ({ collection, canEdit }: CollectionContentProps) => {
   return (
     <div>
       {/* Barra de búsqueda */}
-      {collection.items.length > 0 && (
+      {collection.previewUploads.length > 0 && (
         <div className="mb-6">
           <Input
             placeholder="Buscar en esta colección..."
@@ -79,7 +73,7 @@ const CollectionContent = ({ collection, canEdit }: CollectionContentProps) => {
       {searchTerm && (
         <div className="mb-4 flex items-center justify-between">
           <p className="text-base-content/70 text-sm">
-            {filteredItems.length} de {collection.items.length} items
+            {filteredItems.length} de {collection.previewUploads.length} items
             {searchTerm && ` para "${searchTerm}"`}
           </p>
           {searchTerm && (
@@ -92,12 +86,7 @@ const CollectionContent = ({ collection, canEdit }: CollectionContentProps) => {
 
       {/* Grid de uploads */}
       {filteredItems.length > 0 ? (
-        <Masonry
-          items={masonryItems}
-          columnWidth={isMobile ? 160 : 240}
-          columnGutter={isMobile ? 4 : 20}
-          render={({ data }) => <UploadCard upload={data.upload} />}
-        />
+        <MasonryGrid uploads={filteredItems} />
       ) : searchTerm ? (
         <div className="py-12 text-center">
           <p className="text-base-content/60">

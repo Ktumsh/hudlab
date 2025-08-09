@@ -2,16 +2,13 @@
 
 import { useMemo, useRef } from "react";
 
-import type {
-  UploadWithDetails,
-  UploadWithProfileAndAspect,
-} from "@/lib/types";
+import type { UploadWithDetails } from "@/lib/types";
 
-import { aspectRatios } from "@/lib";
+// Ya no usamos aspect ratios aleatorios; usamos alturas fijas estilo Pinterest
 
-type GalleryItem =
-  | { type: "upload"; id: string; upload: UploadWithProfileAndAspect }
-  | { type: "skeleton"; id: string; aspectRatio: string };
+export type GalleryItem =
+  | { type: "upload"; id: string; upload: UploadWithDetails }
+  | { type: "skeleton"; id: string; height: number; hidden?: boolean };
 
 export function useGalleryItems(
   uploads: UploadWithDetails[],
@@ -20,8 +17,7 @@ export function useGalleryItems(
   isReachingEnd: boolean,
   limit: number,
 ): GalleryItem[] {
-  const aspectRatioMap = useRef(new Map<string, string>());
-  const lastRatiosRef = useRef<string[]>([]);
+  const lastHeightsRef = useRef<number[]>([]);
   const lastCount = useRef(0);
 
   const totalExpected =
@@ -34,47 +30,32 @@ export function useGalleryItems(
   return useMemo(() => {
     const items: GalleryItem[] = [];
 
-    const selectSmartRatio = (): string => {
-      const recentRatios = lastRatiosRef.current.slice(-3);
-      let attempts = 0;
-      let ratio: string;
-
-      do {
-        ratio = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
-        attempts++;
-      } while (recentRatios.includes(ratio) && attempts < 10);
-
-      // Actualizar historial
-      lastRatiosRef.current.push(ratio);
-      if (lastRatiosRef.current.length > 5) {
-        lastRatiosRef.current.shift();
-      }
-
-      return ratio;
+    const selectHeight = (): number => {
+      // Alternamos entre 236 y 256px para dar variación mínima
+      const candidates = [236, 256];
+      const recent = lastHeightsRef.current.slice(-3);
+      // Elige el que no sea igual al último si es posible
+      const last = recent[recent.length - 1];
+      const choice = candidates.find((h) => h !== last) ?? candidates[0];
+      lastHeightsRef.current.push(choice);
+      if (lastHeightsRef.current.length > 5) lastHeightsRef.current.shift();
+      return choice;
     };
 
     for (let i = 0; i < lastCount.current; i++) {
       const upload = uploads[i];
 
       if (upload) {
-        if (!aspectRatioMap.current.has(upload.id)) {
-          const ratio = selectSmartRatio();
-          aspectRatioMap.current.set(upload.id, ratio);
-        }
-
         items.push({
           type: "upload",
           id: upload.id,
-          upload: {
-            ...upload,
-            aspectRatio: aspectRatioMap.current.get(upload.id)!,
-          },
+          upload,
         });
       } else {
         items.push({
           type: "skeleton",
           id: `skeleton-${i}`,
-          aspectRatio: aspectRatios[i % aspectRatios.length],
+          height: selectHeight(),
           hidden: !loading && !initialLoading && isReachingEnd,
         } as GalleryItem);
       }

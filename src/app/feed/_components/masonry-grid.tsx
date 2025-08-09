@@ -6,16 +6,14 @@ import UploadCard from "./upload-card";
 import UploadSkeleton from "./upload-skeleton";
 import { useGalleryItems } from "../_hooks/use-gallery-items";
 
-import type {
-  UploadWithDetails,
-  UploadWithProfileAndAspect,
-} from "@/lib/types";
+import type { GalleryItem } from "../_hooks/use-gallery-items";
+import type { UploadWithDetails } from "@/lib/types";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MasonryGridProps {
   uploads?: UploadWithDetails[];
-  relatedUploads?: UploadWithProfileAndAspect[];
+  relatedUploads?: UploadWithDetails[];
   loading?: boolean;
   initialLoading?: boolean;
   isReachingEnd?: boolean;
@@ -54,16 +52,14 @@ const MasonryGrid = ({
     return (
       <Masonry
         items={galleryItems}
-        columnWidth={isMobile ? 160 : 240}
+        columnWidth={isMobile ? 160 : 260}
         columnGutter={isMobile ? 4 : 20}
-        render={({ data }) => {
-          if (data.type === "upload") {
-            return <UploadCard upload={data.upload} />;
+        render={({ data }: { data: GalleryItem }) => {
+          if (data.type === "skeleton") {
+            if (data.hidden) return null;
+            return <UploadSkeleton height={data.height} />;
           }
-
-          if ((data as any).hidden) return null;
-
-          return <UploadSkeleton aspectRatio={data.aspectRatio} />;
+          return <UploadCard upload={data.upload} />;
         }}
       />
     );
@@ -73,15 +69,14 @@ const MasonryGrid = ({
     return (
       <Masonry
         items={relatedItems}
-        columnWidth={isMobile ? 160 : 240}
+        columnWidth={isMobile ? 160 : 260}
         columnGutter={isMobile ? 4 : 20}
-        render={({ data }) => {
-          if (data.type === "upload") {
-            return <UploadCard upload={data.upload} />;
+        render={({ data }: { data: GalleryItem }) => {
+          if (data.type === "skeleton") {
+            if (data.hidden) return null;
+            return <UploadSkeleton height={data.height} />;
           }
-          if ((data as any).hidden) return null;
-
-          return <UploadSkeleton aspectRatio={data.aspectRatio} />;
+          return <UploadCard upload={data.upload} />;
         }}
       />
     );

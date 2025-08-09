@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib";
 
@@ -16,38 +15,33 @@ const CollectionsSkeleton = ({
   return (
     <div
       className={cn(
-        "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+        "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7",
         className,
       )}
     >
       {Array.from({ length: count }).map((_, index) => (
-        <Card key={index} className="overflow-hidden">
-          <CardContent className="p-0">
-            {/* Cover Image Skeleton */}
-            <Skeleton className="aspect-square" />
-
-            {/* Content Skeleton */}
-            <div className="space-y-3 p-4">
-              {/* Title */}
-              <Skeleton className="h-4" />
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-2/3" />
+        <div key={index} className="group">
+          <div className="rounded-box relative overflow-hidden">
+            <div className="flex h-4/5 gap-0.5">
+              <div className="w-2/3">
+                <Skeleton className="h-full rounded-none" />
               </div>
-
-              {/* Stats */}
-              <div className="flex items-center justify-between pt-2">
-                <Skeleton className="h-3 w-20" />
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-3 w-12" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
+              <div className="flex w-1/3 flex-col gap-0.5">
+                <Skeleton className="aspect-square rounded-none" />
+                <Skeleton className="aspect-square rounded-none" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          {/* Contenido */}
+          <div className="p-3">
+            <Skeleton className="mb-2 h-5 w-3/4" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-3.5 w-12" />
+              <Skeleton className="h-3.5 w-20" />
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );

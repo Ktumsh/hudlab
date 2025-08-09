@@ -6,6 +6,7 @@ export const formErrors = {
     displayName: "El nombre para mostrar es obligatorio",
     bio: "La biografía es obligatoria",
     password: "La contraseña es obligatoria",
+    collectionName: "El nombre de la colección es obligatorio",
   },
   invalid: {
     email: "El formato del correo no es válido",
@@ -21,6 +22,10 @@ export const formErrors = {
     displayNameMax: "El nombre para mostrar no puede exceder los 50 caracteres",
     bioMax: "La biografía no puede exceder los 160 caracteres",
     passwordMin: "La contraseña debe tener al menos 8 caracteres",
+    collectionNameMax:
+      "El nombre de la colección no puede exceder 100 caracteres",
+    collectionDescriptionMax:
+      "La descripción de la colección no puede exceder 200 caracteres",
   },
   password: {
     noUppercase: "Debe contener al menos una letra mayúscula",

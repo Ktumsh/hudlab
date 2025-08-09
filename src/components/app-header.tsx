@@ -31,7 +31,7 @@ const AppHeader = () => {
   const { filterOptions } = useFilterOptions();
   const { searchSuggestions } = useSearchSuggestions();
 
-  const { setFilters, onFilterChange } = useFilters();
+  const { setFilters, onFilterChange, hasActiveFilters } = useFilters();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -77,7 +77,7 @@ const AppHeader = () => {
     return (
       <header
         className={cn(
-          "bg-base-100 sticky top-0 z-50 w-full",
+          "bg-base-100/80 sticky top-0 z-50 w-full backdrop-blur-md",
           !isHome && "fixed bg-transparent",
         )}
       >
@@ -100,16 +100,21 @@ const AppHeader = () => {
             </Button>
           )}
           <div className="flex items-center gap-2">
-            {isHome && (
+            {isHome && hasActiveFilters && (
               <Filters
                 filterOptions={filterOptions}
                 onFilterChange={onFilterChange}
               />
             )}
             {!user && isHome && (
-              <Button variant="primary" asChild className="h-11">
-                <Link href="/auth/signup">Registrarse</Link>
-              </Button>
+              <>
+                <Button size="sm" asChild className="h-9">
+                  <Link href="/auth/login">Iniciar sesión</Link>
+                </Button>
+                <Button variant="primary" size="sm" asChild className="h-9">
+                  <Link href="/auth/signup">Registrarse</Link>
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -117,7 +122,7 @@ const AppHeader = () => {
     );
   }
   return (
-    <header className="bg-base-100 sticky top-0 z-50 w-full">
+    <header className="bg-base-100/80 sticky top-0 z-50 w-full backdrop-blur-md">
       <div className="flex h-20 items-center justify-between gap-4 px-6">
         {logo}
         <div className="mx-auto w-full">
@@ -125,7 +130,7 @@ const AppHeader = () => {
             suggestions={searchSuggestions}
             onFilterChange={onFilterChange}
           >
-            {isHome && (
+            {isHome && hasActiveFilters && (
               <Filters
                 filterOptions={filterOptions}
                 onFilterChange={onFilterChange}

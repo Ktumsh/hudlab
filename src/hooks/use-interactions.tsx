@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRequestProtection } from "./use-request-protection";
 import { useUser } from "./use-user";
 
-import { useApiMutation } from "@/lib/use-mutation";
+import { apiPost } from "@/lib/fetcher";
 
 interface UseInteractionsOptions {
   uploadId: string;
@@ -51,15 +51,26 @@ export const useInteractions = ({
   // Estados de carga
   const [isLikeLoading, setIsLikeLoading] = useState(false);
 
-  // Mutaciones API (solo likes)
-  const toggleLikeMutation = useApiMutation(
-    "/api/interactions/toggle-like",
-    "POST",
-  );
+  const likeEndpoint = `/api/interactions/toggle-like`;
+  // (Opcional) Podríamos usar useOptimisticSWRMutation si se requiere cache central de uploads.
 
-  // 🛡️ Protección de peticiones HTTP (NO afecta estados optimistas)
   const { executeRequest: protectedToggleLike } = useRequestProtection(
-    (uploadId: string) => toggleLikeMutation.mutateAsync({ uploadId }),
+    async () => {
+      try {
+        return await apiPost<{
+          success: boolean;
+          isLiked: boolean;
+          likesCount: number;
+        }>(likeEndpoint, { body: { uploadId } });
+      } catch (e) {
+        return {
+          success: false,
+          error: e instanceof Error ? e.message : "Error",
+          isLiked: isLiked,
+          likesCount,
+        };
+      }
+    },
     {
       debounceMs: 300,
       throttleMs: 1000,
@@ -80,7 +91,7 @@ export const useInteractions = ({
 
     // 🛡️ PETICIÓN HTTP: Protegida contra abuso (sin bloquear el estado optimista)
     try {
-      const result = (await protectedToggleLike(uploadId)) as {
+      const result = (await protectedToggleLike()) as {
         success: boolean;
         isLiked?: boolean;
         likesCount?: number;
@@ -111,7 +122,7 @@ export const useInteractions = ({
     } finally {
       setIsLikeLoading(false);
     }
-  }, [user, isLiked, likesCount, uploadId, onLikeSuccess, protectedToggleLike]);
+  }, [user, isLiked, likesCount, onLikeSuccess, protectedToggleLike]);
 
   const updateCommentsCount = useCallback(
     (change: number) => {

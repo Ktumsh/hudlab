@@ -6,8 +6,11 @@ import {
   IconPlus,
   IconStar,
   IconStarFilled,
+  IconStarOff,
 } from "@tabler/icons-react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import CreateCollectionForm from "../app/collections/_components/create-collection-form";
 
@@ -20,6 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { BetterTooltip } from "@/components/ui/tooltip";
 import { useCollectionsInteractions } from "@/hooks/use-collections-interactions";
+import { useUser } from "@/hooks/use-user";
 import { useUserCollections } from "@/hooks/use-user-collections";
 import { cn } from "@/lib";
 
@@ -34,6 +38,9 @@ const AddToCollectionButton = ({
   className,
   variant = "card",
 }: AddToCollectionButtonProps) => {
+  const { user } = useUser();
+  const pathname = usePathname();
+
   const {
     getCollectionsForUpload,
     isLoading: isInitialLoading,
@@ -54,7 +61,6 @@ const AddToCollectionButton = ({
     ? userCollections.some((col) => col.hasUpload)
     : false;
 
-  // Configuración de estilo según el contexto
   const getButtonProps = (): {
     variant: "default" | "primary";
     size: "icon" | "icon-lg";
@@ -108,16 +114,39 @@ const AddToCollectionButton = ({
         </PopoverTrigger>
       </BetterTooltip>
       <PopoverContent
-        className="p-0 sm:max-w-md"
+        className="p-0 sm:max-w-xs sm:min-w-xs"
         align="end"
         sideOffset={8}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4">
-          <h3 className="mb-4 text-lg font-semibold">Agregar a Colección</h3>
+          {user && (
+            <h3 className="mb-4 text-lg font-semibold">Añadir a colección</h3>
+          )}
           <div className="space-y-4">
             <div className="space-y-4">
-              {isInitialLoading ? (
+              {!user ? (
+                <div className="py-3 text-center">
+                  <div className="mb-3">
+                    <IconStarOff className="text-base-content/40 mx-auto size-10" />
+                  </div>
+                  <p className="text-content-muted mb-4 text-pretty">
+                    Necesitas una cuenta para guardar este HUD en una colección.
+                  </p>
+                  <div className="space-x-2">
+                    <Button asChild>
+                      <Link href={`/auth/login?next=${pathname}`}>
+                        Iniciar sesión
+                      </Link>
+                    </Button>
+                    <Button asChild variant="primary">
+                      <Link href={`/auth/login?next=${pathname}`}>
+                        Registrarse
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : isInitialLoading ? (
                 <div className="space-y-3">
                   {[...Array(3)].map((_, index) => (
                     <div
@@ -135,9 +164,9 @@ const AddToCollectionButton = ({
               ) : userCollections.length === 0 ? (
                 <div className="py-8 text-center">
                   <div className="mb-4">
-                    <IconStar className="text-base-content/40 mx-auto h-12 w-12" />
+                    <IconStar className="text-base-content/40 mx-auto size-10" />
                   </div>
-                  <p className="text-base-content/60 mb-4">
+                  <p className="text-content-muted mb-4">
                     Aún no tienes colecciones
                   </p>
                   <CreateCollectionForm>
@@ -186,7 +215,7 @@ const AddToCollectionButton = ({
                               {collection.description}
                             </p>
                           )}
-                          <p className="text-base-content/60 text-xs">
+                          <p className="text-content-muted text-xs">
                             {collection.itemsCount || 0} items
                           </p>
                         </div>
@@ -194,7 +223,6 @@ const AddToCollectionButton = ({
                     ))}
                 </div>
               )}
-              {/* Botón para crear nueva colección cuando ya hay colecciones */}
               {userCollections.length > 0 && (
                 <div className="border-t pt-4">
                   <CreateCollectionForm>

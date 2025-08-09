@@ -1,15 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconSearch, IconX } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import useSWRMutation from "swr/mutation";
 
-import type { UserSearchResult } from "@/lib/types";
+import CollaboratorSelector from "./collaborator-selector";
+import { useUserCollectionsPreview } from "../_hooks/use-user-collections-preview";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { CollaboratorPermission } from "@/lib/types";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,15 +30,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useSimpleSearchDebounce } from "@/hooks/use-simple-debounce";
 import { useUser } from "@/hooks/use-user";
-import { useUserSearch } from "@/hooks/use-user-search";
-import {
-  CreateCollectionFormData,
-  createCollectionSchema,
-  formatDisplayName,
-} from "@/lib";
-import { useApiMutation } from "@/lib/use-mutation";
+import { CreateCollectionFormData, createCollectionSchema } from "@/lib";
+import { apiPost } from "@/lib/fetcher";
 
 interface CreateCollectionFormProps {
   children: React.ReactNode;
@@ -55,26 +50,11 @@ interface CreateCollectionResponse {
 
 const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
   const [open, setOpen] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(false); // Cambió de isSecret a isPrivate
-  const [collaborators, setCollaborators] = useState<UserSearchResult[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
+  const [collaborators, setCollaborators] = useState<string[]>([]);
+  const [collaboratorsPermission] = useState<CollaboratorPermission>("admin");
+  const { user } = useUser();
 
-  // Obtener usuario actual
-  const { user: currentUser } = useUser();
-
-  const debouncedQuery = useSimpleSearchDebounce(searchQuery, 300);
-
-  const { users: allSearchResults } = useUserSearch(debouncedQuery);
-
-  const searchResults =
-    searchQuery.trim().length > 0
-      ? allSearchResults.filter(
-          (user) =>
-            user.id !== currentUser?.profile?.id &&
-            !collaborators.find((c) => c.id === user.id),
-        )
-      : [];
+  const { refresh } = useUserCollectionsPreview();
 
   const form = useForm<CreateCollectionFormData>({
     resolver: zodResolver(createCollectionSchema),
@@ -85,25 +65,36 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
     },
   });
 
-  const createCollectionMutation = useApiMutation("/api/collections", "POST");
+  const { handleSubmit, reset, control, formState } = form;
+
+  const { trigger: triggerCreate, isMutating: isCreating } = useSWRMutation(
+    "/api/collections",
+    async (
+      _url,
+      {
+        arg,
+      }: {
+        arg: CreateCollectionFormData & {
+          collaborators: string[];
+          collaboratorsPermission: CollaboratorPermission;
+        };
+      },
+    ) => apiPost<CreateCollectionResponse>("/api/collections", { body: arg }),
+  );
 
   const onSubmit = async (data: CreateCollectionFormData) => {
     try {
-      const visibility = isPrivate ? "private" : "public";
-
-      const result = (await createCollectionMutation.mutateAsync({
+      const result = await triggerCreate({
         ...data,
-        visibility,
-        collaborators: collaborators.map((c) => c.id),
-      })) as CreateCollectionResponse;
+        collaborators,
+        collaboratorsPermission,
+      });
 
       if (result.success && result.collection) {
         toast.success("Colección creada exitosamente");
-        form.reset();
-        setIsPrivate(false);
+        reset();
         setCollaborators([]);
-        setSearchQuery("");
-        router.refresh();
+        refresh();
         setOpen(false);
       } else {
         toast.error(result.error || "Error al crear la colección");
@@ -114,14 +105,7 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
     }
   };
 
-  const addCollaborator = (user: UserSearchResult) => {
-    setCollaborators((prev) => [...prev, user]);
-    setSearchQuery("");
-  };
-
-  const removeCollaborator = (userId: string) => {
-    setCollaborators((prev) => prev.filter((c) => c.id !== userId));
-  };
+  // Eliminar colaborador desde el propio selector
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -134,9 +118,9 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <FormField
-              control={form.control}
+              control={control}
               name="name"
               render={({ field }) => (
                 <FormItem>
@@ -144,8 +128,8 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Nombre de tu colección de HUDs"
                       maxLength={100}
+                      placeholder="Nombre de tu colección de HUDs"
                     />
                   </FormControl>
                   <FormMessage />
@@ -153,7 +137,7 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
               )}
             />
             <FormField
-              control={form.control}
+              control={control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -161,8 +145,8 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="¿De qué trata tu colección?"
                       maxLength={200}
+                      placeholder="¿De qué trata tu colección?"
                     />
                   </FormControl>
                   <FormMessage />
@@ -171,122 +155,48 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
             />
 
             {/* Opción de privacidad */}
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="private"
-                checked={isPrivate}
-                onCheckedChange={(checked) => setIsPrivate(checked as boolean)}
-                className="mt-1"
-              />
-              <div className="flex-1">
-                <label
-                  htmlFor="private"
-                  className="cursor-pointer text-sm font-medium"
-                >
-                  Colección privada
-                </label>
-                <p className="text-content-muted mt-1 text-xs">
-                  La colección no será visible para el público general.
-                </p>
-              </div>
-            </div>
-
-            <div className="fieldset">
-              <FormLabel>Agregar colaboradores</FormLabel>
-              <div className="relative">
-                <IconSearch className="text-content-muted absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Buscar por nombre"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              {/* Resultados de búsqueda */}
-              {searchResults.length > 0 && (
-                <div className="scrollbar-sm rounded-field max-h-40 overflow-y-auto border">
-                  {searchResults.map((user) => (
-                    <div key={user.id} className="flex items-center gap-3 p-3">
-                      <Avatar>
-                        <AvatarImage
-                          src={user.avatarUrl}
-                          alt={user.displayName}
-                        />
-                        <AvatarFallback>
-                          {formatDisplayName(user.displayName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {user.displayName}
-                        </p>
-                        <p className="text-content-muted truncate text-xs">
-                          @{user.username}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        outline
-                        onClick={() => addCollaborator(user)}
-                      >
-                        Agregar
-                      </Button>
+            <FormField
+              control={control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center gap-3">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value === "private"}
+                        onCheckedChange={(checked: boolean | "indeterminate") =>
+                          field.onChange(checked ? "private" : "public")
+                        }
+                        className="checkbox-lg!"
+                      />
+                    </FormControl>
+                    <div>
+                      <FormLabel>Colección privada</FormLabel>
+                      <p className="text-content-muted text-sm text-pretty">
+                        La colección no será visible para la comunidad, sólo
+                        para colaboradores.
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-            {/* Colaboradores agregados */}
-            {collaborators.length > 0 && (
-              <div className="fieldset">
-                <p className="fieldset-legend text-sm leading-none">
-                  Colaboradores ({collaborators.length})
-                </p>
-                <div className="space-y-2">
-                  {collaborators.map((collaborator) => (
-                    <div
-                      key={collaborator.id}
-                      className="bg-base-200 flex items-center gap-3 rounded-lg p-2"
-                    >
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage
-                          src={collaborator.avatarUrl}
-                          alt={
-                            collaborator.displayName || collaborator.username
-                          }
-                        />
-                        <AvatarFallback className="text-xs">
-                          {formatDisplayName(collaborator.displayName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {collaborator.displayName || collaborator.username}
-                        </p>
-                      </div>
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => removeCollaborator(collaborator.id)}
-                        className="p-0"
-                      >
-                        <IconX />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            />
+
+            <CollaboratorSelector
+              selectedCollaborators={collaborators}
+              onCollaboratorsChange={(ids) => setCollaborators(ids)}
+              excludeIds={user?.profile?.id ? [user.profile.id] : []}
+            />
 
             <div className="flex justify-end gap-2">
               <Button
-                disabled={!form.formState.isValid}
                 type="submit"
                 variant="primary"
+                disabled={!formState.isValid}
                 className="w-full"
               >
-                {createCollectionMutation.isLoading ? "Creando..." : "Crear"}
+                {isCreating ? "Creando..." : "Crear"}
               </Button>
             </div>
           </form>

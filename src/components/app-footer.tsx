@@ -101,7 +101,12 @@ const AppFooter = () => {
                         {Icon && (
                           <Icon className={cn("size-6", isLast && "size-7")} />
                         )}
-                        {isProfile && <UserAvatar className="size-6" />}
+                        {isProfile && (
+                          <UserAvatar
+                            profile={user?.profile}
+                            className="size-6"
+                          />
+                        )}
                       </span>
                     </Link>
                   </Button>
@@ -150,7 +155,12 @@ const AppFooter = () => {
                       )}
                       <span className="relative z-10 flex flex-col items-center">
                         {Icon && <Icon className="size-6" />}
-                        {isProfile && <UserAvatar className="size-6" />}
+                        {isProfile && (
+                          <UserAvatar
+                            profile={user?.profile}
+                            className="size-6"
+                          />
+                        )}
                         <span className="text-xs">{item.title}</span>
                       </span>
                     </Link>

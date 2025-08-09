@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-
 import EmptyState from "./empty-state";
 import FooterStatus from "./footer-status";
 import { usePaginatedUploads } from "../_hooks/use-paginated-uploads";
@@ -48,9 +47,7 @@ const GalleryFeed = () => {
         <MasonryGrid
           key={`${filters.searchText}-${filters.sortBy}-${filters.platform}-${filters.releaseYear}`}
           uploads={uploads}
-          loading={isLoadingMore}
           initialLoading={isLoadingInitial}
-          isReachingEnd={isReachingEnd}
         />
       </div>
       <FooterStatus

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
-import { useApiMutation } from "@/lib/use-mutation";
+import useOptimisticSWRMutation from "@/hooks/use-optimistic-swr-mutation";
 
 interface UseCollectionsInteractionsOptions {
   uploadId: string;
@@ -26,10 +26,22 @@ export const useCollectionsInteractions = ({
 }: UseCollectionsInteractionsOptions): UseCollectionsInteractionsReturn => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const toggleCollectionMutation = useApiMutation(
-    "/api/collections/toggle-upload",
-    "POST",
-  );
+  const lastPayloadRef = useRef<{
+    collectionId: string;
+    uploadId: string;
+    hasUpload: boolean;
+  } | null>(null);
+
+  const { run: runToggleUpload, isMutating } = useOptimisticSWRMutation<{
+    success: boolean;
+    collectionName?: string;
+    error?: string;
+  }>("/api/collections/toggle-upload", {
+    getBody: () => lastPayloadRef.current,
+    onError: (err) => {
+      console.error("Error toggling collection:", err);
+    },
+  });
 
   const handleToggleCollection = useCallback(
     async (collectionId: string, currentHasUpload: boolean) => {
@@ -39,38 +51,37 @@ export const useCollectionsInteractions = ({
       setIsLoading(true);
 
       try {
-        const result = (await toggleCollectionMutation.mutateAsync({
+        lastPayloadRef.current = {
           collectionId,
           uploadId,
           hasUpload: !currentHasUpload,
-        })) as { success: boolean; collectionName?: string; error?: string };
+        };
+        const result = await runToggleUpload();
 
         if (!result.success) {
           onOptimisticUpdate(collectionId, currentHasUpload);
           console.error("Error toggling collection:", result.error);
         } else {
-          // Mostrar toast con el nombre de la colección
           const collectionName = result.collectionName || "la colección";
           toast.success(
             currentHasUpload
-              ? `Se quitó de "${collectionName}"`
-              : `Se agregó a "${collectionName}"`,
+              ? `Se eliminó de "${collectionName}"`
+              : `Se añadió a "${collectionName}"`,
           );
         }
         onRefresh();
       } catch (error) {
-        // Revert optimistic update on error
         onOptimisticUpdate(collectionId, currentHasUpload);
         console.error("Error toggling collection:", error);
       } finally {
         setIsLoading(false);
       }
     },
-    [uploadId, toggleCollectionMutation, onOptimisticUpdate, onRefresh],
+    [uploadId, runToggleUpload, onOptimisticUpdate, onRefresh],
   );
 
   return {
-    isLoading,
+    isLoading: isLoading || isMutating,
     handleToggleCollection,
   };
 };

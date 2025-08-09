@@ -38,7 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isValidating,
     isLoading: swrIsLoading,
     mutate,
-  } = useSWR<UserWithProfile | null>("/api/user", authFetcher);
+  } = useSWR<UserWithProfile | null>("/api/user", authFetcher, {
+    revalidateOnFocus: false,
+    fallbackData: null,
+    errorRetryCount: 0,
+  });
 
   const isLoading = isValidating || swrIsLoading;
 
@@ -90,8 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Obtener token CSRF
       const csrfToken = await getCsrfToken();
 
-      // En lugar de usar fetch con redirect manual, vamos a usar el approach directo
-      // Crear un form temporal y enviarlo para que el navegador maneje la redirección naturalmente
       const form = document.createElement("form");
       form.method = "POST";
       form.action = `${apiUrl}/api/auth/signin/${provider}`;

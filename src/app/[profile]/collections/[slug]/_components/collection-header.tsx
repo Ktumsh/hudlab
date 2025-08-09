@@ -1,15 +1,18 @@
 "use client";
 
-import Image from "next/image";
-
-import type { CollectionWithFullDetails } from "@/lib/types";
+import type {
+  CollectionPreviewWithDetails,
+  CollectionPermissionWithProfile,
+} from "@/lib/types";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import UserAvatar from "@/components/user-avatar";
 import { formatDisplayName } from "@/lib";
 
 interface CollectionHeaderProps {
-  collection: CollectionWithFullDetails;
+  collection: CollectionPreviewWithDetails;
 }
 
 const CollectionHeader = ({ collection }: CollectionHeaderProps) => {
@@ -18,18 +21,6 @@ const CollectionHeader = ({ collection }: CollectionHeaderProps) => {
 
   return (
     <div className="mb-8">
-      {/* Cover Image */}
-      {collection.coverImageUrl && (
-        <div className="relative mb-6 h-48 w-full overflow-hidden rounded-lg">
-          <Image
-            src={collection.coverImageUrl}
-            alt={collection.name}
-            fill
-            className="object-cover"
-          />
-        </div>
-      )}
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1">
           {/* Título y descripción */}
@@ -105,6 +96,37 @@ const CollectionHeader = ({ collection }: CollectionHeaderProps) => {
               </div>
             </div>
           </div>
+
+          {/* Colaboradores (avatar-group) */}
+          {collection.permissions && collection.permissions.length > 0 && (
+            <div className="fieldset mt-6">
+              <Label className="fieldset-legend">Colaboradores</Label>
+              <div className="flex items-center justify-between gap-4">
+                <div className="avatar-group -space-x-3">
+                  <UserAvatar
+                    profile={collection.profile}
+                    className="avatar size-11"
+                  />
+                  {collection.permissions
+                    .slice(0, 9)
+                    .map((perm: CollectionPermissionWithProfile) => (
+                      <UserAvatar
+                        key={perm.profileId}
+                        profile={perm.profile}
+                        className="avatar size-11"
+                      />
+                    ))}
+                  {collection.permissions.length > 9 && (
+                    <Avatar className="avatar avatar-placeholder size-11">
+                      <AvatarFallback>
+                        +{collection.permissions.length - 9}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -35,6 +35,7 @@ import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Textarea } from "@/components/ui/textarea";
 import UserAvatar from "@/components/user-avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib";
 
 interface CommentsBoxProps {
@@ -54,6 +55,8 @@ const CommentsBox = ({
   uploadId,
   publicId,
 }: CommentsBoxProps) => {
+  const { user, isLoading: isLoadingUser } = useUser();
+
   const isMobile = useIsMobile();
 
   const {
@@ -522,7 +525,11 @@ const CommentsBox = ({
 
   const footer = (
     <div className="relative flex gap-2">
-      <UserAvatar className="mt-2" />
+      <UserAvatar
+        profile={user?.profile}
+        loading={isLoadingUser}
+        className="mt-2"
+      />
       <div className="flex-1">
         <Textarea
           rows={1}

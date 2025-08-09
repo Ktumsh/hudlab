@@ -10,10 +10,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-import EditCollectionForm from "./edit-collection-form";
+import type { CollectionPreview } from "@/lib/types";
 
-import type { CollectionWithFullDetails } from "@/lib/types";
-
+import EditCollectionForm from "@/app/collections/_components/edit-collection-form";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,10 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BetterTooltip } from "@/components/ui/tooltip";
-import { useApiMutation } from "@/lib/use-mutation";
+import useOptimisticSWRMutation from "@/hooks/use-optimistic-swr-mutation";
+// apiUrl ya abstraído en postJson
 
 interface CollectionActionsProps {
-  collection: CollectionWithFullDetails;
+  collection: CollectionPreview;
   canEdit: boolean;
   isFollowing: boolean;
 }
@@ -40,53 +40,50 @@ const CollectionActions = ({
   const [followersCount, setFollowersCount] = useState(
     collection.followersCount || 0,
   );
-  const [showEditForm, setShowEditForm] = useState(false);
 
-  const toggleFollowMutation = useApiMutation(
-    "/api/collections/toggle-follow",
-    "POST",
-  );
+  const { run: runToggleFollow, isMutating } = useOptimisticSWRMutation<{
+    success: boolean;
+    isFollowing: boolean;
+    followersCount: number;
+  }>("/api/collections/toggle-follow", {
+    getBody: () => ({ collectionId: collection.id }),
+    onError: (err) => {
+      toast.error(err.message || "Error al seguir/dejar de seguir");
+    },
+  });
 
   const handleToggleFollow = async () => {
-    // Actualización optimista
-    const newFollowing = !following;
-    const newFollowersCount = newFollowing
-      ? followersCount + 1
-      : followersCount - 1;
-
-    setFollowing(newFollowing);
-    setFollowersCount(newFollowersCount);
+    const prevFollowing = following;
+    const prevFollowers = followersCount;
+    const optimisticFollowing = !prevFollowing;
+    const optimisticFollowers = Math.max(
+      0,
+      prevFollowers + (optimisticFollowing ? 1 : -1),
+    );
+    setFollowing(optimisticFollowing);
+    setFollowersCount(optimisticFollowers);
 
     try {
-      const result = (await toggleFollowMutation.mutateAsync({
-        collectionId: collection.id,
-      })) as {
-        success: boolean;
-        isFollowing?: boolean;
-        followersCount?: number;
-        error?: string;
-      };
-
-      if (result.success) {
-        setFollowing(result.isFollowing ?? false);
-        setFollowersCount(result.followersCount ?? 0);
+      const res = await runToggleFollow();
+      if (res.success) {
+        setFollowing(res.isFollowing);
+        setFollowersCount(res.followersCount);
         toast.success(
-          result.isFollowing
+          res.isFollowing
             ? "Ahora sigues esta colección"
             : "Ya no sigues esta colección",
         );
       } else {
-        // Revertir en caso de error
-        setFollowing(following);
-        setFollowersCount(followersCount);
-        toast.error(result.error || "Error al seguir/dejar de seguir");
+        setFollowing(prevFollowing);
+        setFollowersCount(prevFollowers);
+        toast.error("Error al seguir/dejar de seguir");
       }
-    } catch (error) {
-      // Revertir en caso de error
-      setFollowing(following);
-      setFollowersCount(followersCount);
-      console.error("Error toggling follow:", error);
-      toast.error("Error inesperado");
+    } catch (err) {
+      setFollowing(prevFollowing);
+      setFollowersCount(prevFollowers);
+      toast.error(
+        err instanceof Error ? err.message : "Error al seguir/dejar de seguir",
+      );
     }
   };
 
@@ -117,14 +114,14 @@ const CollectionActions = ({
       <div className="border-base-300 mb-8 flex items-center justify-between border-b pb-6">
         <div className="flex items-center gap-2">
           {/* Botón de seguir - solo si no puede editar la colección */}
-          {!canEdit && (
+          {canEdit && (
             <BetterTooltip
               content={following ? "Dejar de seguir" : "Seguir colección"}
             >
               <Button
                 variant={following ? "primary" : "secondary"}
                 onClick={handleToggleFollow}
-                disabled={toggleFollowMutation.isLoading}
+                disabled={isMutating}
                 className="gap-2"
               >
                 {following ? (
@@ -141,22 +138,19 @@ const CollectionActions = ({
           {/* Botón de compartir */}
           <BetterTooltip content="Compartir">
             <Button variant="ghost" size="icon" onClick={handleShare}>
-              <IconShare className="h-4 w-4" />
+              <IconShare />
             </Button>
           </BetterTooltip>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Botón de editar (solo para propietarios/editores) */}
           {canEdit && (
             <BetterTooltip content="Editar colección">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowEditForm(true)}
-              >
-                <IconEdit className="h-4 w-4" />
-              </Button>
+              <EditCollectionForm collection={collection}>
+                <Button variant="ghost" size="icon">
+                  <IconEdit />
+                </Button>
+              </EditCollectionForm>
             </BetterTooltip>
           )}
 
@@ -164,34 +158,29 @@ const CollectionActions = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                <IconDots className="h-4 w-4" />
+                <IconDots />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleShare}>
-                <IconShare className="mr-2 h-4 w-4" />
+                <IconShare />
                 Compartir
               </DropdownMenuItem>
               {canEdit && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowEditForm(true)}>
-                    <IconEdit className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
+                  <EditCollectionForm collection={collection}>
+                    <DropdownMenuItem>
+                      <IconEdit />
+                      Editar
+                    </DropdownMenuItem>
+                  </EditCollectionForm>
                 </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-
-      {/* Modal de edición */}
-      <EditCollectionForm
-        collection={collection}
-        isOpen={showEditForm}
-        onClose={() => setShowEditForm(false)}
-      />
     </>
   );
 };

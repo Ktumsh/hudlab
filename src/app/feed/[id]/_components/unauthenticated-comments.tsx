@@ -12,10 +12,10 @@ const UnauthenticatedComments = () => {
   return (
     <div className="bg-base-200/50 mt-4 flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-4 py-8 text-center">
       <IconMessageCircle className="text-content-muted mb-1 size-10" />
-      <span className="text-base-content text-lg font-semibold">
-        ¿Quieres comentar o ver feedback de otros diseñadores?
-      </span>
-      <span className="text-base-content/80 max-w-md text-sm">
+      <h3 className="text-base-content text-lg font-semibold">
+        ¿Quieres comentar o ver feedback de otros miembros de la comunidad?
+      </h3>
+      <span className="text-base-content/80 max-w-xl text-sm">
         <span className="text-base-content font-medium">Inicia sesión</span> o{" "}
         <span className="text-base-content font-medium">crea una cuenta</span>{" "}
         para compartir tus ideas, inspirarte y analizar interfaces junto a la

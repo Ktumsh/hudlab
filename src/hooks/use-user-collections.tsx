@@ -9,7 +9,12 @@ import type { CollectionWithItems, CollectionWithUpload } from "@/lib/types";
 
 import { fetcher } from "@/lib";
 
-export function useUserCollections() {
+type UseUserCollectionsOptions = {
+  includeItems?: boolean;
+};
+
+export function useUserCollections(options: UseUserCollectionsOptions = {}) {
+  const { includeItems = true } = options;
   const { user } = useAuth();
 
   const {
@@ -17,7 +22,9 @@ export function useUserCollections() {
     isLoading,
     mutate,
   } = useSWR<CollectionWithItems[]>(
-    user?.id ? `/api/user-collections/${user.id}?includeItems=true` : null,
+    user?.id
+      ? `/api/user-collections/${user.id}${includeItems ? "?includeItems=true" : ""}`
+      : null,
     fetcher,
     {
       revalidateOnFocus: false,

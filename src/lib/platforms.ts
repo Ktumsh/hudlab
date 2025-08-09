@@ -102,7 +102,7 @@ export const getPlatformIcon = (platformName: string) => {
 
 export const parsePlatforms = (
   platforms: string,
-): Array<{ name: string; Icon: any }> => {
+): Array<{ name: string; Icon: React.ElementType }> => {
   if (!platforms) return [];
 
   return platforms

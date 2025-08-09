@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
+import useSWRMutation from "swr/mutation";
 
 import type { Comment } from "@/lib/types";
 
-import { useApiMutation } from "@/lib/use-mutation";
+import { apiPost } from "@/lib/fetcher";
 
 interface UseCommentLikesOptions {
   onCommentsUpdate?: (updater: (prev: Comment[]) => Comment[]) => void;
@@ -22,9 +23,15 @@ interface UseCommentLikesReturn {
 export const useCommentLikes = ({
   onCommentsUpdate,
 }: UseCommentLikesOptions): UseCommentLikesReturn => {
-  const toggleCommentLikeMutation = useApiMutation(
+  const { trigger: triggerToggle } = useSWRMutation(
     "/api/interactions/toggle-comment-like",
-    "POST",
+    async (_url, { arg }: { arg: { commentId: string } }) =>
+      apiPost<{
+        success: boolean;
+        isLiked?: boolean;
+        likesCount?: number;
+        error?: string;
+      }>("/api/interactions/toggle-comment-like", { body: arg }),
   );
 
   const updateCommentInStructure = useCallback(
@@ -74,14 +81,7 @@ export const useCommentLikes = ({
       );
 
       try {
-        const result = (await toggleCommentLikeMutation.mutateAsync({
-          commentId,
-        })) as {
-          success: boolean;
-          isLiked?: boolean;
-          likesCount?: number;
-          error?: string;
-        };
+        const result = await triggerToggle({ commentId });
 
         if (result.success) {
           // Actualizar con valores reales del servidor
@@ -133,7 +133,7 @@ export const useCommentLikes = ({
         return { success: false, error: "Error al toggle like del comentario" };
       }
     },
-    [onCommentsUpdate, updateCommentInStructure, toggleCommentLikeMutation],
+    [onCommentsUpdate, updateCommentInStructure, triggerToggle],
   );
 
   return {

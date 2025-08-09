@@ -7,7 +7,6 @@ import type { UploadWithDetails, FilterState } from "@/lib/types";
 
 import { fetcher } from "@/lib";
 
-
 type UploadsResponse = {
   uploads: UploadWithDetails[];
   nextCursor: string | null;
@@ -74,7 +73,7 @@ export function usePaginatedUploads(filters: FilterState) {
     isLoadingInitial,
     isLoadingMore,
     isReachingEnd,
-    limit: 20, // Para mostrar que la primera carga es de 20
+    limit: 20,
     loadMore: () => setSize(size + 1),
     error,
   };

@@ -79,6 +79,7 @@ const ImageCarousel = ({ images, title, className }: ImageCarouselProps) => {
       <div className={cn("relative", className)}>
         <div className="hidden aspect-3/2 flex-1 place-content-center md:grid">
           <Image
+            priority
             src={images[0].imageUrl}
             alt={title}
             width={900}
@@ -87,6 +88,7 @@ const ImageCarousel = ({ images, title, className }: ImageCarouselProps) => {
           />
         </div>
         <Image
+          priority
           src={images[0].imageUrl}
           alt={title}
           width={900}

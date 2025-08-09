@@ -13,8 +13,6 @@ import { usePaginatedRelatedUploads } from "@/app/feed/_hooks/use-paginated-rela
 import { Button } from "@/components/ui/button";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
-
-
 const MasonryGrid = dynamic(() => import("../../_components/masonry-grid"), {
   ssr: false,
 });

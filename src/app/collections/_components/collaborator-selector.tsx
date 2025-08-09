@@ -1,42 +1,61 @@
 "use client";
 
-import { IconSearch, IconX } from "@tabler/icons-react";
-import { useState } from "react";
+import { IconMoodSad, IconSearch } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 
 import type { UserSearchResult } from "@/lib/types";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useSimpleSearchDebounce } from "@/hooks/use-simple-debounce";
+import UserAvatar from "@/components/user-avatar";
+import { useSimpleSearchDebounce } from "@/hooks/use-debounce";
 import { useUserSearch } from "@/hooks/use-user-search";
-import { formatDisplayName } from "@/lib";
 
 interface CollaboratorSelectorProps {
   selectedCollaborators: string[];
-  onCollaboratorsChange: (collaborators: string[]) => void;
+  onCollaboratorsChange: (
+    collaborators: string[],
+    collaboratorUsers?: UserSearchResult[],
+  ) => void;
+  initialCollaborators?: UserSearchResult[];
+  hideLabel?: boolean;
+  excludeIds?: string[];
 }
 
 const CollaboratorSelector = ({
   selectedCollaborators,
   onCollaboratorsChange,
+  initialCollaborators = [],
+  hideLabel = false,
+  excludeIds = [],
 }: CollaboratorSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useSimpleSearchDebounce(searchQuery, 300);
 
-  const { users, isLoading } = useUserSearch(debouncedSearchQuery);
+  const { users, isLoading: isLoadingUsers } =
+    useUserSearch(debouncedSearchQuery);
 
-  const [collaborators, setCollaborators] = useState<UserSearchResult[]>([]);
+  // Estado local de los colaboradores visibles en el listado "Ya invitados"
+  const [collaboratorUsers, setCollaboratorUsers] =
+    useState<UserSearchResult[]>(initialCollaborators);
+
+  useEffect(() => {
+    if (initialCollaborators && initialCollaborators.length > 0) {
+      setCollaboratorUsers(initialCollaborators);
+    }
+  }, [initialCollaborators]);
 
   const handleAddCollaborator = (user: UserSearchResult) => {
-    if (!selectedCollaborators.includes(user.id)) {
+    if (
+      !selectedCollaborators.includes(user.id) &&
+      !excludeIds.includes(user.id)
+    ) {
       const updatedCollaborators = [...selectedCollaborators, user.id];
-      const updatedCollaboratorObjects = [...collaborators, user];
+      const updatedCollaboratorObjects = [...collaboratorUsers, user];
 
-      onCollaboratorsChange(updatedCollaborators);
-      setCollaborators(updatedCollaboratorObjects);
-      setSearchQuery("");
+      onCollaboratorsChange(updatedCollaborators, updatedCollaboratorObjects);
+      setCollaboratorUsers(updatedCollaboratorObjects);
     }
   };
 
@@ -44,125 +63,100 @@ const CollaboratorSelector = ({
     const updatedCollaborators = selectedCollaborators.filter(
       (id) => id !== userId,
     );
-    const updatedCollaboratorObjects = collaborators.filter(
+    const updatedCollaboratorObjects = collaboratorUsers.filter(
       (user) => user.id !== userId,
     );
 
-    onCollaboratorsChange(updatedCollaborators);
-    setCollaborators(updatedCollaboratorObjects);
+    onCollaboratorsChange(updatedCollaborators, updatedCollaboratorObjects);
+    setCollaboratorUsers(updatedCollaboratorObjects);
   };
 
   // Filtrar usuarios que ya están agregados
   const filteredUsers = users.filter(
-    (user) => !selectedCollaborators.includes(user.id),
+    (user) =>
+      !selectedCollaborators.includes(user.id) && !excludeIds.includes(user.id),
   );
 
   return (
-    <div className="space-y-3">
-      <Label>Agregar colaboradores</Label>
+    <div className="fieldset">
+      {!hideLabel && <FormLabel>Agregar colaboradores</FormLabel>}
 
       {/* Buscador */}
       <div className="relative">
-        <IconSearch className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <IconSearch className="text-content-muted absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2" />
         <Input
           type="text"
           placeholder="Buscar usuarios..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-9"
         />
       </div>
 
-      {/* Resultados de búsqueda */}
-      {debouncedSearchQuery && (
-        <div className="space-y-2">
-          {isLoading ? (
-            <p className="text-muted-foreground text-sm">Buscando...</p>
-          ) : filteredUsers.length > 0 ? (
-            <div className="max-h-32 space-y-1 overflow-y-auto">
-              {filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="hover:bg-muted/50 flex items-center justify-between rounded-md border p-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={user.avatarUrl || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {formatDisplayName(user.displayName || user.username)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {user.displayName || user.username}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        @{user.username}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddCollaborator(user)}
-                  >
-                    Agregar
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              No se encontraron usuarios
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Colaboradores agregados */}
-      {collaborators.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium">
-            Colaboradores ({collaborators.length})
-          </p>
-          <div className="space-y-1">
-            {collaborators.map((collaborator) => (
+      {/* Resultados de búsqueda cuando hay término */}
+      <div className="space-y-2">
+        {((debouncedSearchQuery && filteredUsers.length > 0) ||
+          collaboratorUsers.length > 0) && (
+          <div className="scrollbar-sm rounded-field max-h-60 overflow-y-auto border">
+            {collaboratorUsers.map((collaborator) => (
               <div
                 key={collaborator.id}
-                className="bg-muted/30 flex items-center justify-between rounded-md border p-2"
+                className="flex items-center gap-3 p-3"
               >
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={collaborator.avatarUrl || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {formatDisplayName(
-                        collaborator.displayName || collaborator.username,
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {collaborator.displayName || collaborator.username}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      @{collaborator.username}
-                    </p>
-                  </div>
+                <UserAvatar profile={collaborator} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {collaborator.displayName || collaborator.username}
+                  </p>
+                  <p className="text-content-muted truncate text-xs">
+                    @{collaborator.username}
+                  </p>
                 </div>
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
                   onClick={() => handleRemoveCollaborator(collaborator.id)}
                 >
-                  <IconX className="h-4 w-4" />
+                  Invitado
                 </Button>
               </div>
             ))}
+            {debouncedSearchQuery &&
+              filteredUsers.map((user) => (
+                <div key={user.id} className="flex items-center gap-3 p-3">
+                  <UserAvatar profile={user} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {user.displayName || user.username}
+                    </p>
+                    <p className="text-content-muted truncate text-xs">
+                      @{user.username}
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    outline
+                    onClick={() => handleAddCollaborator(user)}
+                  >
+                    Invitar
+                  </Button>
+                </div>
+              ))}
           </div>
-        </div>
-      )}
+        )}
+        {debouncedSearchQuery &&
+          filteredUsers.length === 0 &&
+          !isLoadingUsers && (
+            <div className="rounded-field flex items-center justify-center gap-2 border p-4">
+              <p className="text-content-muted text-sm">
+                No se encontraron usuarios
+              </p>
+              <IconMoodSad className="text-content-muted size-5" />
+            </div>
+          )}
+      </div>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useMemo, useTransition } from "react";
 import useSWR from "swr";
+import useSWRMutation from "swr/mutation";
 
 import type { Comment, CommentWithRelations } from "@/lib/types";
 
@@ -9,7 +10,7 @@ import { mapComment } from "@/app/feed/[id]/_lib/utils";
 import { useRequestProtection } from "@/hooks/use-request-protection";
 import { useUser } from "@/hooks/use-user";
 import { fetcher } from "@/lib";
-import { useApiMutation } from "@/lib/use-mutation";
+import { apiPost } from "@/lib/fetcher";
 
 interface UseCommentsOptions {
   publicId: string;
@@ -57,27 +58,45 @@ export function useComments({
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const [isCommentLoading, startCommentTransition] = useTransition();
 
-  const deleteCommentMutation = useApiMutation(
+  const { trigger: triggerDelete } = useSWRMutation(
     "/api/interactions/delete-comment",
-    "DELETE",
+    async (_url, { arg }: { arg: { commentId: string } }) => {
+      const qs = new URLSearchParams({ commentId: arg.commentId }).toString();
+      return apiPost<{ success: boolean }>(
+        `/api/interactions/delete-comment?${qs}`,
+        { method: "DELETE" },
+      );
+    },
   );
-  const updateCommentMutation = useApiMutation(
+  const { trigger: triggerUpdate } = useSWRMutation(
     "/api/interactions/update-comment",
-    "PUT",
+    async (_url, { arg }: { arg: { commentId: string; content: string } }) =>
+      apiPost<{ success: boolean }>("/api/interactions/update-comment", {
+        body: arg,
+        method: "PUT",
+      }),
   );
-  const addCommentMutation = useApiMutation(
+  const { trigger: triggerAddComment } = useSWRMutation(
     "/api/interactions/add-comment",
-    "POST",
+    async (_url, { arg }: { arg: { uploadId: string; content: string } }) =>
+      apiPost<{ success: boolean; comment?: unknown }>(
+        "/api/interactions/add-comment",
+        { body: arg },
+      ),
   );
-  const addReplyMutation = useApiMutation(
+  const { trigger: triggerAddReply } = useSWRMutation(
     "/api/interactions/add-reply",
-    "POST",
+    async (_url, { arg }: { arg: { commentId: string; content: string } }) =>
+      apiPost<{ success: boolean; reply?: unknown }>(
+        "/api/interactions/add-reply",
+        { body: arg },
+      ),
   );
 
   // Protección de peticiones HTTP
   const { executeRequest: protectedAddComment } = useRequestProtection(
     (uploadId: string, content: string) =>
-      addCommentMutation.mutateAsync({ uploadId, content }),
+      triggerAddComment({ uploadId, content }),
     {
       debounceMs: 500,
       throttleMs: 2000,
@@ -87,7 +106,7 @@ export function useComments({
 
   const { executeRequest: protectedAddReply } = useRequestProtection(
     (commentId: string, content: string) =>
-      addReplyMutation.mutateAsync({ commentId, content }),
+      triggerAddReply({ commentId, content }),
     {
       debounceMs: 500,
       throttleMs: 1500,
@@ -140,9 +159,7 @@ export function useComments({
         setIsDeleting(true);
         setDeletingCommentIds((prev) => [...prev, commentId]);
 
-        await deleteCommentMutation.mutateAsync({
-          commentId,
-        });
+        await triggerDelete({ commentId });
 
         await mutate();
 
@@ -155,17 +172,14 @@ export function useComments({
         setDeletingCommentIds((prev) => prev.filter((id) => id !== commentId));
       }
     },
-    [deleteCommentMutation, mutate],
+    [triggerDelete, mutate],
   );
 
   const handleUpdateComment = useCallback(
     async (commentId: string, content: string) => {
       try {
         setIsUpdating(true);
-        await updateCommentMutation.mutateAsync({
-          commentId,
-          content,
-        });
+        await triggerUpdate({ commentId, content });
 
         await mutate();
 
@@ -177,7 +191,7 @@ export function useComments({
         setIsUpdating(false);
       }
     },
-    [updateCommentMutation, mutate],
+    [triggerUpdate, mutate],
   );
 
   const handleAddComment = useCallback(

@@ -19,6 +19,5 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { profile } = await params;
 
   if (!profile) redirect("/feed");
-
-  return <div>ProfilePage: {profile}</div>;
+  redirect(`/${profile}/huds`);
 }
