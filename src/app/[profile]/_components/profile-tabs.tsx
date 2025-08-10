@@ -19,6 +19,7 @@ const ProfileTabs = ({ username }: { username: string }) => {
         <div className="group grid grid-cols-2 gap-0.5">
           <Link
             href={`/${username}/huds`}
+            scroll={false}
             className={cn(
               "relative flex h-9 flex-1 items-center justify-center px-4 font-semibold",
               isHuds && "text-primary",
@@ -39,6 +40,7 @@ const ProfileTabs = ({ username }: { username: string }) => {
           </Link>
           <Link
             href={`/${username}/collections`}
+            scroll={false}
             className={cn(
               "relative flex h-9 flex-1 items-center justify-center px-4 font-semibold",
               isCollections && "text-primary",

@@ -64,9 +64,7 @@ const UploadDetails = ({
           key={upload.id}
           relatedUploads={relatedUploads}
           layout="details"
-          loading={isLoadingInitial || isLoadingMore}
           initialLoading={isLoadingInitial}
-          isReachingEnd={isReachingEnd}
         />
         <FooterStatus
           isLoadingInitial={isLoadingInitial}

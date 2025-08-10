@@ -4,49 +4,8 @@ import UploadDetails from "./_components/upload-details";
 
 import type { Metadata } from "next";
 
-import { apiUrl } from "@/lib";
+import { getLikeStatus, getUploadByPublicId } from "@/data/upload";
 import { getServerAuth } from "@/lib/server-auth";
-
-async function getUploadByPublicId(publicId: string) {
-  try {
-    const response = await fetch(`${apiUrl}/api/uploads/${publicId}`, {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.upload;
-  } catch (error) {
-    console.error("Error fetching upload:", error);
-    return null;
-  }
-}
-
-async function getLikeStatus(publicId: string, userId?: string) {
-  if (!userId) return { isLiked: false, likesCount: 0 };
-
-  try {
-    const response = await fetch(
-      `${apiUrl}/api/uploads/${publicId}/like-status`,
-      {
-        cache: "no-store",
-      },
-    );
-
-    if (!response.ok) {
-      return { isLiked: false, likesCount: 0 };
-    }
-
-    const data = await response.json();
-    return data.likeStatus;
-  } catch (error) {
-    console.error("Error fetching like status:", error);
-    return { isLiked: false, likesCount: 0 };
-  }
-}
 
 interface UploadPageProps {
   params: Promise<{ id: string }>;
@@ -74,7 +33,7 @@ export default async function UploadPage({ params }: UploadPageProps) {
   const session = await getServerAuth();
 
   const likeStatus = session?.user?.id
-    ? await getLikeStatus(upload.publicId, session.user.id)
+    ? await getLikeStatus(String(upload.publicId), session.user.id)
     : { isLiked: false };
 
   return <UploadDetails upload={upload} initialLiked={likeStatus.isLiked} />;

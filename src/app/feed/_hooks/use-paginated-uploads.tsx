@@ -19,7 +19,7 @@ export function usePaginatedUploads(filters: FilterState) {
   ) => {
     if (previousPageData && !previousPageData.nextCursor) return null;
 
-    const limit = pageIndex === 0 ? 30 : 10;
+    const limit = pageIndex === 0 ? 30 : 20;
     const cursor = previousPageData?.nextCursor;
 
     const queryString = new URLSearchParams({

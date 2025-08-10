@@ -71,9 +71,11 @@ const UserOptions = () => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <IconFingerprint />
-            Mi perfil
+          <DropdownMenuItem asChild>
+            <Link href={`/${user.profile.username}/huds`}>
+              <IconFingerprint />
+              Mi perfil
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <IconSettings />

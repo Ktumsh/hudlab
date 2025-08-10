@@ -17,6 +17,8 @@ export async function fetcher<T>(
     cache: options?.noStore ? "no-store" : "default",
   });
 
+  console.log(res);
+
   if (!res.ok) {
     const error = new Error(
       "Ocurrió un error al hacer fetch de los datos",

@@ -134,7 +134,7 @@ const AppFooter = () => {
                     <Link
                       href={
                         isProfile
-                          ? `/${user?.profile.username}`
+                          ? `/${user?.profile.username}/huds`
                           : (item.href ?? "")
                       }
                       className={cn(

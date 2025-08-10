@@ -6,6 +6,7 @@ import type { Viewport } from "next";
 
 import AppFooter from "@/components/app-footer";
 import AppHeader from "@/components/app-header";
+import GlobalLoader from "@/components/global-loader";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { inter } from "@/config/font.config";
@@ -32,10 +33,12 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={cn(inter.variable, "antialiased")}>
         <Providers>
-          <SessionTracker />
-          <AppHeader />
-          {children}
-          <AppFooter />
+          <GlobalLoader>
+            <SessionTracker />
+            <AppHeader />
+            {children}
+            <AppFooter />
+          </GlobalLoader>
         </Providers>
         <Toaster />
       </body>

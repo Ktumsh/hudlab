@@ -30,7 +30,8 @@ const MasonryGrid = ({
 }: MasonryGridProps) => {
   const isMobile = useIsMobile();
 
-  const feedSkeletonCount = initialLoading ? 30 : 10;
+  const feedSkeletonCount = initialLoading ? 30 : 20;
+  const relatedSkeletonCount = 20;
 
   const galleryItems = useGalleryItems(
     uploads ?? [],
@@ -45,7 +46,7 @@ const MasonryGrid = ({
     loading ?? false,
     initialLoading ?? false,
     isReachingEnd ?? true,
-    10,
+    relatedSkeletonCount,
   );
 
   if (layout === "feed" && uploads) {
