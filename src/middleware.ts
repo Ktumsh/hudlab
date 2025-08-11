@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Verificación ligera de token HMAC (opcional). Para evitar duplicar lógica compleja, implementamos
+// una versión mínima en frontend que solo valida estructura temporal (no seguridad real, heurística).
+function tryParseHmacPart(token: string) {
+  // token original no está disponible (firmado en backend), aquí solo comprobamos expiración si
+  // viene en formato uid:username:exp (espejo). No se confía para autorización.
+  const parts = token.split(":");
+  if (parts.length < 3) return null;
+  const [uid, username, expStr] = parts;
+  const exp = Number(expStr);
+  if (!uid || !exp || isNaN(exp) || Date.now() > exp) return null;
+  return { id: uid, profile: { username } } as CurrentUserPayload;
+}
+
 // Rutas públicas de autenticación (ya no se usa la constante directamente para flexibilidad)
 
 const PROTECTED_ROUTES = [
@@ -26,15 +39,9 @@ interface CurrentUserPayload {
 // Estrategia: usar una cookie espejo (no sensible) colocada por el frontend (ej: hudlab_auth=uid:username:exp)
 // únicamente para heurística de redirecciones suaves. No se usa para autorización real.
 function parseMirrorCookie(request: NextRequest) {
-  const cookie = request.cookies.get("hudlab_auth")?.value;
-  if (!cookie) return null;
-  // formato: uid:username:expEpoch
-  const parts = cookie.split(":");
-  if (parts.length < 3) return null;
-  const [uid, username, expStr] = parts;
-  const exp = Number(expStr);
-  if (!uid || !exp || Date.now() > exp) return null;
-  return { id: uid, profile: { username } } as CurrentUserPayload;
+  const raw = request.cookies.get("hudlab_auth")?.value;
+  if (!raw) return null;
+  return tryParseHmacPart(raw);
 }
 
 export async function middleware(request: NextRequest) {

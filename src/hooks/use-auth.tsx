@@ -58,16 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (!res.ok) return;
         const data = await res.json();
-        if (data.authenticated && data.token) {
-          // token contiene HMAC; además generamos cookie legible: uid:username:exp (5 min)
-          const exp = Date.now() + 5 * 60 * 1000;
-          // guardamos dos cookies: espejo simple (para parse rápido) y firma (opcional futuro)
-          document.cookie = `hudlab_auth_simple=${data.username || ""}:${exp}; Path=/; Max-Age=300; SameSite=Lax`;
-          document.cookie = `hudlab_auth=${data.token}:${exp}; Path=/; Max-Age=300; SameSite=Lax`;
+        if (data.authenticated && data.uid) {
+          // Formato esperado por middleware: uid:username:exp
+          const exp = Date.now() + 5 * 60 * 1000; // 5 minutos
+          const value = `${data.uid}:${data.username || ""}:${exp}`;
+          document.cookie = `hudlab_auth=${value}; Path=/; Max-Age=300; SameSite=Lax`;
         } else {
           // borrar cookie
           document.cookie = "hudlab_auth=; Path=/; Max-Age=0";
-          document.cookie = "hudlab_auth_simple=; Path=/; Max-Age=0";
         }
       } catch {
         /* ignore */
@@ -94,7 +92,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok && data.type === "success") {
         await mutate(); // trigger fetch user
-        // Mirror cookie se actualizará por efecto
+
+        // Sincronizar cookie espejo inmediatamente después de login exitoso
+        try {
+          const mirrorRes = await fetch(`${apiUrl}/api/session-mirror`, {
+            credentials: "include",
+            cache: "no-store",
+          });
+          if (mirrorRes.ok) {
+            const mirrorData = await mirrorRes.json();
+            if (mirrorData.authenticated && mirrorData.uid) {
+              const exp = Date.now() + 5 * 60 * 1000;
+              const value = `${mirrorData.uid}:${mirrorData.username || ""}:${exp}`;
+              document.cookie = `hudlab_auth=${value}; Path=/; Max-Age=300; SameSite=Lax`;
+            }
+          }
+        } catch {
+          // Ignore mirror sync errors
+        }
+
         toast.success(data.message || "Sesión iniciada correctamente");
         return true;
       } else {
@@ -193,7 +209,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mutate(null);
       // Limpieza inmediata cookies espejo
       document.cookie = "hudlab_auth=; Path=/; Max-Age=0";
-      document.cookie = "hudlab_auth_simple=; Path=/; Max-Age=0";
     } catch (error) {
       console.error("Sign out error:", error);
     }
