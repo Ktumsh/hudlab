@@ -39,7 +39,8 @@ export const navConfig = {
       iconFilled: IconStarFilled,
     },
     {
-      title: "Perfil",
+      title: "Mi Perfil",
+      href: "/me/huds",
     },
   ],
   bottomNav: [
@@ -67,8 +68,8 @@ export const navConfig = {
       iconFilled: IconIconsFilled,
     },
     {
-      title: "Perfil",
-      href: "/profile",
+      title: "Mi Perfil",
+      href: "/me/huds",
     },
     {
       title: "Login",

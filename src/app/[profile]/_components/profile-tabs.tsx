@@ -6,19 +6,26 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib";
 
-const ProfileTabs = ({ username }: { username: string }) => {
+interface ProfileTabsProps {
+  username: string;
+  basePath?: string; // allows "/me" vs "/:username"
+}
+
+const ProfileTabs = ({ username, basePath }: ProfileTabsProps) => {
   const pathname = usePathname();
-  const isHuds =
-    pathname?.endsWith(`/${username}`) ||
-    pathname?.includes(`/${username}/huds`);
-  const isCollections = pathname?.includes(`/${username}/collections`);
+  const root = basePath ? `${basePath}` : `/${username}`;
+  const hudsPath = `${root}/huds`;
+  const collectionsPath = `${root}/collections`;
+  const isHuds = pathname === hudsPath || pathname?.startsWith(`${hudsPath}`);
+  const isCollections =
+    pathname === collectionsPath || pathname?.startsWith(`${collectionsPath}`);
 
   return (
-    <div className="border-border-muted mb-5 flex justify-center border-b">
+    <div className="mb-5 flex justify-center border-b">
       <LayoutGroup>
         <div className="group grid grid-cols-2 gap-0.5">
           <Link
-            href={`/${username}/huds`}
+            href={hudsPath}
             scroll={false}
             className={cn(
               "relative flex h-9 flex-1 items-center justify-center px-4 font-semibold",
@@ -39,7 +46,7 @@ const ProfileTabs = ({ username }: { username: string }) => {
             <span className="relative z-1">HUDs</span>
           </Link>
           <Link
-            href={`/${username}/collections`}
+            href={collectionsPath}
             scroll={false}
             className={cn(
               "relative flex h-9 flex-1 items-center justify-center px-4 font-semibold",

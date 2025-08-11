@@ -40,6 +40,37 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthenticated = await checkAuthentication(request);
 
+  // Normalización de rutas propias: /:username(/huds|/collections)? -> /me/...
+  // Solo si autenticado y la ruta sigue el patrón esperado.
+  if (isAuthenticated) {
+    // Extraer username actual consultando API ligera (reuse checkAuthentication? necesitamos username)
+    try {
+      const meResp = await fetch(`${apiUrl}/api/user`, {
+        headers: { Cookie: request.headers.get("cookie") || "" },
+        cache: "no-store",
+      });
+      if (meResp.ok) {
+        const user = await meResp.json();
+        const currentUsername = user?.profile?.username;
+        if (currentUsername) {
+          const profileRegex = new RegExp(
+            `^/${currentUsername}(?:/(huds|collections))?$`,
+          );
+          const match = pathname.match(profileRegex);
+          if (match) {
+            const section = match[1];
+            const target = section ? `/me/${section}` : `/me/huds`;
+            if (pathname !== target) {
+              return NextResponse.redirect(new URL(target, request.url));
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignorar errores silenciosamente
+    }
+  }
+
   if (isAuthenticated && PUBLIC_AUTH_ROUTES.includes(pathname)) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
@@ -62,5 +93,6 @@ export const config = {
     "/settings/:path*",
     "/profiles/:path*",
     "/payment/:path*",
+    "/:path*",
   ],
 };

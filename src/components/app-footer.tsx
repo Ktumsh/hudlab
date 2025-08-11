@@ -4,7 +4,7 @@ import { motion, LayoutGroup } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Button } from "./ui/button";
+import { buttonVariants } from "./ui/button";
 import UserAvatar from "./user-avatar";
 
 import { navConfig } from "@/config/nav.config";
@@ -32,7 +32,7 @@ const AppFooter = () => {
   const navigationDesktop = navConfig.mainNav;
   const navigationMobile = navConfig.bottomNav;
 
-  const slicedNavigationDesktop = user
+  const filteredNavigationDesktop = user
     ? navigationDesktop
     : navigationDesktop.slice(0, 2);
 
@@ -88,28 +88,28 @@ const AppFooter = () => {
                   key={item.title}
                   className="relative flex h-14 flex-1 items-center justify-center"
                 >
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link
-                      href={item.href ?? "/"}
-                      className={cn(
-                        "flex h-14 w-full flex-col items-center justify-center",
-                        isActive && "text-white",
-                        isLast && "text-primary",
+                  <Link
+                    href={item.href ?? "/"}
+                    scroll={false}
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "icon" }),
+                      "flex h-14 w-full flex-col items-center justify-center",
+                      isActive && "text-white",
+                      isLast && "text-primary",
+                    )}
+                  >
+                    <span className="relative z-10 flex flex-col items-center">
+                      {Icon && (
+                        <Icon className={cn("size-6", isLast && "size-7")} />
                       )}
-                    >
-                      <span className="relative z-10 flex flex-col items-center">
-                        {Icon && (
-                          <Icon className={cn("size-6", isLast && "size-7")} />
-                        )}
-                        {isProfile && (
-                          <UserAvatar
-                            profile={user?.profile}
-                            className="size-6"
-                          />
-                        )}
-                      </span>
-                    </Link>
-                  </Button>
+                      {isProfile && (
+                        <UserAvatar
+                          profile={user?.profile}
+                          className="size-6"
+                        />
+                      )}
+                    </span>
+                  </Link>
                 </li>
               );
             })}
@@ -124,69 +124,69 @@ const AppFooter = () => {
       <nav className="bg-base-100/80 pointer-events-auto mx-auto rounded-[22px] border p-1.5 backdrop-blur">
         <LayoutGroup>
           <ul className={cn("grid grid-cols-5 gap-2", !user && "grid-cols-4")}>
-            {slicedNavigationDesktop.map((item, index) => {
+            {filteredNavigationDesktop.map((item, index) => {
               const isActive = item.href === pathname;
               const Icon = isActive ? item.iconFilled : item.icon;
               const isProfile = index === navigationDesktop.length - 1;
               return (
                 <li key={item.title} className="relative">
-                  <Button variant="ghost" asChild>
-                    <Link
-                      href={
-                        isProfile
-                          ? `/${user?.profile.username}/huds`
-                          : (item.href ?? "")
-                      }
-                      className={cn(
-                        "rounded-box flex h-14 w-20 flex-col items-center gap-1 border-0 p-1.5 hover:bg-transparent!",
-                        isActive && "text-white",
-                      )}
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeNavItem"
-                          className="rounded-box bg-base-200 hover:bg-base-300 absolute inset-0 z-0 transition-colors"
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 30,
-                          }}
+                  <Link
+                    href={item.href ?? ""}
+                    scroll={false}
+                    className={cn(
+                      buttonVariants({
+                        variant: "ghost",
+                      }),
+                      "rounded-box flex h-14 w-20 flex-col items-center gap-1 border-0 p-1.5 hover:bg-transparent!",
+                      isActive && "text-white",
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeNavItem"
+                        className="rounded-field bg-base-200 hover:bg-base-300 absolute inset-0 z-0 transition-colors"
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                    <span className="relative z-10 flex flex-col items-center">
+                      {Icon && <Icon className="size-6" />}
+                      {isProfile && (
+                        <UserAvatar
+                          profile={user?.profile}
+                          className="size-6"
                         />
                       )}
-                      <span className="relative z-10 flex flex-col items-center">
-                        {Icon && <Icon className="size-6" />}
-                        {isProfile && (
-                          <UserAvatar
-                            profile={user?.profile}
-                            className="size-6"
-                          />
-                        )}
-                        <span className="text-xs">{item.title}</span>
-                      </span>
-                    </Link>
-                  </Button>
+                      <span className="text-xs">{item.title}</span>
+                    </span>
+                  </Link>
                 </li>
               );
             })}
             {!user && (
               <li className="col-span-2 grid gap-2">
-                <Button
-                  asChild
-                  className="bg-base-200 hover:bg-base-300 text-neutral-content h-auto rounded-b-sm"
+                <Link
+                  href={`/auth/login?next=${pathname}`}
+                  className={buttonVariants({
+                    variant: "ghost",
+                    className:
+                      "bg-base-200 hover:bg-base-300 text-neutral-content h-auto rounded-b-sm",
+                  })}
                 >
-                  <Link href={`/auth/login?next=${pathname}`}>
-                    <span className="text-xs">Iniciar sesión</span>
-                  </Link>
-                </Button>
-                <Button
-                  variant="primary"
-                  asChild
-                  className="h-auto rounded-t-sm"
+                  <span className="text-xs">Iniciar sesión</span>
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className={buttonVariants({
+                    variant: "primary",
+                    className: "h-auto rounded-t-sm",
+                  })}
                 >
-                  <Link href="/auth/signup">
-                    <span className="text-xs">Registrarse</span>
-                  </Link>
-                </Button>
+                  <span className="text-xs">Registrarse</span>
+                </Link>
               </li>
             )}
           </ul>

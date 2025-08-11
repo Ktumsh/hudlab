@@ -1,13 +1,24 @@
 "use client";
 
-import { IconDots } from "@tabler/icons-react";
+import {
+  IconDots,
+  IconLockExclamation,
+  IconLogout,
+  IconMessageReport,
+  IconSettings2,
+  IconShare3,
+} from "@tabler/icons-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import * as React from "react";
 
 import { useProfile } from "../_hooks/use-profile";
 import { useProfileActions } from "../_hooks/use-profile-actions";
 
 import type { ProfileData } from "@/lib/types";
 
+import { AvatarUploader } from "@/app/me/_components/avatar-uploader";
+import ShareSheet from "@/components/share-sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,8 +26,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import UserAvatar from "@/components/user-avatar";
 
 const ProfileHeader = ({
   username,
@@ -25,33 +34,37 @@ const ProfileHeader = ({
   username: string;
   initialData: ProfileData;
 }) => {
-  const { data, mutate, isLoading } = useProfile({ username, initialData });
+  const { data, mutate } = useProfile({ username, initialData });
 
   const profile = data?.profile;
   const stats = data?.stats;
   const isFollowing = !!data?.isFollowing;
-  const isSelf = !!data?.isSelf;
+  const pathname = usePathname();
+  const isSelf = pathname?.startsWith("/me/") || pathname === "/me";
 
-  const { toggleFollow, handleShare, isToggling } = useProfileActions({
-    displayName: profile?.displayName,
+  const { toggleFollow, isToggling } = useProfileActions({
     username,
     mutate,
   });
 
+  const shareText = `Mira el perfil de ${profile?.displayName ? profile.displayName : `@${username}`} en HUDLab`;
+  const shareUrl =
+    (typeof window !== "undefined" &&
+      `${window.location.origin}/${username}/huds`) ||
+    "";
+
   return (
     <div className="flex items-center py-6">
       <div className="mx-auto flex w-full max-w-2xl items-center gap-6">
-        <UserAvatar profile={profile!} className="size-32" />
+        <AvatarUploader profile={profile!} isSelf={isSelf} />
         <div>
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-neutral-content text-2xl font-bold">
               {profile?.displayName}
             </h1>
             <div className="flex items-center gap-2">
-              {isLoading ? (
-                <Skeleton className="rounded-field h-10 w-20" />
-              ) : isSelf ? (
-                <Link href="/profile/edit" className={buttonVariants()}>
+              {isSelf ? (
+                <Link href="/settings/edit" className={buttonVariants()}>
                   Editar perfil
                 </Link>
               ) : (
@@ -63,27 +76,38 @@ const ProfileHeader = ({
                   {isFollowing ? "Siguiendo" : "Seguir"}
                 </Button>
               )}
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    outline
-                    size="icon-md"
-                    disabled={isLoading}
-                  >
+                  <Button variant="ghost" size="icon-md">
                     <IconDots className="size-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleShare}>
-                    Compartir
-                  </DropdownMenuItem>
-                  {!isSelf && !isLoading && (
+                <DropdownMenuContent>
+                  <ShareSheet text={shareText} url={shareUrl}>
+                    <button className="hover:bg-base-300 rounded-field hover:text-neutral-content [&_svg:not([class*='text-'])]:text-base-content/60 hover:[&_svg:not([class*='text-'])]:text-neutral-content/60 relative flex h-10 w-full items-center gap-2 px-3 py-2 text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                      <IconShare3 />
+                      Compartir
+                    </button>
+                  </ShareSheet>
+                  {isSelf ? (
+                    <>
+                      <DropdownMenuItem>
+                        <IconSettings2 />
+                        Configuración
+                      </DropdownMenuItem>
+                      <DropdownMenuItem variant="destructive">
+                        <IconLogout />
+                        Cerrar sesión
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
                     <>
                       <DropdownMenuItem variant="destructive">
+                        <IconMessageReport />
                         Reportar
                       </DropdownMenuItem>
                       <DropdownMenuItem variant="destructive">
+                        <IconLockExclamation />
                         Bloquear
                       </DropdownMenuItem>
                     </>

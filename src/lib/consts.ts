@@ -44,4 +44,22 @@ export const DEFAULT_FILTERS: FilterState = {
   sortBy: "newest",
 };
 
-// Eliminado: aspectRatios ya no se utiliza; manejamos altura fija en skeletons
+export const defaultAppTheme = "black";
+
+export const darkAppThemes = [
+  { dataTheme: "black", label: "Default" },
+  { dataTheme: "cyberpunk", label: "Cyberpunk" },
+  { dataTheme: "neonwave", label: "Neon Wave" },
+  { dataTheme: "darkmatter", label: "Dark Matter" },
+  { dataTheme: "glitch", label: "Glitch" },
+  { dataTheme: "midnight", label: "Midnight" },
+];
+
+export const lightAppThemes = [
+  { dataTheme: "pixelart", label: "Pixel Art" },
+  { dataTheme: "vaporwave", label: "Vaporwave" },
+  { dataTheme: "steampunk", label: "Steampunk" },
+  { dataTheme: "zenith", label: "Zenith" },
+  { dataTheme: "cotton", label: "Cotton" },
+  { dataTheme: "sage", label: "Sage" },
+];

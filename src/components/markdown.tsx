@@ -9,12 +9,37 @@ interface MarkdownProps {
   className?: string;
 }
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
 const components: Partial<Components> = {
   p({ children }) {
     return <p className="mb-2 last:mb-0">{children}</p>;
   },
+  h2({ children }) {
+    const text = String(children);
+    const id = slugify(text);
+    return (
+      <h2 id={id} className="mt-10 scroll-mt-24">
+        {text}
+      </h2>
+    );
+  },
   h3({ children }) {
-    return <h3 className="mt-4">{children}</h3>;
+    const text = String(children);
+    const id = slugify(text);
+    return (
+      <h3 id={id} className="mt-6 scroll-mt-24">
+        {text}
+      </h3>
+    );
   },
   a({ children, href }) {
     return (

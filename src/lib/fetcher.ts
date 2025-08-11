@@ -17,8 +17,6 @@ export async function fetcher<T>(
     cache: options?.noStore ? "no-store" : "default",
   });
 
-  console.log(res);
-
   if (!res.ok) {
     const error = new Error(
       "Ocurrió un error al hacer fetch de los datos",
@@ -33,7 +31,7 @@ export async function fetcher<T>(
 
 interface ApiPostOptions<TBody> {
   body?: TBody;
-  noStore?: boolean; // para simetría, aunque POST usualmente no cachea
+  noStore?: boolean;
   signal?: AbortSignal;
   method?: "POST" | "PUT" | "PATCH" | "DELETE";
 }
@@ -54,6 +52,37 @@ export async function apiPost<TResponse, TBody = unknown>(
   if (!res.ok) {
     const error = new Error(
       "Ocurrió un error al procesar la solicitud",
+    ) as ApplicationError;
+    error.info = await res.json().catch(() => ({}));
+    error.status = res.status;
+    throw error;
+  }
+  return (await res.json()) as TResponse;
+}
+
+interface ApiUploadOptions {
+  noStore?: boolean;
+  signal?: AbortSignal;
+  method?: "POST" | "PUT" | "PATCH";
+}
+
+export async function apiUpload<TResponse>(
+  url: string,
+  formData: FormData,
+  { noStore, signal, method = "POST" }: ApiUploadOptions = {},
+): Promise<TResponse> {
+  const fetchUrl = url.startsWith("/api/") ? `${apiUrl}${url}` : url;
+  const res = await fetch(fetchUrl, {
+    method,
+    credentials: "include",
+    cache: noStore ? "no-store" : "no-cache",
+    // No establecer Content-Type para que el navegador añada el boundary automáticamente
+    body: formData,
+    signal,
+  });
+  if (!res.ok) {
+    const error = new Error(
+      "Ocurrió un error al subir el archivo",
     ) as ApplicationError;
     error.info = await res.json().catch(() => ({}));
     error.status = res.status;

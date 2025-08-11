@@ -1,6 +1,7 @@
 "use client";
 
 import { IconPlus, IconStar } from "@tabler/icons-react";
+import { usePathname } from "next/navigation";
 
 import { useProfileCollections } from "../../_hooks/use-profile-collections";
 
@@ -11,11 +12,12 @@ import { Button } from "@/components/ui/button";
 
 interface ProfileCollectionsProps {
   username: string;
-  isSelf: boolean;
 }
 
-const ProfileCollections = ({ username, isSelf }: ProfileCollectionsProps) => {
+const ProfileCollections = ({ username }: ProfileCollectionsProps) => {
   const { collections, isLoading } = useProfileCollections(username);
+  const pathname = usePathname();
+  const isSelf = pathname?.startsWith("/me/") || pathname === "/me";
 
   return (
     <>

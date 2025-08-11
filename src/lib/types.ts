@@ -1,3 +1,5 @@
+import type { Icon, IconProps } from "@tabler/icons-react";
+
 // ─────────────────────────────
 // 🧾 TYPES LOCALES (sin dependencias de DB)
 // ─────────────────────────────
@@ -360,6 +362,18 @@ export type UserRole = "user" | "admin" | "moderator";
 
 export type UserStatus = "active" | "suspended" | "pending";
 
+export type ShareTargetId =
+  | "copy"
+  | "whatsapp"
+  | "facebook"
+  | "x"
+  | "telegram"
+  | "email"
+  | "instagram"
+  | "discord"
+  | "messenger"
+  | "all";
+
 // ─────────────────────────────
 // ✉️ COLLECTION INVITATIONS
 // ─────────────────────────────
@@ -417,5 +431,27 @@ export interface ProfileData {
     uploads: number;
   };
   isFollowing: boolean;
-  isSelf: boolean;
+}
+
+// ─────────────────────────────
+// 🔗 SHARE SHEET
+// ─────────────────────────────
+
+export interface ShareTarget {
+  id: ShareTargetId;
+  label: string;
+  color: string;
+  icon:
+    | React.ComponentType<React.SVGProps<SVGSVGElement>>
+    | React.ForwardRefExoticComponent<IconProps & React.RefAttributes<Icon>>;
+  hrefBuilder?: (payload: {
+    title?: string;
+    text?: string;
+    url?: string;
+  }) => string;
+  action?: (payload: {
+    title?: string;
+    text?: string;
+    url?: string;
+  }) => Promise<void> | void;
 }

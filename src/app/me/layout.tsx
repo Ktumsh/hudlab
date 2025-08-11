@@ -1,0 +1,36 @@
+import { redirect } from "next/navigation";
+
+import ProfileHeader from "@/app/[profile]/_components/profile-header";
+import ProfileTabs from "@/app/[profile]/_components/profile-tabs";
+import { getProfile } from "@/data/profile";
+import { getServerAuth } from "@/lib/server-auth";
+
+export default async function MeLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getServerAuth();
+  const username = session?.user?.username;
+  if (!username) redirect("/auth/login?next=/me/huds");
+
+  const data = await getProfile(username);
+  if (!data) redirect("/feed");
+
+  const profile = data.profile;
+  const stats = data.stats;
+  const isFollowing = false;
+
+  return (
+    <main>
+      <ProfileHeader
+        username={username}
+        initialData={{ profile, stats, isFollowing }}
+      />
+      <div className="relative px-1 md:px-6">
+        <ProfileTabs username={username} basePath="/me" />
+        {children}
+      </div>
+    </main>
+  );
+}

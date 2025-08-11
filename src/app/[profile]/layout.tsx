@@ -19,13 +19,12 @@ export default async function ProfileLayout({
   const profile = data.profile;
   const stats = data.stats;
   const isFollowing = !!data.isFollowing;
-  const isSelf = !!data.isSelf;
 
   return (
     <main>
       <ProfileHeaderClient
         username={username}
-        initialData={{ profile, stats, isFollowing, isSelf }}
+        initialData={{ profile, stats, isFollowing }}
       />
       <div className="relative px-1 md:px-6">
         <ProfileTabs username={username} />

@@ -1,24 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
 import { toast } from "sonner";
-import { useCopyToClipboard } from "usehooks-ts";
 
 import type { ProfileData } from "@/lib/types";
 import type { KeyedMutator } from "swr";
 
 import useOptimisticSWRMutation from "@/hooks/use-optimistic-swr-mutation";
 
-// (sin apiUrl: no se requiere aquí porque el hook genérico realiza el fetch interno)
-
 interface useProfileActionsProps {
-  displayName?: string;
   username: string;
   mutate: KeyedMutator<ProfileData>;
 }
 
 export function useProfileActions({
-  displayName,
   username,
   mutate,
 }: useProfileActionsProps) {
@@ -63,33 +57,9 @@ export function useProfileActions({
       },
     });
 
-  const [, copy] = useCopyToClipboard();
-
-  const shareUrl = useMemo(() => {
-    if (typeof window === "undefined") return `/${username}`;
-    return `${window.location.origin}/${username}`;
-  }, [username]);
-
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          url: shareUrl,
-          title: displayName || `@${username}`,
-          text: `Mira el perfil de ${displayName ? displayName : `@${username}`} en HUDLab`,
-        });
-        return;
-      }
-      await copy(shareUrl);
-      toast.success("Enlace copiado al portapapeles");
-    } catch {
-      toast.error("No se pudo compartir");
-    }
-  };
-
   const toggleFollow = async () => {
     await runToggleFollow();
   };
 
-  return { toggleFollow, handleShare, isToggling };
+  return { toggleFollow, isToggling };
 }

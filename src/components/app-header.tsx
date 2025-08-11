@@ -18,14 +18,7 @@ import { useSearchSuggestions } from "@/hooks/use-search-suggestions";
 import { useUser } from "@/hooks/use-user";
 import { cn } from "@/lib";
 
-const PAGES_TO_HIDE = [
-  "/auth/login",
-  "/auth/signup",
-  "/auth/forgot-password",
-  "/auth/reset-password",
-  "/auth/verify-email",
-  "/auth/account-deleted",
-];
+const PAGES_TO_HIDE = ["/auth", "/legal"];
 
 const AppHeader = () => {
   const { filterOptions } = useFilterOptions();
@@ -41,7 +34,7 @@ const AppHeader = () => {
 
   const isMobile = useIsMobile();
 
-  if (PAGES_TO_HIDE.includes(pathname)) return null;
+  if (PAGES_TO_HIDE.some((page) => pathname.startsWith(page))) return null;
 
   const logo = (
     <BetterTooltip content="Inicio" side="bottom">

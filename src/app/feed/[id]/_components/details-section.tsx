@@ -257,7 +257,7 @@ const DetailsSection = ({
                   <span
                     key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="text-info-content cursor-pointer text-sm transition-colors hover:underline"
+                    className="text-info cursor-pointer text-sm transition-colors hover:underline"
                   >
                     #{tag.trim()}
                   </span>

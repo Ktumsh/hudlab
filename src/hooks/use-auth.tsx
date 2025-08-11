@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { createContext, useContext } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -32,6 +33,7 @@ const authFetcher = (url: string) =>
   fetcher<UserWithProfile | null>(url, { noStore: true });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const {
     data: user,
     error,
@@ -155,10 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         credentials: "include",
       });
+      router.push("/auth/login");
+      mutate(null);
     } catch (error) {
       console.error("Sign out error:", error);
-    } finally {
-      mutate(null);
     }
   };
 

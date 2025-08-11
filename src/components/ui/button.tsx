@@ -19,7 +19,8 @@ const buttonVariants = cva(
         success: "btn-success",
         warning: "btn-warning",
         error: "btn-error",
-        ghost: "btn-ghost hover:bg-neutral hover:text-neutral-content",
+        ghost:
+          "btn-ghost hover:bg-base-200 hover:text-neutral-content hover:border-base-200",
         link: "group btn-link no-underline underline-offset-2 text-base-content hover:text-neutral-content h-auto border-0 px-0 transition *:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current",
       },
       size: {

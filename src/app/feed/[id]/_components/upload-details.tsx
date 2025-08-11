@@ -59,7 +59,7 @@ const UploadDetails = ({
         <DetailsSection upload={upload} initialLiked={initialLiked} />
       </div>
       <div className="w-full">
-        <h2 className="mb-2 px-3 font-semibold">Subidas relacionadas</h2>
+        <h2 className="mb-2 px-3 font-semibold">Relacionados</h2>
         <MasonryGrid
           key={upload.id}
           relatedUploads={relatedUploads}

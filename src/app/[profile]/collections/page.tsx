@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import ProfileCollections from "./_components/profile-collections";
 
 import { getServerAuth, type AuthSession } from "@/lib/server-auth";
@@ -11,6 +13,6 @@ export default async function ProfileCollectionsPage({
   const session: AuthSession | null = await getServerAuth();
   const currentUsername = session?.user?.username;
   const isSelf = !!currentUsername && currentUsername === profile;
-
-  return <ProfileCollections username={profile} isSelf={isSelf} />;
+  if (isSelf) redirect("/me/collections");
+  return <ProfileCollections username={profile} />;
 }

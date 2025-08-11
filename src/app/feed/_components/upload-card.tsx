@@ -49,7 +49,7 @@ const UploadCard = ({ upload }: UploadCardProps) => {
           </div>
         )}
 
-        <div className="from-base-100/80 pointer-events-none absolute inset-0 flex flex-col items-end justify-between bg-gradient-to-t to-transparent p-3 opacity-0 transition-opacity will-change-[opacity] group-hover:opacity-100">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-end justify-between bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 transition-opacity will-change-[opacity] group-hover:opacity-100">
           <div className="pointer-events-auto z-10">
             {user && <AddToCollectionButton uploadId={upload.id} />}
           </div>
