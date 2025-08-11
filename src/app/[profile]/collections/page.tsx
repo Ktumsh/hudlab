@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import ProfileCollections from "./_components/profile-collections";
 
-import { getServerAuth, type AuthSession } from "@/lib/server-auth";
+import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
 
 export default async function ProfileCollectionsPage({
   params,
@@ -10,7 +10,7 @@ export default async function ProfileCollectionsPage({
   params: Promise<{ profile: string }>;
 }) {
   const { profile } = await params;
-  const session: AuthSession | null = await getServerAuth();
+  const session = await getServerAuthFromMirror();
   const currentUsername = session?.user?.username;
   const isSelf = !!currentUsername && currentUsername === profile;
   if (isSelf) redirect("/me/collections");

@@ -40,39 +40,14 @@ interface CurrentUserPayload {
 // únicamente para heurística de redirecciones suaves. No se usa para autorización real.
 function parseMirrorCookie(request: NextRequest) {
   const raw = request.cookies.get("hudlab_auth")?.value;
-
-  // Debug logs for production issues
-  if (process.env.NODE_ENV === "production") {
-    console.log("🔍 Middleware Debug - Cookie raw:", raw);
-    console.log("🔍 Middleware Debug - All cookies:", request.cookies.getAll());
-  }
-
   if (!raw) return null;
-  const result = tryParseHmacPart(raw);
-
-  if (process.env.NODE_ENV === "production") {
-    console.log("🔍 Middleware Debug - Parsed result:", result);
-  }
-
-  return result;
+  return tryParseHmacPart(raw);
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const user = parseMirrorCookie(request);
   const isAuthenticated = !!user;
-
-  // Debug log for production
-  if (process.env.NODE_ENV === "production" && pathname.startsWith("/me")) {
-    console.log(
-      "🔍 Middleware Debug - Path:",
-      pathname,
-      "Auth:",
-      isAuthenticated,
-      "User:",
-      user,
-    );
-  }
 
   // Normalización de rutas propias: /:username(/huds|/collections)? -> /me/...
   // Solo si autenticado y la ruta sigue el patrón esperado.

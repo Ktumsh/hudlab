@@ -33,7 +33,9 @@ export default async function UploadPage({ params }: UploadPageProps) {
   const session = await getServerAuth();
 
   const likeStatus = session?.user?.id
-    ? await getLikeStatus(String(upload.publicId), session.user.id)
+    ? await getLikeStatus(String(upload.publicId), session.user.id).catch(
+        () => ({ isLiked: false }),
+      )
     : { isLiked: false };
 
   return <UploadDetails upload={upload} initialLiked={likeStatus.isLiked} />;

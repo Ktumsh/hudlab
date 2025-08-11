@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
-import { getServerAuth } from "@/lib/server-auth";
+import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
 
 interface ProfilePageProps {
   params: Promise<{ profile: string }>;
@@ -20,7 +20,7 @@ export async function generateMetadata({
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { profile } = await params;
   if (!profile) redirect("/feed");
-  const session = await getServerAuth();
+  const session = await getServerAuthFromMirror();
   const username = session?.user?.username;
   if (username && username === profile) {
     redirect("/me/huds");

@@ -3,14 +3,14 @@ import { redirect } from "next/navigation";
 import ProfileHeader from "@/app/[profile]/_components/profile-header";
 import ProfileTabs from "@/app/[profile]/_components/profile-tabs";
 import { getProfile } from "@/data/profile";
-import { getServerAuth } from "@/lib/server-auth";
+import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
 
 export default async function MeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerAuth();
+  const session = await getServerAuthFromMirror();
   const username = session?.user?.username;
   if (!username) redirect("/auth/login?next=/me/huds");
 
