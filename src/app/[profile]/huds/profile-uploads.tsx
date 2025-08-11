@@ -6,7 +6,6 @@ import { useProfileUploads } from "../_hooks/use-profile-uploads";
 
 import Loader from "@/components/loader";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { useUser } from "@/hooks/use-user";
 
 const MasonryGrid = dynamic(
   () => import("@/app/feed/_components/masonry-grid"),
@@ -15,12 +14,9 @@ const MasonryGrid = dynamic(
   },
 );
 
-const ProfileUploads = () => {
-  const { user } = useUser();
-  const username = user?.profile.username;
-
+const ProfileUploads = ({ username }: { username: string }) => {
   const { uploads, isLoadingInitial, isLoadingMore, isReachingEnd, loadMore } =
-    useProfileUploads(username!);
+    useProfileUploads(username);
 
   useInfiniteScroll({
     disabled: isLoadingInitial || isLoadingMore || !!isReachingEnd,
