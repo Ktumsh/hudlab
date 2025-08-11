@@ -6,7 +6,6 @@ import type { Viewport } from "next";
 
 import AppFooter from "@/components/app-footer";
 import AppHeader from "@/components/app-header";
-import DebugAuth from "@/components/debug-auth";
 import GlobalLoader from "@/components/global-loader";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -39,7 +38,6 @@ export default function RootLayout({
             <AppHeader />
             {children}
             <AppFooter />
-            <DebugAuth />
           </GlobalLoader>
         </Providers>
         <Toaster />
