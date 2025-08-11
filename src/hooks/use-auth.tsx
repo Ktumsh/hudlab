@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -48,6 +48,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isLoading = isValidating || swrIsLoading;
 
+  // Sincroniza cookie espejo ligera para middleware (cross-domain workaround)
+  useEffect(() => {
+    const syncMirror = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/api/session-mirror`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.authenticated && data.token) {
+          // token contiene HMAC; además generamos cookie legible: uid:username:exp (5 min)
+          const exp = Date.now() + 5 * 60 * 1000;
+          // guardamos dos cookies: espejo simple (para parse rápido) y firma (opcional futuro)
+          document.cookie = `hudlab_auth_simple=${data.username || ""}:${exp}; Path=/; Max-Age=300; SameSite=Lax`;
+          document.cookie = `hudlab_auth=${data.token}:${exp}; Path=/; Max-Age=300; SameSite=Lax`;
+        } else {
+          // borrar cookie
+          document.cookie = "hudlab_auth=; Path=/; Max-Age=0";
+          document.cookie = "hudlab_auth_simple=; Path=/; Max-Age=0";
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    // Ejecutar al montar y cada vez que cambia el id de usuario
+    syncMirror();
+    const id = setInterval(syncMirror, 120000); // refresco cada 2min
+    return () => clearInterval(id);
+  }, [user?.id]);
+
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch(`${apiUrl}/api/login`, {
@@ -62,7 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.type === "success") {
-        await mutate();
+        await mutate(); // trigger fetch user
+        // Mirror cookie se actualizará por efecto
         toast.success(data.message || "Sesión iniciada correctamente");
         return true;
       } else {
@@ -159,6 +191,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       router.push("/auth/login");
       mutate(null);
+      // Limpieza inmediata cookies espejo
+      document.cookie = "hudlab_auth=; Path=/; Max-Age=0";
+      document.cookie = "hudlab_auth_simple=; Path=/; Max-Age=0";
     } catch (error) {
       console.error("Sign out error:", error);
     }

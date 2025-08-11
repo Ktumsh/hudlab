@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_AUTH_ROUTES = [
-  "/auth/login",
-  "/auth/signup",
-  "/auth/forgot-password",
-  "/auth/reset-password",
-  "/auth/verify-email",
-  "/auth/account-deleted",
-];
+// Rutas públicas de autenticación (ya no se usa la constante directamente para flexibilidad)
 
 const PROTECTED_ROUTES = [
   "/account",
@@ -19,60 +12,56 @@ const PROTECTED_ROUTES = [
   "/payment/canceled",
 ];
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// (apiUrl eliminado: no podemos usar fetch cross-domain con cookies en middleware)
 
-async function checkAuthentication(request: NextRequest): Promise<boolean> {
-  try {
-    const response = await fetch(`${apiUrl}/api/user`, {
-      headers: {
-        Cookie: request.headers.get("cookie") || "",
-      },
-      cache: "no-store",
-    });
+interface CurrentUserPayload {
+  id: string;
+  email: string;
+  profile?: {
+    username?: string;
+  };
+}
 
-    return response.ok;
-  } catch {
-    return false;
-  }
+// Ya que el dominio del API es distinto (vercel.app separado), el middleware no recibe cookies AuthJS.
+// Estrategia: usar una cookie espejo (no sensible) colocada por el frontend (ej: hudlab_auth=uid:username:exp)
+// únicamente para heurística de redirecciones suaves. No se usa para autorización real.
+function parseMirrorCookie(request: NextRequest) {
+  const cookie = request.cookies.get("hudlab_auth")?.value;
+  if (!cookie) return null;
+  // formato: uid:username:expEpoch
+  const parts = cookie.split(":");
+  if (parts.length < 3) return null;
+  const [uid, username, expStr] = parts;
+  const exp = Number(expStr);
+  if (!uid || !exp || Date.now() > exp) return null;
+  return { id: uid, profile: { username } } as CurrentUserPayload;
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const isAuthenticated = await checkAuthentication(request);
+  const user = parseMirrorCookie(request);
+  const isAuthenticated = !!user;
 
   // Normalización de rutas propias: /:username(/huds|/collections)? -> /me/...
   // Solo si autenticado y la ruta sigue el patrón esperado.
-  if (isAuthenticated) {
-    // Extraer username actual consultando API ligera (reuse checkAuthentication? necesitamos username)
-    try {
-      const meResp = await fetch(`${apiUrl}/api/user`, {
-        headers: { Cookie: request.headers.get("cookie") || "" },
-        cache: "no-store",
-      });
-      if (meResp.ok) {
-        const user = await meResp.json();
-        const currentUsername = user?.profile?.username;
-        if (currentUsername) {
-          const profileRegex = new RegExp(
-            `^/${currentUsername}(?:/(huds|collections))?$`,
-          );
-          const match = pathname.match(profileRegex);
-          if (match) {
-            const section = match[1];
-            const target = section ? `/me/${section}` : `/me/huds`;
-            if (pathname !== target) {
-              return NextResponse.redirect(new URL(target, request.url));
-            }
-          }
-        }
+  if (isAuthenticated && user?.profile?.username) {
+    // Normalizamos rutas /:username(/huds|/collections)? a /me/... solo si coincide exactamente con su username
+    const { username } = user.profile;
+    const profileRegex = new RegExp(`^/${username}(?:/(huds|collections))?$`);
+    const match = pathname.match(profileRegex);
+    if (match) {
+      const section = match[1];
+      const target = section ? `/me/${section}` : `/me/huds`;
+      if (pathname !== target) {
+        return NextResponse.redirect(new URL(target, request.url));
       }
-    } catch {
-      // Ignorar errores silenciosamente
     }
   }
 
-  if (isAuthenticated && PUBLIC_AUTH_ROUTES.includes(pathname)) {
-    return NextResponse.redirect(new URL("/feed", request.url));
+  if (isAuthenticated) {
+    if (pathname.startsWith("/auth") && !pathname.startsWith("/auth/logout")) {
+      return NextResponse.redirect(new URL("/feed", request.url));
+    }
   }
 
   const isProtected = PROTECTED_ROUTES.some((route) =>
@@ -80,7 +69,16 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtected && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/feed", request.url));
+    const url = new URL("/auth/login", request.url);
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Bloquear acceso directo a /me/* no autenticado
+  if (pathname.startsWith("/me") && !isAuthenticated) {
+    const url = new URL("/auth/login", request.url);
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
