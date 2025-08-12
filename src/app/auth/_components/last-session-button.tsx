@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import Image from "next/image";
 import { memo } from "react";
 
@@ -59,13 +58,8 @@ const PureLastSessionButton = () => {
     return null;
   }
 
-  const MotionButton = motion(Button);
-
   return (
-    <MotionButton
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+    <Button
       type="button"
       variant="ghost"
       className="bg-primary/5 border-primary/20 hover:bg-primary/10 flex h-auto w-full items-center gap-3 border p-3 transition-colors"
@@ -92,7 +86,7 @@ const PureLastSessionButton = () => {
         </div>
         {getProviderIcon(lastSession!.provider)}
       </div>
-    </MotionButton>
+    </Button>
   );
 };
 

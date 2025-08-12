@@ -110,7 +110,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Ignore mirror sync errors
         }
 
-        toast.success(data.message || "Sesión iniciada correctamente");
         return true;
       } else {
         toast.error(data.message || "Error al iniciar sesión");
@@ -205,8 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include",
       });
       router.push("/auth/login");
-      mutate(null);
-      // Limpieza inmediata cookies espejo
+      await mutate(null);
       document.cookie = "hudlab_auth=; Path=/; Max-Age=0";
     } catch (error) {
       console.error("Sign out error:", error);
