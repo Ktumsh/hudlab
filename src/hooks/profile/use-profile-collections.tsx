@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 
-import type { CollectionPreview } from "@/lib/types";
+import type { CollectionPreviewWithDetails } from "@/lib/types";
 
 import { fetcher } from "@/lib";
 
@@ -11,7 +11,8 @@ export function useProfileCollections(username: string) {
     data: collections,
     isLoading,
     error,
-  } = useSWR<CollectionPreview[]>(
+    mutate: refresh,
+  } = useSWR<CollectionPreviewWithDetails[]>(
     `/api/users/${username}/collections`,
     fetcher,
     {
@@ -20,5 +21,5 @@ export function useProfileCollections(username: string) {
     },
   );
 
-  return { collections, isLoading, error };
+  return { collections, isLoading, error, refresh };
 }

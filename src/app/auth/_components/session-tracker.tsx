@@ -22,23 +22,8 @@ const SessionTracker = () => {
       if (!isLoading && user) {
         // Verificar que tengamos la información necesaria
         if (user.id && user.email) {
-          // Determinar el provider basado en la información de la sesión
-          let provider = "credentials"; // default
-
-          // Intentar determinar el provider basado en el avatar URL
-          if (user.profile?.avatarUrl) {
-            try {
-              const imageUrl = new URL(user.profile.avatarUrl);
-              if (imageUrl.hostname === "googleusercontent.com") {
-                provider = "google";
-              } else if (imageUrl.hostname === "cdn.discordapp.com") {
-                provider = "discord";
-              }
-            } catch (e) {
-              // If URL parsing fails, leave provider as "credentials"
-              console.error("Error parsing user image URL:", e);
-            }
-          }
+          // Usar el lastProvider de la sesión
+          const provider = user.lastProvider || "credentials";
 
           // Solo guardar sesiones de OAuth (no credentials)
           if (provider !== "credentials") {
@@ -64,7 +49,7 @@ const SessionTracker = () => {
             }
           }
         }
-      } else if (status === "unauthenticated") {
+      } else if (!isLoading && !user) {
         // Si el usuario se desconecta, limpiar la referencia pero no el localStorage
         // para que pueda ver su última sesión cuando regrese
         lastSavedSessionRef.current = null;

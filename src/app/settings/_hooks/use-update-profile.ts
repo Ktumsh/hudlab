@@ -16,10 +16,11 @@ interface UpdateProfileResponse {
 }
 
 export function useUpdateProfile(username?: string) {
-  const key = `/api/users/${username}/profile`;
+  const keyProfile = `/api/users/${username}/profile`;
+  const keyUser = "/api/user";
 
   const mutation = useSWRMutation(
-    key,
+    keyProfile,
     async (_url, { arg }: { arg: ProfileUpdateFormData }) => {
       return apiPost<UpdateProfileResponse>(`/api/profile`, {
         body: arg,
@@ -30,7 +31,8 @@ export function useUpdateProfile(username?: string) {
       onSuccess: (data) => {
         if (data.success) {
           toast.success("Perfil actualizado");
-          mutate(key);
+          mutate(keyProfile);
+          mutate(keyUser);
         } else {
           toast.error(data.error || "Error al actualizar el perfil");
         }

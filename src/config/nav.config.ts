@@ -62,10 +62,10 @@ export const navConfig = {
       iconFilled: IconPlus,
     },
     {
-      title: "Explorar",
-      href: "/explore",
-      icon: IconIcons,
-      iconFilled: IconIconsFilled,
+      title: "Colecciones",
+      href: "/collections",
+      icon: IconStar,
+      iconFilled: IconStarFilled,
     },
     {
       title: "Mi Perfil",

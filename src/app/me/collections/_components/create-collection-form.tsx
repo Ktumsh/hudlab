@@ -7,10 +7,10 @@ import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
 
 import CollaboratorSelector from "./collaborator-selector";
-import { useUserCollectionsPreview } from "../_hooks/use-user-collections-preview";
 
-import type { CollaboratorPermission } from "@/lib/types";
+import type { CollaboratorPermission, UserSearchResult } from "@/lib/types";
 
+import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useProfileCollections } from "@/hooks/profile/use-profile-collections";
 import { useUser } from "@/hooks/use-user";
 import { CreateCollectionFormData, createCollectionSchema } from "@/lib";
 import { apiPost } from "@/lib/fetcher";
@@ -50,11 +51,11 @@ interface CreateCollectionResponse {
 
 const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
   const [open, setOpen] = useState(false);
-  const [collaborators, setCollaborators] = useState<string[]>([]);
+  const [collaborators, setCollaborators] = useState<UserSearchResult[]>([]);
   const [collaboratorsPermission] = useState<CollaboratorPermission>("admin");
   const { user } = useUser();
 
-  const { refresh } = useUserCollectionsPreview();
+  const { refresh } = useProfileCollections(user?.profile.username ?? "");
 
   const form = useForm<CreateCollectionFormData>({
     resolver: zodResolver(createCollectionSchema),
@@ -86,7 +87,7 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
     try {
       const result = await triggerCreate({
         ...data,
-        collaborators,
+        collaborators: collaborators.map((c) => c.id), // Convertir a array de IDs
         collaboratorsPermission,
       });
 
@@ -103,6 +104,17 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
       console.error("Error creating collection:", error);
       toast.error("Error inesperado al crear la colección");
     }
+  };
+
+  // Funciones para manejar colaboradores
+  const handleAddCollaborator = async (user: UserSearchResult) => {
+    if (!collaborators.find((c) => c.id === user.id)) {
+      setCollaborators((prev) => [...prev, user]);
+    }
+  };
+
+  const handleRemoveCollaborator = async (profileId: string) => {
+    setCollaborators((prev) => prev.filter((c) => c.id !== profileId));
   };
 
   // Eliminar colaborador desde el propio selector
@@ -184,19 +196,28 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
             />
 
             <CollaboratorSelector
-              selectedCollaborators={collaborators}
-              onCollaboratorsChange={(ids) => setCollaborators(ids)}
-              excludeIds={user?.profile?.id ? [user.profile.id] : []}
+              currentCollaborators={collaborators}
+              onAdd={handleAddCollaborator}
+              onRemove={handleRemoveCollaborator}
+              excludeUserIds={user?.profile?.id ? [user.profile.id] : []}
+              showAcceptedStatus={false}
             />
 
             <div className="flex justify-end gap-2">
               <Button
                 type="submit"
                 variant="primary"
-                disabled={!formState.isValid}
-                className="w-full"
+                wide
+                disabled={!formState.isValid || isCreating}
               >
-                {isCreating ? "Creando..." : "Crear"}
+                {isCreating ? (
+                  <>
+                    <Loader className="mx-0 size-4" />
+                    Creando...
+                  </>
+                ) : (
+                  "Crear"
+                )}
               </Button>
             </div>
           </form>

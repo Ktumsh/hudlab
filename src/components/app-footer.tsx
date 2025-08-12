@@ -92,9 +92,8 @@ const AppFooter = () => {
                     href={item.href ?? "/"}
                     scroll={false}
                     className={cn(
-                      buttonVariants({ variant: "ghost", size: "icon" }),
                       "flex h-14 w-full flex-col items-center justify-center",
-                      isActive && "text-white",
+                      isActive && "text-primary hover:text-primary",
                       isLast && "text-primary",
                     )}
                   >
@@ -121,7 +120,7 @@ const AppFooter = () => {
 
   return (
     <footer className="pointer-events-none fixed bottom-0 left-0 z-50 mb-5 flex w-full">
-      <nav className="bg-base-100/80 pointer-events-auto mx-auto rounded-[22px] border p-1.5 backdrop-blur">
+      <nav className="bg-base-100/80 pointer-events-auto mx-auto rounded-[calc(var(--radius-field)+6px)] border p-1.5 backdrop-blur">
         <LayoutGroup>
           <ul className={cn("grid grid-cols-5 gap-2", !user && "grid-cols-4")}>
             {filteredNavigationDesktop.map((item, index) => {
@@ -129,7 +128,7 @@ const AppFooter = () => {
               const Icon = isActive ? item.iconFilled : item.icon;
               const isProfile = index === navigationDesktop.length - 1;
               return (
-                <li key={item.title} className="relative">
+                <li key={item.title} className="group relative">
                   <Link
                     href={item.href ?? ""}
                     scroll={false}
@@ -137,14 +136,14 @@ const AppFooter = () => {
                       buttonVariants({
                         variant: "ghost",
                       }),
-                      "rounded-box flex h-14 w-20 flex-col items-center gap-1 border-0 p-1.5 hover:bg-transparent!",
-                      isActive && "text-white",
+                      "flex h-14 w-20 flex-col items-center gap-1 border-0 p-1.5 hover:bg-transparent!",
+                      isActive && "text-primary hover:text-primary",
                     )}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activeNavItem"
-                        className="rounded-field bg-base-200 hover:bg-base-300 absolute inset-0 z-0 transition-colors"
+                        className="rounded-field bg-base-300 group-hover:bg-base-200 absolute inset-0 z-0 transition-colors"
                         transition={{
                           type: "spring",
                           stiffness: 400,

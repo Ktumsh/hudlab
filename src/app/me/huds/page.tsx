@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 
-import ProfileUploads from "@/app/[profile]/huds/profile-uploads";
+import ProfileUploads from "@/components/profile/profile-uploads";
 import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
+
+export const dynamic = "force-dynamic";
 
 export default async function MeHudsPage() {
   const session = await getServerAuthFromMirror();

@@ -12,7 +12,6 @@ import { useAuthForm } from "../_hooks/use-auth-form";
 import Logo from "@/components/logo";
 import { BetterTooltip } from "@/components/ui/tooltip";
 
-
 const AuthHeader = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -86,7 +85,7 @@ const AuthHeader = () => {
         {(isLoginPage || isSignupPage) && (
           <BetterTooltip content="Ir al inicio" side="top">
             <Link href="/feed">
-              <Logo width={56} height={56} className="relative z-2" />
+              <Logo size={56} className="relative z-2" />
             </Link>
           </BetterTooltip>
         )}

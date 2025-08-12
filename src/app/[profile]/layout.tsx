@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import ProfileHeaderClient from "@/app/[profile]/_components/profile-header";
-import ProfileTabs from "@/app/[profile]/_components/profile-tabs";
+import ProfileHeaderClient from "@/components/profile/profile-header";
+import ProfileTabs from "@/components/profile/profile-tabs";
 import { getProfile } from "@/data/profile";
 
 export default async function ProfileLayout({

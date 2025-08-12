@@ -10,9 +10,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { CollectionPreview } from "@/lib/types";
+import type { CollectionPreviewWithDetails } from "@/lib/types";
 
-import EditCollectionForm from "@/app/collections/_components/edit-collection-form";
+import EditCollectionForm from "@/app/me/collections/_components/edit-collection-form";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,10 +23,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { BetterTooltip } from "@/components/ui/tooltip";
 import useOptimisticSWRMutation from "@/hooks/use-optimistic-swr-mutation";
-// apiUrl ya abstraído en postJson
 
 interface CollectionActionsProps {
-  collection: CollectionPreview;
+  collection: CollectionPreviewWithDetails;
   canEdit: boolean;
   isFollowing: boolean;
 }

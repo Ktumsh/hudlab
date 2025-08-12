@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 
 import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
 
+export const dynamic = "force-dynamic";
+
 interface ProfilePageProps {
   params: Promise<{ profile: string }>;
 }

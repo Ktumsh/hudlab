@@ -1,10 +1,16 @@
 "use client";
 
-import { IconMoodSad, IconSearch } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import {
+  IconCheck,
+  IconMoodSad,
+  IconProgress,
+  IconSearch,
+} from "@tabler/icons-react";
+import { useState } from "react";
 
-import type { UserSearchResult } from "@/lib/types";
+import type { UserSearchResult, PendingInvitation } from "@/lib/types";
 
+import ProfileUsername from "@/components/profile/profile-username";
 import { Button } from "@/components/ui/button";
 import { FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -13,22 +19,23 @@ import { useSimpleSearchDebounce } from "@/hooks/use-debounce";
 import { useUserSearch } from "@/hooks/use-user-search";
 
 interface CollaboratorSelectorProps {
-  selectedCollaborators: string[];
-  onCollaboratorsChange: (
-    collaborators: string[],
-    collaboratorUsers?: UserSearchResult[],
-  ) => void;
-  initialCollaborators?: UserSearchResult[];
+  currentCollaborators: UserSearchResult[];
+  pendingInvitations?: PendingInvitation[];
+  onAdd: (user: UserSearchResult) => Promise<void>;
+  onRemove?: (profileId: string) => Promise<void>;
   hideLabel?: boolean;
-  excludeIds?: string[];
+  excludeUserIds?: string[];
+  showAcceptedStatus?: boolean; // Nueva prop para controlar si mostrar "Aceptado"
 }
 
 const CollaboratorSelector = ({
-  selectedCollaborators,
-  onCollaboratorsChange,
-  initialCollaborators = [],
+  currentCollaborators,
+  pendingInvitations = [],
+  onAdd,
+  onRemove,
   hideLabel = false,
-  excludeIds = [],
+  excludeUserIds = [],
+  showAcceptedStatus = true, // Por defecto mostrar "Aceptado"
 }: CollaboratorSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useSimpleSearchDebounce(searchQuery, 300);
@@ -36,45 +43,21 @@ const CollaboratorSelector = ({
   const { users, isLoading: isLoadingUsers } =
     useUserSearch(debouncedSearchQuery);
 
-  // Estado local de los colaboradores visibles en el listado "Ya invitados"
-  const [collaboratorUsers, setCollaboratorUsers] =
-    useState<UserSearchResult[]>(initialCollaborators);
-
-  useEffect(() => {
-    if (initialCollaborators && initialCollaborators.length > 0) {
-      setCollaboratorUsers(initialCollaborators);
-    }
-  }, [initialCollaborators]);
-
-  const handleAddCollaborator = (user: UserSearchResult) => {
-    if (
-      !selectedCollaborators.includes(user.id) &&
-      !excludeIds.includes(user.id)
-    ) {
-      const updatedCollaborators = [...selectedCollaborators, user.id];
-      const updatedCollaboratorObjects = [...collaboratorUsers, user];
-
-      onCollaboratorsChange(updatedCollaborators, updatedCollaboratorObjects);
-      setCollaboratorUsers(updatedCollaboratorObjects);
+  const handleAddCollaborator = async (user: UserSearchResult) => {
+    if (!excludeUserIds.includes(user.id)) {
+      await onAdd(user);
     }
   };
 
-  const handleRemoveCollaborator = (userId: string) => {
-    const updatedCollaborators = selectedCollaborators.filter(
-      (id) => id !== userId,
-    );
-    const updatedCollaboratorObjects = collaboratorUsers.filter(
-      (user) => user.id !== userId,
-    );
-
-    onCollaboratorsChange(updatedCollaborators, updatedCollaboratorObjects);
-    setCollaboratorUsers(updatedCollaboratorObjects);
+  const handleRemoveCollaborator = async (userId: string) => {
+    if (onRemove) {
+      await onRemove(userId);
+    }
   };
 
-  // Filtrar usuarios que ya están agregados
+  // Filtrar usuarios que ya están agregados o excluidos
   const filteredUsers = users.filter(
-    (user) =>
-      !selectedCollaborators.includes(user.id) && !excludeIds.includes(user.id),
+    (user) => !excludeUserIds.includes(user.id),
   );
 
   return (
@@ -96,9 +79,11 @@ const CollaboratorSelector = ({
       {/* Resultados de búsqueda cuando hay término */}
       <div className="space-y-2">
         {((debouncedSearchQuery && filteredUsers.length > 0) ||
-          collaboratorUsers.length > 0) && (
+          currentCollaborators.length > 0 ||
+          pendingInvitations.length > 0) && (
           <div className="scrollbar-sm rounded-field max-h-60 overflow-y-auto border">
-            {collaboratorUsers.map((collaborator) => (
+            {/* Colaboradores aceptados */}
+            {currentCollaborators.map((collaborator) => (
               <div
                 key={collaborator.id}
                 className="flex items-center gap-3 p-3"
@@ -112,12 +97,57 @@ const CollaboratorSelector = ({
                     @{collaborator.username}
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  {showAcceptedStatus && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="success"
+                      outline
+                      className="pointer-events-none"
+                    >
+                      <IconCheck />
+                      Aceptado
+                    </Button>
+                  )}
+                  {onRemove && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleRemoveCollaborator(collaborator.id)}
+                    >
+                      Eliminar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Invitaciones pendientes */}
+            {pendingInvitations.map((invitation) => (
+              <div key={invitation.id} className="flex items-center gap-3 p-3">
+                <UserAvatar profile={invitation.profile} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {invitation.profile.displayName ||
+                      invitation.profile.username}
+                  </p>
+                  <ProfileUsername
+                    username={invitation.profile.username}
+                    className="text-xs"
+                    logoClassName="size-4 mr-0.5"
+                    logoSize={16}
+                  />
+                </div>
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => handleRemoveCollaborator(collaborator.id)}
+                  variant="warning"
+                  outline
+                  className="pointer-events-none"
                 >
-                  Invitado
+                  <IconProgress />
+                  Pendiente
                 </Button>
               </div>
             ))}

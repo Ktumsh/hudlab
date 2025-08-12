@@ -20,6 +20,7 @@ const AvatarView = ({ children, avatar, displayName }: AvatarViewProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
+        disableStopPropagation
         className="w-fit rounded-full border-0 bg-transparent p-0 shadow-none"
       >
         <DialogTitle className="sr-only">{displayText}</DialogTitle>

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconChevronLeft } from "@tabler/icons-react";
+import { IconChevronLeft, IconIcons, IconSettings2 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -29,6 +29,9 @@ const AppHeader = () => {
   const pathname = usePathname();
 
   const isHome = pathname === "/feed";
+  const isSelfProfile = pathname.startsWith("/me");
+  const isUpload = pathname.startsWith("/feed/");
+  const isCollection = /^\/[^/]+\/collections\/[^/]+/.test(pathname);
 
   const { user } = useUser();
 
@@ -71,7 +74,7 @@ const AppHeader = () => {
       <header
         className={cn(
           "bg-base-100/80 sticky top-0 z-50 w-full backdrop-blur-md",
-          !isHome && "fixed bg-transparent",
+          !isHome && "fixed bg-transparent backdrop-blur-none",
         )}
       >
         <div
@@ -83,33 +86,50 @@ const AppHeader = () => {
           {isHome ? (
             logo
           ) : (
-            <Button
-              size="icon-lg"
-              onClick={() => router.back()}
-              className="text-base-300 mb-1 border-0 bg-white/80"
-            >
-              <IconChevronLeft className="-ms-0.5 size-7" />
-              <span className="sr-only">Volver</span>
-            </Button>
+            <>
+              <Button
+                size="icon-lg"
+                onClick={() =>
+                  isUpload || isCollection
+                    ? router.back()
+                    : router.push("/feed")
+                }
+                className="text-base-content bg-base-100/80 mb-1 border-0"
+              >
+                <IconChevronLeft className="-ms-0.5 size-7" />
+                <span className="sr-only">Volver</span>
+              </Button>
+              {isSelfProfile && (
+                <Button size="icon-lg" variant="ghost">
+                  <IconSettings2 className="size-6" />
+                </Button>
+              )}
+            </>
           )}
-          <div className="flex items-center gap-2">
-            {isHome && hasActiveFilters && (
-              <Filters
-                filterOptions={filterOptions}
-                onFilterChange={onFilterChange}
-              />
-            )}
-            {!user && isHome && (
-              <>
-                <Button size="sm" asChild className="h-9">
-                  <Link href="/auth/login">Iniciar sesión</Link>
+          {isHome && (
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <Filters
+                  filterOptions={filterOptions}
+                  onFilterChange={onFilterChange}
+                />
+              )}
+              {user ? (
+                <Button size="icon-md">
+                  <IconIcons className="size-5" />
                 </Button>
-                <Button variant="primary" size="sm" asChild className="h-9">
-                  <Link href="/auth/signup">Registrarse</Link>
-                </Button>
-              </>
-            )}
-          </div>
+              ) : (
+                <>
+                  <Button size="sm" asChild className="h-9">
+                    <Link href="/auth/login">Iniciar sesión</Link>
+                  </Button>
+                  <Button variant="primary" size="sm" asChild className="h-9">
+                    <Link href="/auth/signup">Registrarse</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </header>
     );

@@ -2,9 +2,8 @@
 
 import dynamic from "next/dynamic";
 
-import { useProfileUploads } from "../_hooks/use-profile-uploads";
-
 import Loader from "@/components/loader";
+import { useProfileUploads } from "@/hooks/profile/use-profile-uploads";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 const MasonryGrid = dynamic(

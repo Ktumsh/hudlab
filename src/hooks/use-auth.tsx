@@ -23,7 +23,6 @@ interface AuthContextType {
 interface SignUpData {
   email: string;
   password: string;
-  username: string;
   displayName: string;
 }
 

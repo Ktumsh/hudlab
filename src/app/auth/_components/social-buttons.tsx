@@ -53,9 +53,7 @@ const SocialButtons = ({ isSubmitting }: SocialButtonsProps) => {
           aria-label="Iniciar sesión con Discord"
         >
           <Discord className="size-5" />
-          <span>
-            {isOAuthLoading === "discord" ? "Cargando..." : "Discord"}
-          </span>
+          <span>Discord</span>
         </Button>
 
         <Button
@@ -67,7 +65,7 @@ const SocialButtons = ({ isSubmitting }: SocialButtonsProps) => {
           aria-label="Iniciar sesión con Google"
         >
           <Google className="size-5" />
-          <span>{isOAuthLoading === "google" ? "Cargando..." : "Google"}</span>
+          <span>Google</span>
         </Button>
       </div>
     </>

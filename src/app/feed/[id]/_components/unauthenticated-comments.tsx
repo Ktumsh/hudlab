@@ -21,11 +21,7 @@ const UnauthenticatedComments = () => {
         para compartir tus ideas, inspirarte y analizar interfaces junto a la
         comunidad de
         <div className="relative ms-8 inline">
-          <Logo
-            width={24}
-            height={24}
-            className="absolute -top-0.5 -left-7 size-6"
-          />
+          <Logo size={24} className="absolute -top-0.5 -left-7 size-6" />
           <span className="text-base-content font-medium">HUDLab.</span>
         </div>
       </span>

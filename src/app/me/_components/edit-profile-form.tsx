@@ -11,9 +11,8 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { useAvatarUpload } from "@/app/me/_hooks/use-avatar-upload";
-import { useUpdateProfile } from "@/app/me/_hooks/use-update-profile";
-import { useUsernameCheck } from "@/app/me/_hooks/use-username-check";
+import { useUpdateProfile } from "@/app/settings/_hooks/use-update-profile";
+import { useUsernameCheck } from "@/app/settings/_hooks/use-username-check";
 import AvatarView from "@/components/avatar-view";
 import Loader from "@/components/loader";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import UserAvatar from "@/components/user-avatar";
+import { useAvatarUpload } from "@/hooks/profile/use-avatar-upload";
 import { useUser } from "@/hooks/use-user";
 import {
   formErrors,

@@ -21,14 +21,11 @@ import CoverSelector from "./cover-selector";
 
 import type {
   CollaboratorPermission,
-  CollectionPreview,
   CollectionPreviewWithDetails,
   CollectionVisibility,
   UserSearchResult,
 } from "@/lib/types";
 
-import { usePublicCollections } from "@/app/collections/_hooks/use-public-collections";
-import { useUserCollectionsPreview } from "@/app/collections/_hooks/use-user-collections-preview";
 import Loader from "@/components/loader";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -58,6 +55,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import UserAvatar from "@/components/user-avatar";
+import {
+  useInviteCollaborator,
+  useRemoveCollaborator,
+  useUpdateCollaboratorsPermission,
+} from "@/hooks/profile/use-collection-collaborators";
+import { useCollectionRole } from "@/hooks/profile/use-collection-role";
+import { usePendingInvitations } from "@/hooks/profile/use-pending-invitations";
+import { useProfileCollections } from "@/hooks/profile/use-profile-collections";
+import { useUser } from "@/hooks/use-user";
 import {
   cn,
   createCollectionSchema,
@@ -99,7 +105,7 @@ const slideVariants = {
 };
 
 interface EditCollectionFormProps {
-  collection: CollectionPreview | CollectionPreviewWithDetails;
+  collection: CollectionPreviewWithDetails;
   children: React.ReactNode;
 }
 
@@ -119,8 +125,17 @@ const EditCollectionForm = ({
   collection,
   children,
 }: EditCollectionFormProps) => {
-  const { refresh: refreshUserCollections } = useUserCollectionsPreview();
-  const { refresh: refreshPublicCollections } = usePublicCollections();
+  const { user } = useUser();
+  const { refresh } = useProfileCollections(user?.profile.username ?? "");
+  const { inviteCollaborator } = useInviteCollaborator(collection.id);
+  const { removeCollaborator } = useRemoveCollaborator(collection.id);
+  const { updateCollaboratorsPermission, isUpdating } =
+    useUpdateCollaboratorsPermission(collection.id);
+  const { pendingInvitations, refresh: refreshPendingInvitations } =
+    usePendingInvitations(collection.id);
+
+  // Verificar permisos del usuario usando el hook de roles
+  const { canManageCollaborators } = useCollectionRole(collection);
 
   const [isOpen, setOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
@@ -128,25 +143,27 @@ const EditCollectionForm = ({
   const [view, setView] = useState<"form" | "collaborators" | "invite">("form");
   const [direction, setDirection] = useState(0);
 
-  const withDetails = collection as Partial<CollectionPreviewWithDetails>;
-  const existingPerms = Array.isArray(withDetails.permissions)
-    ? withDetails.permissions
-    : [];
-  const [collaborators, setCollaborators] = useState<string[]>(
-    // Precargar IDs de colaboradores existentes (excluye propietario)
-    existingPerms
-      .filter((p) => p.profileId !== collection.profileId)
-      .map((p) => p.profileId),
+  const existingPerms = collection.permissions || [];
+
+  // Separar colaboradores aceptados de los pendientes
+  const acceptedCollaborators = existingPerms.filter(
+    (p) => p.profileId !== collection.profileId && p.status !== "pending",
   );
+
+  const [collaborators, setCollaborators] = useState<string[]>(
+    // Solo mostrar colaboradores aceptados en la gestión
+    acceptedCollaborators.map((p) => p.profileId),
+  );
+
   // Para mostrar chips con avatar/nombre en el selector
-  const initialCollaborators: UserSearchResult[] = existingPerms
-    .filter((p) => p.profileId !== collection.profileId)
-    .map<UserSearchResult>((p) => ({
+  const initialCollaborators: UserSearchResult[] =
+    acceptedCollaborators.map<UserSearchResult>((p) => ({
       id: p.profile.id,
       username: p.profile.username,
       displayName: p.profile.displayName,
       avatarUrl: p.profile.avatarUrl,
     }));
+
   const [collaboratorsDetails, setCollaboratorsDetails] =
     useState<UserSearchResult[]>(initialCollaborators);
   // Selector global de permisos para colaboradores
@@ -196,35 +213,19 @@ const EditCollectionForm = ({
 
   const onSubmit = async (data: CreateCollectionFormData) => {
     try {
-      // Incluir colaboradores sólo si cambiaron respecto a los iniciales
-      const initialIds = new Set(initialCollaborators.map((u) => u.id));
-      const currentIds = new Set(collaborators);
-      const sameSize = initialIds.size === currentIds.size;
-      const sameMembers =
-        sameSize && [...initialIds].every((id) => currentIds.has(id));
-      const includeCollaborators = !sameMembers;
-
+      // Solo enviar los datos básicos de la colección, sin colaboradores
       const payload: Partial<CreateCollectionFormData> & {
         coverImageUrl?: string;
-        collaborators?: string[];
-        collaboratorsPermission?: CollaboratorPermission;
       } = {
         ...data,
         coverImageUrl,
       };
 
-      if (includeCollaborators) {
-        payload.collaborators = collaborators;
-        payload.collaboratorsPermission = collaboratorsPermission;
-      }
-
       const result = await triggerUpdate(payload);
 
       if (result.success) {
         toast.success("Colección actualizada exitosamente");
-        // Mantener colaboradores, solo cerrar modal
-        refreshUserCollections();
-        refreshPublicCollections();
+        refresh();
         setOpen(false);
       } else {
         toast.error(result.error || "Error al actualizar la colección");
@@ -244,9 +245,68 @@ const EditCollectionForm = ({
     setShowCoverSelector(false);
   };
 
-  const handleRemoveCollaborator = (id: string) => {
-    setCollaborators((prev) => prev.filter((cId) => cId !== id));
-    setCollaboratorsDetails((prev) => prev.filter((u) => u.id !== id));
+  const handleRemoveCollaborator = async (id: string) => {
+    try {
+      const result = await removeCollaborator({ profileId: id });
+      if (result.success) {
+        setCollaborators((prev) => prev.filter((cId) => cId !== id));
+        setCollaboratorsDetails((prev) => prev.filter((u) => u.id !== id));
+        refresh(); // Refrescar la lista de colecciones
+        refreshPendingInvitations(); // Refrescar invitaciones pendientes
+        toast.success("Colaborador eliminado exitosamente");
+      } else {
+        toast.error(result.error || "Error al eliminar colaborador");
+      }
+    } catch (error) {
+      console.error("Error removing collaborator:", error);
+      toast.error("Error al eliminar colaborador");
+    }
+  };
+
+  const handleInviteCollaborator = async (user: UserSearchResult) => {
+    try {
+      const result = await inviteCollaborator({
+        profileId: user.id,
+        permission: collaboratorsPermission,
+        userProfile: user,
+      });
+      if (!result.success) {
+        toast.error(result.error || "Error al enviar invitación");
+      }
+    } catch (error) {
+      console.error("Error inviting collaborator:", error);
+      toast.error("Error al enviar invitación");
+    }
+  };
+
+  const handlePermissionChange = async (permission: CollaboratorPermission) => {
+    // Solo actualizar si hay colaboradores o invitaciones pendientes
+    const hasCollaborators = acceptedCollaborators.length > 0;
+    const hasPendingInvitations = pendingInvitations.length > 0;
+
+    if (hasCollaborators || hasPendingInvitations) {
+      try {
+        // Actualizar estado local inmediatamente
+        setCollaboratorsPermission(permission);
+
+        // Actualizar en el backend optimísticamente
+        const result = await updateCollaboratorsPermission({ permission });
+
+        if (!result.success) {
+          // Revertir cambio local si falla
+          setCollaboratorsPermission(collaboratorsPermission);
+          toast.error(result.error || "Error al actualizar permisos");
+        }
+      } catch (error) {
+        // Revertir cambio local si falla
+        setCollaboratorsPermission(collaboratorsPermission);
+        console.error("Error updating permissions:", error);
+        toast.error("Error al actualizar permisos");
+      }
+    } else {
+      // Solo cambiar estado local si no hay colaboradores
+      setCollaboratorsPermission(permission);
+    }
   };
 
   const selectedPermission = useMemo(
@@ -271,7 +331,7 @@ const EditCollectionForm = ({
           {children}
         </DialogTrigger>
         <DialogContent
-          className="max-w-md overflow-hidden"
+          className="overflow-hidden sm:max-w-md"
           onClick={(e) => e.stopPropagation()}
         >
           <DialogHeader>
@@ -302,7 +362,7 @@ const EditCollectionForm = ({
                   </DialogDescription>
                 </motion.div>
               )}
-              {view === "collaborators" && (
+              {view === "collaborators" && canManageCollaborators && (
                 <motion.div
                   key="collaborators-header"
                   custom={direction}
@@ -328,7 +388,7 @@ const EditCollectionForm = ({
                   </div>
                 </motion.div>
               )}
-              {view === "invite" && (
+              {view === "invite" && canManageCollaborators && (
                 <motion.div
                   key="invite-header"
                   custom={direction}
@@ -462,38 +522,42 @@ const EditCollectionForm = ({
                         )}
                       />
 
-                      <div className="fieldset">
-                        <Label className="fieldset-legend">Colaboradores</Label>
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="avatar-group -space-x-3">
-                            <UserAvatar
-                              profile={collection.profile}
-                              className="avatar size-11"
-                            />
-                            {initialCollaborators.slice(0, 9).map((c) => (
+                      {canManageCollaborators && (
+                        <div className="fieldset">
+                          <Label className="fieldset-legend">
+                            Colaboradores
+                          </Label>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="avatar-group -space-x-3">
                               <UserAvatar
-                                key={c.id}
-                                profile={c}
+                                profile={collection.profile}
                                 className="avatar size-11"
                               />
-                            ))}
-                            {initialCollaborators.length > 9 && (
-                              <Avatar className="avatar avatar-placeholder size-11">
-                                <AvatarFallback>
-                                  +{collaborators.length - 9}
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
+                              {initialCollaborators.slice(0, 9).map((c) => (
+                                <UserAvatar
+                                  key={c.id}
+                                  profile={c}
+                                  className="avatar size-11"
+                                />
+                              ))}
+                              {initialCollaborators.length > 9 && (
+                                <Avatar className="avatar avatar-placeholder size-11">
+                                  <AvatarFallback>
+                                    +{collaborators.length - 9}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              size="icon-lg"
+                              onClick={() => navigateToView("collaborators")}
+                            >
+                              <IconPlus className="size-6" />
+                            </Button>
                           </div>
-                          <Button
-                            type="button"
-                            size="icon-lg"
-                            onClick={() => navigateToView("collaborators")}
-                          >
-                            <IconPlus className="size-6" />
-                          </Button>
                         </div>
-                      </div>
+                      )}
 
                       <FormField
                         control={control}
@@ -531,11 +595,12 @@ const EditCollectionForm = ({
                         <Button
                           type="submit"
                           variant="primary"
+                          wide
                           disabled={isUpdatingCollection || !formState.isValid}
                         >
                           {isUpdatingCollection ? (
                             <>
-                              <Loader className="size-4" />
+                              <Loader className="mx-0 size-4" />
                               Guardando...
                             </>
                           ) : (
@@ -548,7 +613,7 @@ const EditCollectionForm = ({
                 </motion.div>
               )}
 
-              {view === "collaborators" && (
+              {view === "collaborators" && canManageCollaborators && (
                 <motion.div
                   key="collaborators-content"
                   custom={direction}
@@ -576,14 +641,23 @@ const EditCollectionForm = ({
                       onOpenChange={setOpenDropdown}
                     >
                       <DropdownMenuTrigger asChild>
-                        <Button outline wide className="justify-between">
+                        <Button
+                          outline
+                          wide
+                          className="justify-between"
+                          disabled={isUpdating}
+                        >
                           <span>{selectedPermission?.label}</span>
-                          <IconChevronDown
-                            className={cn(
-                              "transition-transform",
-                              openDropdown ? "rotate-180" : "rotate-0",
-                            )}
-                          />
+                          {isUpdating ? (
+                            <Loader className="ms-auto mr-0 size-4" />
+                          ) : (
+                            <IconChevronDown
+                              className={cn(
+                                "transition-transform",
+                                openDropdown ? "rotate-180" : "rotate-0",
+                              )}
+                            />
+                          )}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -595,10 +669,11 @@ const EditCollectionForm = ({
                             key={perm.id}
                             data-active={perm.id === collaboratorsPermission}
                             onSelect={() =>
-                              setCollaboratorsPermission(
+                              handlePermissionChange(
                                 perm.id as CollaboratorPermission,
                               )
                             }
+                            disabled={isUpdating}
                             className="group/item data-[active=true]:bg-primary/10 h-auto justify-between gap-1"
                           >
                             <div>
@@ -663,7 +738,7 @@ const EditCollectionForm = ({
                 </motion.div>
               )}
 
-              {view === "invite" && (
+              {view === "invite" && canManageCollaborators && (
                 <motion.div
                   key="invite-content"
                   custom={direction}
@@ -680,13 +755,14 @@ const EditCollectionForm = ({
                 >
                   <CollaboratorSelector
                     hideLabel
-                    selectedCollaborators={collaborators}
-                    onCollaboratorsChange={(ids, users) => {
-                      setCollaborators(ids);
-                      if (users) setCollaboratorsDetails(users);
-                    }}
-                    initialCollaborators={collaboratorsDetails}
-                    excludeIds={[collection.profile.id]}
+                    currentCollaborators={collaboratorsDetails}
+                    pendingInvitations={pendingInvitations}
+                    onAdd={handleInviteCollaborator}
+                    excludeUserIds={[
+                      collection.profile.id,
+                      ...collaboratorsDetails.map((c) => c.id),
+                      ...pendingInvitations.map((inv) => inv.profile.id),
+                    ]}
                   />
                 </motion.div>
               )}

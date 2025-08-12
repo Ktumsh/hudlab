@@ -11,6 +11,7 @@ export interface User {
   role?: string;
   createdAt: Date | null;
   status?: string;
+  lastProvider?: string;
 }
 
 export interface Profile {
@@ -389,8 +390,15 @@ export interface CollectionInvitation {
   id: string;
   permission: CollaboratorPermission;
   status?: "pending" | "accepted";
-  collection: CollectionInvitationCollectionMini;
+  collection: Collection;
   grantedBy: Profile;
+}
+
+export interface PendingInvitation {
+  id: string;
+  profile: UserSearchResult;
+  permission: CollaboratorPermission;
+  createdAt: Date | string;
 }
 
 // ─────────────────────────────
@@ -422,14 +430,15 @@ export interface UpdateCollectionResponse {
 // ─────────────────────────────
 // Profile
 // ─────────────────────────────
+export interface ProfileStats {
+  followers: number;
+  following: number;
+  uploads: number;
+}
 
 export interface ProfileData {
   profile: Profile | null;
-  stats: {
-    followers: number;
-    following: number;
-    uploads: number;
-  };
+  stats: ProfileStats;
   isFollowing: boolean;
 }
 

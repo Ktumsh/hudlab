@@ -107,7 +107,6 @@ const SignupForm = () => {
         const success = await signUp({
           email: data.email,
           password: data.password,
-          username: data.email.split("@")[0], // Generar username desde email
           displayName: data.displayName,
         });
 

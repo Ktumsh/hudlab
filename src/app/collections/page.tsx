@@ -1,5 +1,5 @@
-import Collections from "./_components/collections";
+import PublicCollections from "./public-collections";
 
 export default function CollectionsPage() {
-  return <Collections />;
+  return <PublicCollections />;
 }

@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn, getShareTargets } from "@/lib/utils";
 
 interface ShareSheetProps {
+  sheetTitle?: string;
   title?: string;
   text?: string;
   url?: string;
@@ -39,7 +40,13 @@ const copyFeedbackDuration = 1500;
 const messengerAppId = process.env.NEXT_PUBLIC_MESSENGER_APP_ID;
 const messengerRedirectUri = process.env.NEXT_PUBLIC_MESSENGER_REDIRECT_URI;
 
-const ShareSheet = ({ title, text, url, children }: ShareSheetProps) => {
+const ShareSheet = ({
+  sheetTitle = "Compartir",
+  title,
+  text,
+  url,
+  children,
+}: ShareSheetProps) => {
   const isMobile = useIsMobile();
   const shareUrl = url || pickUrl(url);
 
@@ -255,7 +262,7 @@ const ShareSheet = ({ title, text, url, children }: ShareSheetProps) => {
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent className="mx-auto w-full max-w-md rounded-t-2xl">
           <DrawerHeader>
-            <DrawerTitle>Compartir</DrawerTitle>
+            <DrawerTitle>{sheetTitle}</DrawerTitle>
           </DrawerHeader>
           {tiles}
         </DrawerContent>
@@ -268,7 +275,7 @@ const ShareSheet = ({ title, text, url, children }: ShareSheetProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center">Compartir</DialogTitle>
+          <DialogTitle className="text-center">{sheetTitle}</DialogTitle>
           <DialogDescription className="sr-only">
             Comparte este contenido en tus redes sociales.
           </DialogDescription>

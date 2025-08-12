@@ -7,25 +7,30 @@ import { toast } from "sonner";
 
 import type { Profile } from "@/lib/types";
 
-import { useAvatarUpload } from "@/app/me/_hooks/use-avatar-upload";
+import AvatarView from "@/components/avatar-view";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { BetterTooltip } from "@/components/ui/tooltip";
 import UserAvatar from "@/components/user-avatar";
+import { useAvatarUpload } from "@/hooks/profile/use-avatar-upload";
+import { useIsSelfProfile } from "@/hooks/use-is-self-profile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn, formErrors } from "@/lib";
 
 interface AvatarUploaderProps {
   profile: Profile;
-  isSelf: boolean;
 }
 
-export function AvatarUploader({ isSelf, profile }: AvatarUploaderProps) {
+export function AvatarUploader({ profile }: AvatarUploaderProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
   const { trigger: uploadAvatar, isMutating: uploading } = useAvatarUpload(
     profile.username,
   );
+
+  const isMobile = useIsMobile();
+  const isSelf = useIsSelfProfile();
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -62,19 +67,28 @@ export function AvatarUploader({ isSelf, profile }: AvatarUploaderProps) {
     }
   };
 
-  if (!isSelf) {
-    return <UserAvatar profile={profile!} className="size-32" />;
+  if (!isSelf || isMobile) {
+    return (
+      <AvatarView
+        avatar={profile?.avatarUrl ?? ""}
+        displayName={profile.displayName ?? "Usuario"}
+      >
+        <button>
+          <UserAvatar profile={profile!} className="size-20 md:size-32" />
+        </button>
+      </AvatarView>
+    );
   }
 
   return (
     <div className="relative">
       <label htmlFor="dropzone-file" className="group relative rounded-full">
         {preview ? (
-          <Avatar className="size-32">
+          <Avatar className="size-20 md:size-32">
             <AvatarImage src={preview} alt="Previsualización de avatar" />
           </Avatar>
         ) : (
-          <UserAvatar profile={profile!} className="size-32" />
+          <UserAvatar profile={profile!} className="size-20 md:size-32" />
         )}
         <input
           id="dropzone-file"

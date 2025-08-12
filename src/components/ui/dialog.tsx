@@ -69,17 +69,20 @@ function DialogContent({
   closeButtonClass,
   isBlurred = true,
   overlayClassName,
+  disableStopPropagation = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
   closeButtonClass?: string;
   isBlurred?: boolean;
   overlayClassName?: string;
+  disableStopPropagation?: boolean;
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay
         onClick={(e) => {
+          if (disableStopPropagation) return;
           e.stopPropagation();
         }}
         className={cn(overlayVariants({ isBlurred }), overlayClassName)}

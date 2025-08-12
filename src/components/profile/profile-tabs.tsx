@@ -21,14 +21,14 @@ const ProfileTabs = ({ username, basePath }: ProfileTabsProps) => {
     pathname === collectionsPath || pathname?.startsWith(`${collectionsPath}`);
 
   return (
-    <div className="mb-5 flex justify-center border-b">
+    <div className="mb-5 flex justify-center md:border-b">
       <LayoutGroup>
         <div className="group grid grid-cols-2 gap-0.5">
           <Link
             href={hudsPath}
             scroll={false}
             className={cn(
-              "relative flex h-9 flex-1 items-center justify-center px-4 font-semibold",
+              "relative flex h-9 flex-1 items-center justify-center px-4 text-sm font-semibold md:text-base",
               isHuds && "text-primary",
             )}
           >
@@ -49,7 +49,7 @@ const ProfileTabs = ({ username, basePath }: ProfileTabsProps) => {
             href={collectionsPath}
             scroll={false}
             className={cn(
-              "relative flex h-9 flex-1 items-center justify-center px-4 font-semibold",
+              "relative flex h-9 flex-1 items-center justify-center px-4 text-sm font-semibold md:text-base",
               isCollections && "text-primary",
             )}
           >

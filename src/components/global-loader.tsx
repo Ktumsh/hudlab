@@ -37,12 +37,7 @@ const GlobalLoader = ({ children }: { children: React.ReactNode }) => {
               ease: [0.4, 0, 0.2, 1],
             }}
           >
-            <Logo
-              width={200}
-              height={200}
-              className="size-24"
-              aria-label="Cargando"
-            />
+            <Logo size={200} className="size-24" aria-label="Cargando" />
             <span className="sr-only">Cargando...</span>
           </motion.div>
         )}

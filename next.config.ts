@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
         hostname: "cdn.discordapp.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
     ],
   },
   async redirects() {

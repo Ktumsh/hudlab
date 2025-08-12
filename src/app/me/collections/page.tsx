@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 
-import ProfileCollections from "@/app/[profile]/collections/_components/profile-collections";
+import ProfileCollections from "@/components/profile/profile-collections";
 import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
+
+export const dynamic = "force-dynamic";
 
 export default async function MeCollectionsPage() {
   const session = await getServerAuthFromMirror();

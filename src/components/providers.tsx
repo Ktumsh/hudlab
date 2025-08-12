@@ -2,6 +2,7 @@ import { ThemeProvider } from "next-themes";
 
 import { AuthProvider } from "@/hooks/use-auth";
 import { FilterProvider } from "@/hooks/use-filters";
+import { IsSelfProfileProvider } from "@/hooks/use-is-self-profile";
 import { LastSessionProvider } from "@/hooks/use-last-session";
 import { MobileProvider } from "@/hooks/use-mobile";
 import { UserProvider } from "@/hooks/use-user";
@@ -17,7 +18,9 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
             enableSystem={false}
           >
             <LastSessionProvider>
-              <FilterProvider>{children}</FilterProvider>
+              <FilterProvider>
+                <IsSelfProfileProvider>{children}</IsSelfProfileProvider>
+              </FilterProvider>
             </LastSessionProvider>
           </ThemeProvider>
         </UserProvider>

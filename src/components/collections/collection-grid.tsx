@@ -1,11 +1,17 @@
+"use client";
+
 import CollectionItem from "./collection-item";
 
-import type { CollectionPreview } from "@/lib/types";
+import type {
+  CollectionPreview,
+  CollectionPreviewWithDetails,
+} from "@/lib/types";
 
+import { useIsSelfProfile } from "@/hooks/use-is-self-profile";
 import { cn } from "@/lib";
 
 interface CollectionGridProps {
-  collections: CollectionPreview[];
+  collections: (CollectionPreview | CollectionPreviewWithDetails)[];
   className?: string;
   showEditButton?: boolean;
 }
@@ -15,6 +21,8 @@ const CollectionGrid = ({
   className,
   showEditButton = false,
 }: CollectionGridProps) => {
+  const isSelf = useIsSelfProfile();
+
   return (
     <div
       className={cn(
@@ -22,6 +30,7 @@ const CollectionGrid = ({
         className,
       )}
     >
+      {isSelf && <CollectionItem isSelf={isSelf} />}
       {collections.map((collection) => (
         <CollectionItem
           key={collection.id}

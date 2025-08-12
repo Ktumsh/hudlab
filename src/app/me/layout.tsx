@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
-import ProfileHeader from "@/app/[profile]/_components/profile-header";
-import ProfileTabs from "@/app/[profile]/_components/profile-tabs";
+import ProfileHeader from "@/components/profile/profile-header";
+import ProfileTabs from "@/components/profile/profile-tabs";
 import { getProfile } from "@/data/profile";
 import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
+
+export const dynamic = "force-dynamic";
 
 export default async function MeLayout({
   children,
@@ -27,7 +29,7 @@ export default async function MeLayout({
         username={username}
         initialData={{ profile, stats, isFollowing }}
       />
-      <div className="relative px-1 md:px-6">
+      <div className="relative mb-24 px-1 md:mb-32 md:px-6">
         <ProfileTabs username={username} basePath="/me" />
         {children}
       </div>

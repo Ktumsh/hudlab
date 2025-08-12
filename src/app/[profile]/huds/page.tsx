@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
-import ProfileUploads from "./profile-uploads";
+import ProfileUploads from "../../../components/profile/profile-uploads";
 
 import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
+
+export const dynamic = "force-dynamic";
 
 export default async function ProfileHudsPage({
   params,
