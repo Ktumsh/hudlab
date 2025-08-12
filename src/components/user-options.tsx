@@ -72,7 +72,7 @@ const UserOptions = () => {
           <Button
             outline
             size="icon"
-            className="outline-content-muted bg-base-200 rounded-full border-0 outline-2 outline-offset-2"
+            className="outline-content-muted bg-base-200 rounded-full! border-0 outline-2 outline-offset-2"
           >
             <UserAvatar profile={user.profile} />
           </Button>
