@@ -15,6 +15,7 @@ interface LastSession {
   userId: string;
   provider: string;
   userDisplayName: string;
+  userEmail: string;
   userAvatarUrl?: string;
   lastUsedAt: Date;
 }

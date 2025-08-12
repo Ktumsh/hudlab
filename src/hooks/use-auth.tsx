@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok && data.type === "success") {
-        await mutate(); // trigger fetch user
+        await mutate();
 
         // Sincronizar cookie espejo inmediatamente después de login exitoso
         try {

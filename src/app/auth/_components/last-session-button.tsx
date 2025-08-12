@@ -4,21 +4,20 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { memo } from "react";
 
-import { useLastSession } from "../../../hooks/use-last-session";
-
 import { Discord, Google } from "@/components/icons/social";
 import { Button } from "@/components/ui/button";
-import { apiUrl } from "@/lib";
+import { useAuth } from "@/hooks/use-auth";
+import { useLastSession } from "@/hooks/use-last-session";
 
 const PureLastSessionButton = () => {
   const { lastSession, isLoading, hasValidSession } = useLastSession();
+  const { signInWithOAuth } = useAuth();
 
   const handleContinueAs = async () => {
     if (!lastSession || isLoading) return;
 
     try {
-      // Redirigir al endpoint OAuth del backend
-      window.location.href = `${apiUrl}/api/auth/signin/${lastSession.provider}?callbackUrl=${encodeURIComponent(window.location.origin + "/feed")}`;
+      await signInWithOAuth(lastSession.provider as "google" | "discord");
     } catch (error) {
       console.error("Error during sign in:", error);
     }
@@ -49,6 +48,14 @@ const PureLastSessionButton = () => {
   };
 
   if (!hasValidSession) {
+    // Debug temporal para entender por qué no aparece cuando debería o viceversa
+    if (lastSession && !isLoading) {
+      console.log("LastSessionButton - Not showing because:", {
+        provider: lastSession.provider,
+        hasValidSession,
+        isCredentials: lastSession.provider === "credentials",
+      });
+    }
     return null;
   }
 

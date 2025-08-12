@@ -37,6 +37,7 @@ const SessionTracker = () => {
                 userId: user.id,
                 provider: provider,
                 userDisplayName: getFirstName(displayName),
+                userEmail: user.email,
                 userAvatarUrl: user.profile?.avatarUrl || undefined,
               };
 
