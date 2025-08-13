@@ -16,7 +16,7 @@ import UnauthenticatedComments from "./unauthenticated-comments";
 
 import type { UploadWithDetails } from "@/lib/types";
 
-import AddToCollectionButton from "@/components/add-to-collection-button";
+import AddToCollectionButton from "@/components/collections/add-to-collection-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BetterTooltip } from "@/components/ui/tooltip";

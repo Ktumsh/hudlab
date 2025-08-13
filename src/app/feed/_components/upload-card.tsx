@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import type { UploadWithDetails } from "@/lib/types";
 
-import AddToCollectionButton from "@/components/add-to-collection-button";
+import AddToCollectionButton from "@/components/collections/add-to-collection-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
@@ -54,7 +54,7 @@ const UploadCard = ({ upload }: UploadCardProps) => {
             {user && <AddToCollectionButton uploadId={upload.id} />}
           </div>
           <div className="pointer-events-auto max-w-full">
-            <h3 className="mb-2 truncate font-semibold text-white drop-shadow-lg">
+            <h3 className="mb-2 truncate text-base font-semibold text-white drop-shadow-lg">
               {upload.title}
             </h3>
 

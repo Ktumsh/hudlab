@@ -188,20 +188,16 @@ const ShareSheet = ({
           <>
             <span
               className={cn(
-                "border-border-muted relative flex size-10 items-center justify-center rounded-full",
+                "border-border-muted rounded-box relative flex size-10 items-center justify-center",
                 t.color,
                 t.id === "x" && "border",
               )}
             >
               <Icon
-                className={cn(
-                  "size-6",
-                  t.id === "facebook" && "size-10",
-                  t.id === "discord" && "*:fill-white!",
-                )}
+                className={cn("size-6", t.id === "discord" && "*:fill-white!")}
               />
               {needsPreCopy && (
-                <div className="absolute -right-1.5 -bottom-1.5 grid size-6 place-content-center rounded-full border bg-white text-black shadow-sm">
+                <div className="rounded-box absolute -right-1.5 -bottom-1.5 grid size-6 place-content-center border bg-white text-black shadow-sm">
                   <IconCopy className="size-4" />
                 </div>
               )}

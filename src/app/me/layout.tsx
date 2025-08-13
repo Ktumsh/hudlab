@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import ProfileHeader from "@/components/profile/profile-header";
+import ProfileCollectionHeader from "@/components/profile/profile-collection-header";
 import ProfileTabs from "@/components/profile/profile-tabs";
 import { getProfile } from "@/data/profile";
 import { getServerAuthFromMirror } from "@/lib/server-auth-mirror";
@@ -25,7 +25,7 @@ export default async function MeLayout({
 
   return (
     <main>
-      <ProfileHeader
+      <ProfileCollectionHeader
         username={username}
         initialData={{ profile, stats, isFollowing }}
       />

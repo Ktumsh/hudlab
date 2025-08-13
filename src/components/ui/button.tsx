@@ -6,7 +6,7 @@ import * as React from "react";
 import { cn } from "@/lib/index";
 
 const buttonVariants = cva(
-  "btn rounded-field [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
+  "btn rounded-field [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 text-sm",
   {
     variants: {
       variant: {
@@ -26,7 +26,7 @@ const buttonVariants = cva(
       size: {
         default: "",
         xs: "btn-xs [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "btn-sm",
+        sm: "btn-sm text-xs",
         lg: "btn-lg",
         xl: "btn-xl text-lg",
         icon: "size-8 p-0",

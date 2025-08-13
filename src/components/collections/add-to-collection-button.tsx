@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import CreateCollectionForm from "../app/me/collections/_components/create-collection-form";
+import CreateCollectionForm from "./create-collection-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -200,7 +200,7 @@ const AddToCollectionButton = ({
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="truncate font-medium">
+                            <p className="truncate text-base font-medium">
                               {collection.name}
                             </p>
                             {collection.visibility === "private" && (

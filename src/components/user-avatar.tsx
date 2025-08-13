@@ -13,10 +13,15 @@ interface UserAvatarProps {
   className?: string;
 }
 
-const UserAvatar = ({ profile, loading, className }: UserAvatarProps) => {
+const UserAvatar = ({
+  profile,
+  loading,
+  className,
+  ...props
+}: UserAvatarProps & React.ComponentProps<typeof Avatar>) => {
   if (loading) {
     return (
-      <Avatar className={className}>
+      <Avatar className={className} {...props}>
         <Skeleton className="size-full rounded-full" />
       </Avatar>
     );
@@ -24,7 +29,7 @@ const UserAvatar = ({ profile, loading, className }: UserAvatarProps) => {
 
   if (!profile) {
     return (
-      <Avatar className={className}>
+      <Avatar className={className} {...props}>
         <AvatarFallback>U</AvatarFallback>
       </Avatar>
     );
@@ -35,7 +40,7 @@ const UserAvatar = ({ profile, loading, className }: UserAvatarProps) => {
     : "Avatar de usuario";
 
   return (
-    <Avatar className={className}>
+    <Avatar className={className} {...props}>
       {profile.avatarUrl ? (
         <AvatarImage src={profile.avatarUrl} alt={avatarAlt} />
       ) : (

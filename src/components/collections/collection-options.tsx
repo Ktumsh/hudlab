@@ -1,60 +1,54 @@
+"use client";
+
 import {
   IconDots,
-  IconLockExclamation,
-  IconLogout,
   IconMessageReport,
-  IconSettings2,
   IconShare3,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useMemo } from "react";
 
-import type { Profile } from "@/lib/types";
-
-import ShareSheet from "@/components/share-sheet";
-import { Button } from "@/components/ui/button";
+import ShareSheet from "../share-sheet";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "../ui/dropdown-menu";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ProfileOptionsProps {
-  profile?: Profile | null;
+interface CollectionOptionsProps {
   isSelf: boolean;
+  collectionName: string;
+  collectionDescription: string;
 }
 
-const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
+const CollectionOptions = ({
+  isSelf,
+  collectionName,
+  collectionDescription,
+}: CollectionOptionsProps) => {
   const isMobile = useIsMobile();
-  const username = profile?.username;
-  const displayName = profile?.displayName;
 
   const shareSheetTitle = useMemo(() => {
-    return isSelf
-      ? "Compartir mi perfil"
-      : `Compartir perfil de ${displayName ? displayName : `@${username}`}`;
-  }, [displayName, username, isSelf]);
+    return `Compartir "${collectionName}"`;
+  }, [collectionName]);
 
   const shareText = useMemo(
     () =>
-      `¡Echa un vistazo al perfil de ${displayName ? displayName : `@${username}`} en HUDLab!`,
-    [displayName, username],
-  );
-
-  const shareUrl = useMemo(
-    () =>
-      (typeof window !== "undefined" &&
-        `${window.location.origin}/${username}/huds`) ||
-      "",
-    [username],
+      collectionDescription
+        ? collectionDescription
+        : "¡Echa un vistazo a esta colección en HUDLab!",
+    [collectionDescription],
   );
 
   if (isMobile) {
     return (
-      <ShareSheet sheetTitle={shareSheetTitle} text={shareText} url={shareUrl}>
+      <ShareSheet sheetTitle={shareSheetTitle} text={shareText}>
         <Button size="sm" className="flex-1">
-          Compartir perfil
+          Compartir colección
         </Button>
       </ShareSheet>
     );
@@ -68,11 +62,7 @@ const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <ShareSheet
-          sheetTitle={shareSheetTitle}
-          text={shareText}
-          url={shareUrl}
-        >
+        <ShareSheet sheetTitle={shareSheetTitle} text={shareText}>
           <button className="hover:bg-base-300 rounded-field hover:text-neutral-content [&_svg:not([class*='text-'])]:text-base-content/60 hover:[&_svg:not([class*='text-'])]:text-neutral-content/60 relative flex h-10 w-full items-center gap-2 px-3 py-2 text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
             <IconShare3 />
             Compartir
@@ -80,13 +70,9 @@ const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
         </ShareSheet>
         {isSelf ? (
           <>
-            <DropdownMenuItem>
-              <IconSettings2 />
-              Configuración
-            </DropdownMenuItem>
             <DropdownMenuItem variant="destructive">
-              <IconLogout />
-              Cerrar sesión
+              <IconTrash />
+              Eliminar
             </DropdownMenuItem>
           </>
         ) : (
@@ -95,10 +81,6 @@ const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
               <IconMessageReport />
               Reportar
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
-              <IconLockExclamation />
-              Bloquear
-            </DropdownMenuItem>
           </>
         )}
       </DropdownMenuContent>
@@ -106,4 +88,4 @@ const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
   );
 };
 
-export default ProfileOptions;
+export default CollectionOptions;

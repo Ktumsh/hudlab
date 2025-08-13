@@ -74,7 +74,7 @@ const ProfileHeader = ({
           />
           {!isMobile && <ProfileStats stats={stats} />}
           {profile?.bio && (
-            <p className="mt-2 hidden max-w-prose text-sm md:block">
+            <p className="mt-2 hidden text-sm text-pretty md:block">
               {profile.bio}
             </p>
           )}

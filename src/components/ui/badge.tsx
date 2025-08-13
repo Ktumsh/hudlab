@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { cn } from "@/lib";
 
-const badgeVariants = cva("badge [&>svg]:size-3.5", {
+const badgeVariants = cva("badge [&>svg]:size-3.5 text-sm", {
   variants: {
     variant: {
       default: "",

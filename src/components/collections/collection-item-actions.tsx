@@ -2,7 +2,7 @@
 
 import { IconPencil } from "@tabler/icons-react";
 
-import EditCollectionForm from "../../app/me/collections/_components/edit-collection-form";
+import EditCollectionForm from "./edit-collection-form";
 
 import type {
   CollectionPreview,

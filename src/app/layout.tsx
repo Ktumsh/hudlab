@@ -9,7 +9,7 @@ import AppHeader from "@/components/app-header";
 import GlobalLoader from "@/components/global-loader";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
-import { inter } from "@/config/font.config";
+import { inter, jetbrainsMono, merriweather, exo2 } from "@/config/font.config";
 import { metadataConfig } from "@/config/metadata.config";
 import { cn } from "@/lib";
 
@@ -31,7 +31,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={cn(inter.variable, "antialiased")}>
+      <body
+        className={cn(
+          inter.variable,
+          merriweather.variable,
+          exo2.variable,
+          jetbrainsMono.variable,
+          "antialiased",
+        )}
+      >
         <Providers>
           <GlobalLoader>
             <SessionTracker />

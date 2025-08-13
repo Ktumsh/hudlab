@@ -14,6 +14,7 @@ import ProfileUsername from "@/components/profile/profile-username";
 import { Button } from "@/components/ui/button";
 import { FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import UserAvatar from "@/components/user-avatar";
 import { useSimpleSearchDebounce } from "@/hooks/use-debounce";
 import { useUserSearch } from "@/hooks/use-user-search";
@@ -61,7 +62,7 @@ const CollaboratorSelector = ({
   );
 
   return (
-    <div className="fieldset">
+    <div className="flex flex-col gap-2">
       {!hideLabel && <FormLabel>Agregar colaboradores</FormLabel>}
 
       {/* Buscador */}
@@ -81,21 +82,24 @@ const CollaboratorSelector = ({
         {((debouncedSearchQuery && filteredUsers.length > 0) ||
           currentCollaborators.length > 0 ||
           pendingInvitations.length > 0) && (
-          <div className="scrollbar-sm rounded-field max-h-60 overflow-y-auto border">
+          <ScrollArea className="rounded-field h-60 border">
             {/* Colaboradores aceptados */}
             {currentCollaborators.map((collaborator) => (
               <div
                 key={collaborator.id}
-                className="flex items-center gap-3 p-3"
+                className="grid grid-cols-[auto_1fr_auto] gap-3 px-3 py-2"
               >
                 <UserAvatar profile={collaborator} />
-                <div className="min-w-0 flex-1">
+                <div className="max-w-full grow overflow-hidden">
                   <p className="truncate text-sm font-medium">
                     {collaborator.displayName || collaborator.username}
                   </p>
-                  <p className="text-content-muted truncate text-xs">
-                    @{collaborator.username}
-                  </p>
+                  <ProfileUsername
+                    username={collaborator.username}
+                    className="text-xs"
+                    logoClassName="size-4 mr-0.5"
+                    logoSize={16}
+                  />
                 </div>
                 <div className="flex items-center gap-2">
                   {showAcceptedStatus && (
@@ -125,9 +129,12 @@ const CollaboratorSelector = ({
 
             {/* Invitaciones pendientes */}
             {pendingInvitations.map((invitation) => (
-              <div key={invitation.id} className="flex items-center gap-3 p-3">
+              <div
+                key={invitation.id}
+                className="grid grid-cols-[auto_1fr_auto] gap-3 px-3 py-2"
+              >
                 <UserAvatar profile={invitation.profile} />
-                <div className="min-w-0 flex-1">
+                <div className="max-w-full grow overflow-hidden">
                   <p className="truncate text-sm font-medium">
                     {invitation.profile.displayName ||
                       invitation.profile.username}
@@ -153,15 +160,21 @@ const CollaboratorSelector = ({
             ))}
             {debouncedSearchQuery &&
               filteredUsers.map((user) => (
-                <div key={user.id} className="flex items-center gap-3 p-3">
+                <div
+                  key={user.id}
+                  className="grid grid-cols-[auto_1fr_auto] gap-3 px-3 py-2"
+                >
                   <UserAvatar profile={user} />
-                  <div className="min-w-0 flex-1">
+                  <div className="max-w-full grow overflow-hidden">
                     <p className="truncate text-sm font-medium">
                       {user.displayName || user.username}
                     </p>
-                    <p className="text-content-muted truncate text-xs">
-                      @{user.username}
-                    </p>
+                    <ProfileUsername
+                      username={user.username}
+                      className="text-xs"
+                      logoClassName="size-4 mr-0.5"
+                      logoSize={16}
+                    />
                   </div>
 
                   <Button
@@ -174,7 +187,7 @@ const CollaboratorSelector = ({
                   </Button>
                 </div>
               ))}
-          </div>
+          </ScrollArea>
         )}
         {debouncedSearchQuery &&
           filteredUsers.length === 0 &&

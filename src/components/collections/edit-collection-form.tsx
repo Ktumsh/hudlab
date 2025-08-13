@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import UserAvatar from "@/components/user-avatar";
 import {
   useInviteCollaborator,
@@ -167,8 +168,13 @@ const EditCollectionForm = ({
   const [collaboratorsDetails, setCollaboratorsDetails] =
     useState<UserSearchResult[]>(initialCollaborators);
   // Selector global de permisos para colaboradores
+  // Inicializar con el permiso actual de los colaboradores existentes o "admin" por defecto
   const [collaboratorsPermission, setCollaboratorsPermission] =
-    useState<CollaboratorPermission>("admin");
+    useState<CollaboratorPermission>(
+      acceptedCollaborators.length > 0 && acceptedCollaborators[0]?.permission
+        ? (acceptedCollaborators[0].permission as CollaboratorPermission)
+        : "admin",
+    );
   const [showCoverSelector, setShowCoverSelector] = useState(false);
 
   const form = useForm<CreateCollectionFormData>({
@@ -596,7 +602,11 @@ const EditCollectionForm = ({
                           type="submit"
                           variant="primary"
                           wide
-                          disabled={isUpdatingCollection || !formState.isValid}
+                          disabled={
+                            isUpdatingCollection ||
+                            !formState.isValid ||
+                            !formState.isDirty
+                          }
                         >
                           {isUpdatingCollection ? (
                             <>
@@ -691,42 +701,55 @@ const EditCollectionForm = ({
                     </DropdownMenu>
                   </div>
 
-                  <div className="fieldset">
+                  <div className="fieldset py-0">
                     <Label className="fieldset-legend">Colaboradores</Label>
-                    <div className="flex items-center gap-2">
-                      <UserAvatar
-                        profile={collection.profile}
-                        className="size-9"
-                      />
-                      <div>
-                        <div className="text-sm font-medium">
-                          {collection.profile.displayName}
-                        </div>
-                        <div className="text-content-muted">Propietario</div>
-                      </div>
-                    </div>
-                    {collaborators.map((id) => {
-                      const c = collaboratorsDetails.find((u) => u.id === id);
-                      if (!c) return null;
-                      return (
-                        <div key={id} className="flex items-center gap-2">
-                          <UserAvatar profile={c} className="size-9" />
+                    <ScrollArea className="max-h-60">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar
+                            profile={collection.profile}
+                            className="size-9"
+                          />
                           <div>
                             <div className="text-sm font-medium">
-                              {c?.displayName}
+                              {collection.profile.displayName}
                             </div>
-                            <div className="text-content-muted">Invitado</div>
+                            <div className="text-content-muted">
+                              Propietario
+                            </div>
                           </div>
-                          <Button
-                            size="sm"
-                            className="text-error ms-auto"
-                            onClick={() => handleRemoveCollaborator(id)}
-                          >
-                            Eliminar
-                          </Button>
                         </div>
-                      );
-                    })}
+                        {collaborators.map((id) => {
+                          const c = collaboratorsDetails.find(
+                            (u) => u.id === id,
+                          );
+                          if (!c) return null;
+                          return (
+                            <div
+                              key={id}
+                              className="grid grid-cols-[auto_1fr_auto] gap-2"
+                            >
+                              <UserAvatar profile={c} className="size-9" />
+                              <div className="max-w-full grow overflow-hidden">
+                                <div className="truncate text-sm font-medium">
+                                  {c?.displayName}
+                                </div>
+                                <div className="text-content-muted">
+                                  Invitado
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                className="text-error"
+                                onClick={() => handleRemoveCollaborator(id)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   <div>

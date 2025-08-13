@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import ProfileHeaderClient from "@/components/profile/profile-header";
+import ProfileCollectionHeader from "@/components/profile/profile-collection-header";
 import ProfileTabs from "@/components/profile/profile-tabs";
 import { getProfile } from "@/data/profile";
 
@@ -22,7 +22,7 @@ export default async function ProfileLayout({
 
   return (
     <main>
-      <ProfileHeaderClient
+      <ProfileCollectionHeader
         username={username}
         initialData={{ profile, stats, isFollowing }}
       />

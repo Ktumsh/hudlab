@@ -9,7 +9,7 @@ import ProfileUsername from "./profile-username";
 import { Separator } from "../ui/separator";
 
 import { useInvitations } from "@/app/collections/_hooks/use-invitations";
-import CreateCollectionForm from "@/app/me/collections/_components/create-collection-form";
+import CreateCollectionForm from "@/components/collections/create-collection-form";
 import CollectionGrid from "@/components/collections/collection-grid";
 import CollectionsSkeleton from "@/components/collections/collections-skeleton";
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,19 @@ const ProfileCollections = ({ username }: ProfileCollectionsProps) => {
     invitations: invites,
     accept,
     reject,
-    accepting,
-    rejecting,
+    isAccepting,
+    isRejecting,
   } = useInvitations();
+
+  const handleAccept = async (invitationId: string) => {
+    await accept(invitationId);
+    refresh();
+  };
+
+  const handleReject = async (invitationId: string) => {
+    await reject(invitationId);
+    refresh();
+  };
 
   return (
     <div className="space-y-6">
@@ -45,25 +55,27 @@ const ProfileCollections = ({ username }: ProfileCollectionsProps) => {
               >
                 <div className="flex items-center gap-2">
                   <Button
-                    disabled={rejecting}
+                    disabled={isRejecting(inv.id)}
                     className="flex-1"
-                    onClick={() => {
-                      reject(inv.id);
-                      refresh();
-                    }}
+                    onClick={() => handleReject(inv.id)}
                   >
-                    {rejecting ? <Loader className="size-4" /> : "Rechazar"}
+                    {isRejecting(inv.id) ? (
+                      <Loader className="size-4" />
+                    ) : (
+                      "Rechazar"
+                    )}
                   </Button>
                   <Button
                     variant="primary"
-                    disabled={accepting}
+                    disabled={isAccepting(inv.id)}
                     className="flex-1"
-                    onClick={() => {
-                      accept(inv.id);
-                      refresh();
-                    }}
+                    onClick={() => handleAccept(inv.id)}
                   >
-                    {accepting ? <Loader className="size-4" /> : "Aceptar"}
+                    {isAccepting(inv.id) ? (
+                      <Loader className="size-4" />
+                    ) : (
+                      "Aceptar"
+                    )}
                   </Button>
                 </div>
               </CollectionItem>

@@ -16,7 +16,7 @@ import type {
   UploadImage,
 } from "@/lib/types";
 
-import CreateCollectionForm from "@/app/me/collections/_components/create-collection-form";
+import CreateCollectionForm from "@/components/collections/create-collection-form";
 
 interface CollectionItemProps {
   collection?: CollectionPreview | CollectionPreviewWithDetails;
@@ -154,7 +154,9 @@ const CollectionItem = ({
       </div>
 
       <div className="p-3">
-        <h3 className="mb-1 line-clamp-1 font-semibold">{collection.name}</h3>
+        <h3 className="mb-1 line-clamp-1 text-base font-semibold">
+          {collection.name}
+        </h3>
         <div className="text-base-content/60 text-xs">
           <div className="flex items-center gap-3">
             <span>{collection._count?.items || 0} HUDs</span>

@@ -13,7 +13,7 @@ function Input({
       type={type}
       data-slot="input"
       className={cn(
-        "input input-ghost border-border input-neutral outline-base-content/50! selection:bg-primary selection:text-primary-content w-full",
+        "input input-ghost border-border input-neutral outline-base-content/50! selection:bg-primary selection:text-primary-content w-full text-sm",
         "aria-invalid:ring-error/50! aria-invalid:border-error/30",
         className,
         isAuth && "bg-base-100 h-11 text-base",

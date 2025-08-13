@@ -5,6 +5,7 @@ import { FilterProvider } from "@/hooks/use-filters";
 import { IsSelfProfileProvider } from "@/hooks/use-is-self-profile";
 import { LastSessionProvider } from "@/hooks/use-last-session";
 import { MobileProvider } from "@/hooks/use-mobile";
+import { PreferencesProvider } from "@/hooks/use-preferences";
 import { UserProvider } from "@/hooks/use-user";
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
@@ -17,11 +18,13 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
             defaultTheme="black"
             enableSystem={false}
           >
-            <LastSessionProvider>
-              <FilterProvider>
-                <IsSelfProfileProvider>{children}</IsSelfProfileProvider>
-              </FilterProvider>
-            </LastSessionProvider>
+            <PreferencesProvider>
+              <LastSessionProvider>
+                <FilterProvider>
+                  <IsSelfProfileProvider>{children}</IsSelfProfileProvider>
+                </FilterProvider>
+              </LastSessionProvider>
+            </PreferencesProvider>
           </ThemeProvider>
         </UserProvider>
       </AuthProvider>

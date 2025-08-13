@@ -19,6 +19,10 @@ const ProfileTabs = ({ username, basePath }: ProfileTabsProps) => {
   const isHuds = pathname === hudsPath || pathname?.startsWith(`${hudsPath}`);
   const isCollections =
     pathname === collectionsPath || pathname?.startsWith(`${collectionsPath}`);
+  const isCollectionPage = /^\/[^/]+\/collections\/[^/]+$/.test(pathname);
+  const isMeCollectionPage = /^\/me\/collections\/[^/]+$/.test(pathname);
+
+  if (isCollectionPage || isMeCollectionPage) return null;
 
   return (
     <div className="mb-5 flex justify-center md:border-b">

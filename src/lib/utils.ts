@@ -93,7 +93,7 @@ export function getShareTargets(opts: {
     {
       id: "facebook",
       label: "Facebook",
-      color: "bg-blue-600",
+      color: "bg-blue-100",
       icon: Facebook,
       hrefBuilder: ({ title, text, url }) => {
         const u = enc(url || "");
