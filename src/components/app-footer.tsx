@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { buttonVariants } from "./ui/button";
+import { Skeleton } from "./ui/skeleton";
 import UserAvatar from "./user-avatar";
 
 import { navConfig } from "@/config/nav.config";
@@ -51,7 +52,7 @@ const AppFooter = () => {
                   key={idx}
                   className="relative flex h-14 flex-1 items-center justify-center"
                 >
-                  <div className="bg-base-200 size-6 animate-pulse rounded-full" />
+                  <Skeleton className="size-6 rounded-full" />
                 </li>
               ))}
             </ul>
@@ -59,11 +60,11 @@ const AppFooter = () => {
         </footer>
 
         <footer className="pointer-events-none fixed bottom-0 left-0 z-50 mb-5 hidden w-full md:flex">
-          <nav className="bg-base-100/80 pointer-events-auto mx-auto max-w-[360px] rounded-[22px] border p-1.5 backdrop-blur md:max-w-none">
+          <nav className="bg-base-100/80 pointer-events-auto mx-auto max-w-[360px] rounded-[calc(var(--radius-field)+6px)] border p-1.5 backdrop-blur md:max-w-none">
             <ul className="grid grid-cols-5 gap-2">
               {Array.from({ length: 5 }).map((_, idx) => (
                 <li key={idx}>
-                  <div className="rounded-box bg-base-200 h-14 w-20 animate-pulse" />
+                  <Skeleton className="rounded-field h-14 w-20" />
                 </li>
               ))}
             </ul>
