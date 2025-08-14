@@ -59,6 +59,7 @@ const CollectionActions = ({
       )}
       <CollectionOptions
         isSelf={isOwner}
+        collectionId={collection?.id || ""}
         collectionName={collection?.name || ""}
         collectionDescription={collection?.description || ""}
       />

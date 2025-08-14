@@ -3,11 +3,11 @@
 import { IconFolderOpen } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 
-import type { CollectionPreviewWithDetails } from "@/lib/types";
-
+import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { useCollection } from "@/hooks/profile/use-collection";
 import { useCollectionRole } from "@/hooks/profile/use-collection-role";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 const MasonryGrid = dynamic(
   () => import("@/app/feed/_components/masonry-grid"),
@@ -22,11 +22,35 @@ interface CollectionContentProps {
 }
 
 const CollectionContent = ({ username, slug }: CollectionContentProps) => {
-  const { collection, isLoading } = useCollection(username, slug);
+  const {
+    collection,
+    uploads,
+    isLoadingInitial,
+    isLoadingMore,
+    isReachingEnd,
+    loadMore,
+  } = useCollection(username, slug, { withInfiniteUploads: true });
 
   const { canEdit } = useCollectionRole(collection);
 
-  if (collection?.previewUploads.length === 0) {
+  useInfiniteScroll({
+    disabled: isLoadingInitial || isLoadingMore || !!isReachingEnd,
+    onLoadMore: () => {
+      if (loadMore) {
+        loadMore();
+      }
+    },
+  });
+
+  if (isLoadingInitial) {
+    return (
+      <div className="py-16 text-center">
+        <Loader className="mx-auto size-8" />
+      </div>
+    );
+  }
+
+  if (collection && uploads && uploads.length === 0) {
     return (
       <div className="py-16 text-center">
         <div className="bg-base-200 mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full">
@@ -44,10 +68,12 @@ const CollectionContent = ({ username, slug }: CollectionContentProps) => {
   }
 
   return (
-    <MasonryGrid
-      uploads={collection?.previewUploads}
-      initialLoading={isLoading}
-    />
+    <>
+      <MasonryGrid uploads={uploads} initialLoading={isLoadingInitial} />
+      <div className="relative z-2 mt-6 mb-24 flex flex-col items-center gap-2 md:mb-32">
+        {isLoadingMore && <Loader className="mx-auto size-6" />}
+      </div>
+    </>
   );
 };
 

@@ -9,9 +9,9 @@ import ProfileUsername from "./profile-username";
 import { Separator } from "../ui/separator";
 
 import { useInvitations } from "@/app/collections/_hooks/use-invitations";
-import CreateCollectionForm from "@/components/collections/create-collection-form";
 import CollectionGrid from "@/components/collections/collection-grid";
 import CollectionsSkeleton from "@/components/collections/collections-skeleton";
+import CreateCollectionForm from "@/components/collections/create-collection-form";
 import { Button } from "@/components/ui/button";
 import { useIsSelfProfile } from "@/hooks/use-is-self-profile";
 

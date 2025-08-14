@@ -42,8 +42,8 @@ const ProfileTabs = ({ username, basePath }: ProfileTabsProps) => {
                 className="border-primary absolute inset-0 z-0 border-b-2 transition-colors"
                 transition={{
                   type: "spring",
-                  stiffness: 400,
-                  damping: 30,
+                  stiffness: 500,
+                  damping: 40,
                 }}
               />
             )}
@@ -63,8 +63,8 @@ const ProfileTabs = ({ username, basePath }: ProfileTabsProps) => {
                 className="border-primary absolute inset-0 z-0 border-b-2 transition-colors"
                 transition={{
                   type: "spring",
-                  stiffness: 400,
-                  damping: 30,
+                  stiffness: 500,
+                  damping: 40,
                 }}
               />
             )}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -32,7 +31,6 @@ const authFetcher = (url: string) =>
   fetcher<UserWithProfile | null>(url, { noStore: true });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const {
     data: user,
     error,
@@ -203,7 +201,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         credentials: "include",
       });
-      router.push("/auth/login");
       await mutate(null);
       document.cookie = "hudlab_auth=; Path=/; Max-Age=0";
     } catch (error) {

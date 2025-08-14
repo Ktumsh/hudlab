@@ -17,6 +17,7 @@ import type {
 } from "@/lib/types";
 
 import CreateCollectionForm from "@/components/collections/create-collection-form";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CollectionItemProps {
   collection?: CollectionPreview | CollectionPreviewWithDetails;
@@ -35,6 +36,8 @@ const CollectionItem = ({
   collectionInvitation,
   children,
 }: CollectionItemProps) => {
+  const isMobile = useIsMobile();
+
   const voidSpace = <div className="bg-base-300 aspect-square size-full" />;
 
   if (isSelf) {
@@ -51,7 +54,7 @@ const CollectionItem = ({
             </div>
             <div className="from-base-100 absolute inset-0 bg-radial from-20% to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             <div className="from-base-100 absolute inset-0 grid place-content-center">
-              <Button variant="neutral">
+              <Button variant="neutral" size={isMobile ? "sm" : "default"}>
                 <IconPlus />
                 Crear colección
               </Button>
@@ -94,9 +97,11 @@ const CollectionItem = ({
             </div>
           </div>
         </div>
-        <div className="p-3">
-          <h3 className="mb-1 line-clamp-1 font-semibold">{collection.name}</h3>
-          <p className="text-base-content/60 text-sm">
+        <div className="p-2 md:p-3">
+          <h3 className="line-clamp-1 text-sm font-semibold md:mb-1 md:text-base">
+            {collection.name}
+          </h3>
+          <p className="text-content-muted text-xs md:text-sm">
             {grantedBy.displayName || grantedBy.username} te ha invitado a
             colaborar en esta colección
           </p>
@@ -153,11 +158,11 @@ const CollectionItem = ({
         )}
       </div>
 
-      <div className="p-3">
-        <h3 className="mb-1 line-clamp-1 text-base font-semibold">
+      <div className="p-2 md:p-3">
+        <h3 className="line-clamp-1 text-sm font-semibold md:mb-1 md:text-base">
           {collection.name}
         </h3>
-        <div className="text-base-content/60 text-xs">
+        <div className="text-content-muted text-xxs md:text-xs">
           <div className="flex items-center gap-3">
             <span>{collection._count?.items || 0} HUDs</span>
             <span>{collection._count?.followers || 0} seguidores</span>

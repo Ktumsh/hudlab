@@ -6,9 +6,9 @@ import ProfileUsername from "./profile-username";
 
 import type { ProfileData } from "@/lib/types";
 
-import { useProfileActions } from "@/app/[profile]/_hooks/use-profile-actions";
 import { AvatarUploader } from "@/app/me/_components/avatar-uploader";
 import { useProfile } from "@/hooks/profile/use-profile";
+import { useProfileActions } from "@/hooks/profile/use-profile-actions";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const ProfileHeader = ({
@@ -54,7 +54,12 @@ const ProfileHeader = ({
             >
               {profile?.displayName}
             </h1>
-            {isMobile && <ProfileStats stats={stats} />}
+            {isMobile && (
+              <ProfileStats
+                stats={stats}
+                username={profile?.username ?? username}
+              />
+            )}
             {profile?.bio && (
               <p className="text-center text-xs text-pretty md:hidden">
                 {profile.bio}
@@ -72,7 +77,12 @@ const ProfileHeader = ({
             username={profile?.username ?? username}
             className="hidden md:block"
           />
-          {!isMobile && <ProfileStats stats={stats} />}
+          {!isMobile && (
+            <ProfileStats
+              stats={stats}
+              username={profile?.username ?? username}
+            />
+          )}
           {profile?.bio && (
             <p className="mt-2 hidden text-sm text-pretty md:block">
               {profile.bio}

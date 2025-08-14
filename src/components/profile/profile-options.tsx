@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProfileOptionsProps {
@@ -29,6 +30,8 @@ const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
   const isMobile = useIsMobile();
   const username = profile?.username;
   const displayName = profile?.displayName;
+
+  const { signOut } = useAuth();
 
   const shareSheetTitle = useMemo(() => {
     return isSelf
@@ -84,7 +87,13 @@ const ProfileOptions = ({ profile, isSelf }: ProfileOptionsProps) => {
               <IconSettings2 />
               Configuración
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={async () => {
+                await signOut();
+                window.location.href = "/auth/login";
+              }}
+            >
               <IconLogout />
               Cerrar sesión
             </DropdownMenuItem>

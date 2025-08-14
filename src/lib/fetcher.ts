@@ -90,3 +90,26 @@ export async function apiUpload<TResponse>(
   }
   return (await res.json()) as TResponse;
 }
+
+export async function apiDelete<TResponse>(
+  url: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<TResponse> {
+  const fetchUrl = url.startsWith("/api/") ? `${apiUrl}${url}` : url;
+  const res = await fetch(fetchUrl, {
+    method: "DELETE",
+    credentials: "include",
+    cache: "no-cache",
+    headers: { "Content-Type": "application/json" },
+    signal: options.signal,
+  });
+  if (!res.ok) {
+    const error = new Error(
+      "Ocurrió un error al eliminar el recurso",
+    ) as ApplicationError;
+    error.info = await res.json().catch(() => ({}));
+    error.status = res.status;
+    throw error;
+  }
+  return (await res.json()) as TResponse;
+}
