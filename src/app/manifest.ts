@@ -11,6 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#000000",
     start_url: "/",
     display: "standalone",
+    display_override: ["window-controls-overlay"],
     orientation: "portrait",
     protocol_handlers: [
       {
@@ -20,14 +21,26 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     icons: [
       {
-        sizes: "192x192",
         src: "/logo/web-app-manifest-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/logo/web-app-manifest-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/logo/web-app-manifest-192x192.png",
+        sizes: "192x192",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        sizes: "512x512",
         src: "/logo/web-app-manifest-512x512.png",
+        sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
       },

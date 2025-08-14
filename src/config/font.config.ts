@@ -1,10 +1,4 @@
-import {
-  Exo_2,
-  Inter,
-  JetBrains_Mono,
-  Merriweather,
-  Orbitron,
-} from "next/font/google";
+import { Exo_2, Inter, JetBrains_Mono, Merriweather } from "next/font/google";
 
 export const inter = Inter({
   variable: "--font-inter",
