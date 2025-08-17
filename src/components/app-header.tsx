@@ -1,6 +1,6 @@
 "use client";
 
-import { IconChevronLeft, IconIcons, IconSettings2 } from "@tabler/icons-react";
+import { IconChevronLeft, IconSettings2 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -115,9 +115,7 @@ const AppHeader = () => {
                 />
               )}
               {user ? (
-                <Button size="icon-md">
-                  <IconIcons className="size-5" />
-                </Button>
+                <UserOptions />
               ) : (
                 <>
                   <Button size="sm" asChild className="h-9">

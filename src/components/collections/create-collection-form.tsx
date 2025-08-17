@@ -37,6 +37,7 @@ import { apiPost } from "@/lib/fetcher";
 
 interface CreateCollectionFormProps {
   children: React.ReactNode;
+  triggerClassName?: string;
 }
 
 interface CreateCollectionResponse {
@@ -49,7 +50,10 @@ interface CreateCollectionResponse {
   };
 }
 
-const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
+const CreateCollectionForm = ({
+  children,
+  triggerClassName,
+}: CreateCollectionFormProps) => {
   const [open, setOpen] = useState(false);
   const [collaborators, setCollaborators] = useState<UserSearchResult[]>([]);
   const [collaboratorsPermission] = useState<CollaboratorPermission>("admin");
@@ -121,7 +125,9 @@ const CreateCollectionForm = ({ children }: CreateCollectionFormProps) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild className={triggerClassName}>
+        {children}
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Crear colección</DialogTitle>

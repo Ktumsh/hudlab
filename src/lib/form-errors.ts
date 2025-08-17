@@ -7,6 +7,10 @@ export const formErrors = {
     bio: "La biografía es obligatoria",
     password: "La contraseña es obligatoria",
     collectionName: "El nombre de la colección es obligatorio",
+    uploadTitle: "El título del HUD es obligatorio",
+    game: "Debes seleccionar un juego",
+    uploadType: "Debes seleccionar un tipo de HUD",
+    uploadImages: "Debes agregar al menos una imagen",
   },
   invalid: {
     email: "El formato del correo no es válido",
@@ -29,6 +33,10 @@ export const formErrors = {
     collectionDescriptionMax:
       "La descripción de la colección no puede exceder 200 caracteres",
     avatarMax: "La imagen de avatar no debe superar los 2MB.",
+    uploadTitleMax: "El título del HUD no puede exceder 150 caracteres",
+    uploadDescriptionMax: "La descripción no puede exceder 500 caracteres",
+    tagsMax: "Los tags no pueden exceder 200 caracteres",
+    uploadImagesMax: "No puedes agregar más de 5 imágenes",
   },
   password: {
     noUppercase: "Debe contener al menos una letra mayúscula",

@@ -6,7 +6,6 @@ import * as React from "react";
 
 import { cn } from "@/lib";
 
-
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
@@ -29,9 +28,11 @@ function SelectTrigger({
   className,
   size = "default",
   children,
+  hideChevron = false,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
+  hideChevron?: boolean;
 }) {
   return (
     <SelectPrimitive.Trigger
@@ -44,9 +45,11 @@ function SelectTrigger({
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon asChild>
-        <IconChevronDown className="size-4 opacity-50" />
-      </SelectPrimitive.Icon>
+      {!hideChevron && (
+        <SelectPrimitive.Icon asChild>
+          <IconChevronDown className="size-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      )}
     </SelectPrimitive.Trigger>
   );
 }
@@ -109,8 +112,11 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  hideIndicator = false,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  hideIndicator?: boolean;
+}) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -120,11 +126,13 @@ function SelectItem({
       )}
       {...props}
     >
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <IconCheck className="size-4" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
+      {!hideIndicator && (
+        <span className="absolute right-2 flex size-3.5 items-center justify-center">
+          <SelectPrimitive.ItemIndicator>
+            <IconCheck className="size-4" />
+          </SelectPrimitive.ItemIndicator>
+        </span>
+      )}
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );

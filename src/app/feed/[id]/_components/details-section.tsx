@@ -251,15 +251,15 @@ const DetailsSection = ({
             )}
             <div className="mb-2 flex flex-wrap gap-2">
               {upload.tags &&
-                typeof upload.tags === "string" &&
-                upload.tags.trim().length > 0 &&
-                upload.tags.split(",").map((tag: string) => (
+                Array.isArray(upload.tags) &&
+                upload.tags.length > 0 &&
+                upload.tags.map((tag) => (
                   <span
-                    key={tag}
-                    onClick={() => handleTagClick(tag)}
+                    key={tag.id}
+                    onClick={() => handleTagClick(tag.name)}
                     className="text-primary cursor-pointer text-sm transition-colors hover:underline"
                   >
-                    #{tag.trim()}
+                    #{tag.name}
                   </span>
                 ))}
             </div>

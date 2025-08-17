@@ -35,7 +35,7 @@ const UploadDetails = ({
     loadMore,
   } = usePaginatedRelatedUploads({
     gameId: upload.game?.id ?? "",
-    tags: upload.tags ?? "",
+    tags: upload.tags?.map((tag) => tag.name).join(",") ?? "",
     excludeId: upload.id,
   });
 

@@ -4,6 +4,7 @@ import { motion, LayoutGroup } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import CreateMenu from "./create-menu";
 import { buttonVariants } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import UserAvatar from "./user-avatar";
@@ -35,11 +36,11 @@ const AppFooter = () => {
 
   const filteredNavigationDesktop = user
     ? navigationDesktop
-    : navigationDesktop.slice(0, 2);
+    : navigationDesktop.filter((_, idx) => idx !== 2); // Eliminar botón de crear para usuarios no autenticados
 
   const filteredNavigationMobile = user
     ? navigationMobile.slice(0, -1)
-    : navigationMobile.filter((_, idx) => idx !== 2 && idx !== 4);
+    : navigationMobile.filter((_, idx) => idx !== 2 && idx !== 5);
 
   if (isLoading) {
     return (
@@ -84,6 +85,25 @@ const AppFooter = () => {
               const Icon = isActive ? item.iconFilled : item.icon;
               const isProfile = index === 4;
               const isLast = index === filteredNavigationMobile.length - 1;
+              const isCreateButton = item.isCreateButton;
+
+              if (isCreateButton) {
+                return (
+                  <li
+                    key={item.title}
+                    className="relative flex h-14 flex-1 items-center justify-center"
+                  >
+                    <CreateMenu>
+                      <button className="flex h-14 w-full flex-col items-center justify-center">
+                        <span className="relative z-10 flex flex-col items-center">
+                          {Icon && <Icon className="size-6" />}
+                        </span>
+                      </button>
+                    </CreateMenu>
+                  </li>
+                );
+              }
+
               return (
                 <li
                   key={item.title}
@@ -120,7 +140,7 @@ const AppFooter = () => {
   }
 
   return (
-    <footer className="pointer-events-none fixed bottom-0 left-0 z-50 mb-5 flex w-full">
+    <footer className="app-footer pointer-events-none fixed bottom-0 left-0 z-50 mb-5 flex w-full">
       <nav className="bg-base-100/80 pointer-events-auto mx-auto rounded-[calc(var(--radius-field)+6px)] border p-1.5 backdrop-blur">
         <LayoutGroup>
           <ul className={cn("grid grid-cols-5 gap-2", !user && "grid-cols-4")}>
@@ -128,6 +148,30 @@ const AppFooter = () => {
               const isActive = item.href === pathname;
               const Icon = isActive ? item.iconFilled : item.icon;
               const isProfile = index === navigationDesktop.length - 1;
+              const isCreateButton = item.isCreateButton;
+
+              if (isCreateButton) {
+                return (
+                  <li key={item.title} className="group relative">
+                    <CreateMenu>
+                      <button
+                        className={cn(
+                          buttonVariants({
+                            variant: "ghost",
+                          }),
+                          "flex h-14 w-20 flex-col items-center gap-1 border-0 p-1.5 hover:bg-transparent!",
+                        )}
+                      >
+                        <span className="relative z-10 flex flex-col items-center">
+                          {Icon && <Icon className="size-6" />}
+                          <span className="text-xs">{item.title}</span>
+                        </span>
+                      </button>
+                    </CreateMenu>
+                  </li>
+                );
+              }
+
               return (
                 <li key={item.title} className="group relative">
                   <Link

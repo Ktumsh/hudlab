@@ -22,6 +22,7 @@ import UserAvatar from "@/components/user-avatar";
 import { useFollowingData } from "@/hooks/use-following-data";
 import { useUser } from "@/hooks/use-user";
 import { useUserFollow } from "@/hooks/use-user-actions";
+import { cn } from "@/lib";
 
 interface FollowingDialogProps {
   username: string;
@@ -69,11 +70,12 @@ const FollowingDialog = ({
             <div className="flex border-b">
               <button
                 onClick={() => handleTabChange("users")}
-                className={`relative flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                className={cn(
+                  "relative flex-1 px-4 py-2 text-sm font-medium transition-colors",
                   activeTab === "users"
                     ? "border-primary text-primary"
-                    : "text-base-content/60 hover:text-base-content"
-                }`}
+                    : "text-content-muted hover:text-base-content",
+                )}
               >
                 {activeTab === "users" && (
                   <motion.div
@@ -91,11 +93,12 @@ const FollowingDialog = ({
 
               <button
                 onClick={() => handleTabChange("collections")}
-                className={`relative flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                className={cn(
+                  "relative flex-1 px-4 py-2 text-sm font-medium transition-colors",
                   activeTab === "collections"
                     ? "border-primary text-primary"
-                    : "text-base-content/60 hover:text-base-content"
-                }`}
+                    : "text-content-muted hover:text-base-content",
+                )}
               >
                 {activeTab === "collections" && (
                   <motion.div
@@ -180,7 +183,7 @@ const FollowingDialog = ({
                     </div>
                   </ScrollArea>
                 ) : (
-                  <div className="text-base-content/60 flex h-full items-center justify-center">
+                  <div className="text-content-muted flex h-full items-center justify-center">
                     No sigues ninguna colección
                   </div>
                 )}

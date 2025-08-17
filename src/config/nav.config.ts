@@ -28,9 +28,10 @@ export const navConfig = {
     },
     {
       title: "Crear",
-      href: "/create",
+      href: "#", // No navega, solo activa el popover
       icon: IconSquareRoundedPlus,
       iconFilled: IconSquareRoundedPlusFilled,
+      isCreateButton: true,
     },
     {
       title: "Colecciones",
@@ -57,9 +58,9 @@ export const navConfig = {
     },
     {
       title: "Crear",
-      href: "/create",
       icon: IconPlus,
       iconFilled: IconPlus,
+      isCreateButton: true,
     },
     {
       title: "Colecciones",

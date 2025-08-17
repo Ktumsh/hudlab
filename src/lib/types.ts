@@ -46,10 +46,9 @@ export interface Upload {
   id: string;
   profileId: string;
   gameId: string;
+  typeId: string;
   title: string;
   description?: string;
-  type: string;
-  tags?: string;
   likesCount?: number;
   commentsCount?: number;
   createdAt: Date | null;
@@ -107,6 +106,15 @@ export interface CollectionPermission {
 export interface Tag {
   id: string;
   name: string;
+  createdAt?: Date | null;
+  usageCount?: number;
+}
+
+export interface UploadType {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: Date | null;
 }
 
 export interface UploadComment {
@@ -162,6 +170,8 @@ export interface CommentWithRelations {
 export interface UploadWithFullDetails extends Upload {
   profile: Profile;
   game: Game;
+  type: UploadType;
+  tags: Tag[];
   comments: CommentWithRelations[];
   images: UploadImage[];
 }
@@ -169,6 +179,8 @@ export interface UploadWithFullDetails extends Upload {
 export interface UploadWithDetails extends Upload {
   profile: Profile;
   game: Game;
+  type: UploadType;
+  tags: Tag[];
   images: UploadImage[];
 }
 
@@ -351,7 +363,7 @@ export interface ApiError {
 
 export type SortOrder = "asc" | "desc";
 
-export type UploadType = "screenshot" | "artwork" | "meme" | "guide";
+export type UploadCategory = "screenshot" | "artwork" | "meme" | "guide";
 
 export type CollaboratorPermission = "view" | "designer" | "admin";
 

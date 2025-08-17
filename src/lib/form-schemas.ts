@@ -97,3 +97,28 @@ export const profileUpdateSchema = z.object({
 });
 
 export type ProfileUpdateFormData = z.infer<typeof profileUpdateSchema>;
+
+// ─────────────────────────────
+// 📸 UPLOAD CREATION
+// ─────────────────────────────
+export const createUploadSchema = z.object({
+  title: z
+    .string()
+    .min(1, { error: e.required.uploadTitle })
+    .max(150, { error: e.length.uploadTitleMax }),
+  description: z
+    .string()
+    .max(500, { error: e.length.uploadDescriptionMax })
+    .optional()
+    .or(z.literal("")),
+  gameId: z.string().min(1, { error: e.required.game }),
+  type: z.string().min(1, { error: e.required.uploadType }),
+  tags: z
+    .string()
+    .max(200, { error: e.length.tagsMax })
+    .optional()
+    .or(z.literal("")),
+  // images se excluye del esquema; el backend valida y el payload se arma en el submit
+});
+
+export type CreateUploadFormData = z.infer<typeof createUploadSchema>;

@@ -5,7 +5,7 @@ import { IconX } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
 import * as React from "react";
 
-import { cn } from "@/lib";
+import { cn } from "@/lib/index";
 
 function Dialog({
   ...props
@@ -156,7 +156,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-content-muted text-sm", className)}
+      className={cn("text-content-muted text-sm text-pretty", className)}
       {...props}
     />
   );
